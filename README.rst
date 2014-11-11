@@ -1,5 +1,12 @@
-SPI library
------------
+SPI Library
+===========
+
+.. rheader::
+
+   SPI |version|
+
+SPI Libary
+----------
 
 A software defined, industry-standard, SPI (serial peripheral
 interface) component
@@ -27,4 +34,3 @@ Components
  * SPI master (mode 0,1,2,3)
  * SPI master, multiple slaves (mode 0,1,2,3)
  * SPI slave (mode 0,1,2,3)
-
