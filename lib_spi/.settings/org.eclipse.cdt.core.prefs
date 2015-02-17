@@ -1,0 +1,6 @@
+eclipse.preferences.version=1
+environment/project/com.xmos.cdt.toolchain.20421737/XMOS_MODULE_PATH/delimiter=\:
+environment/project/com.xmos.cdt.toolchain.20421737/XMOS_MODULE_PATH/operation=append
+environment/project/com.xmos.cdt.toolchain.20421737/XMOS_MODULE_PATH/value=/home/andrew/sandboxes/swapps/lib_gpio/lib_gpio\:/home/andrew/sandboxes/swapps/lib_pwm/pwm_one_bit_test\:/home/andrew/sandboxes/swapps/lib_pwm/pwm_test\:/home/andrew/sandboxes/swapps/lib_spi/test/spi_bench_async\:/home/andrew/sandboxes/swapps/lib_spi/test/spi_benchmark_sync\:/home/andrew/sandboxes/swapps/lib_spi/test/spi_failure_sync\:/home/andrew/sandboxes/swapps/lib_spi/test/spi_master_async_test\:/home/andrew/sandboxes/swapps/lib_spi/test/spi_multi_client_async\:/home/andrew/sandboxes/swapps/lib_spi/test/spi_multi_client_sync\:/home/andrew/sandboxes/swapps/lib_spi/test/spi_multi_device_async\:/home/andrew/sandboxes/swapps/lib_spi/test/spi_multi_device_sync\:/home/andrew/sandboxes/swapps/lib_spi/test/spi_rx_tx_async\:/home/andrew/sandboxes/swapps/lib_spi/test/spi_rx_tx_sync\:/home/andrew/new_ip_testing/test
+environment/project/com.xmos.cdt.toolchain.20421737/append=true
+environment/project/com.xmos.cdt.toolchain.20421737/appendContributed=true

@@ -1,5 +1,17 @@
 #ifndef _spi_h_
 #define _spi_h_
+#include <xs1.h>
+#include <stdint.h>
+#include <stddef.h>
+
+/** This type indicates what mode an SPI component should use */
+typedef enum spi_mode_t {
+  SPI_MODE_0, /**< SPI Mode 0 - Polarity = 0, Clock Edge = 1 */
+  SPI_MODE_1, /**< SPI Mode 1 - Polarity = 0, Clock Edge = 0 */
+  SPI_MODE_2, /**< SPI Mode 2 - Polarity = 1, Clock Edge = 0 */
+  SPI_MODE_3, /**< SPI Mode 3 - Polarity = 1, Clock Edge = 1 */
+} spi_mode_t;
+
 
 /** This interface allows clients to interact with SPI master task. */
 interface spi_master_if {
@@ -25,7 +37,7 @@ interface spi_master_if {
    *  This ends a transaction on the bus and releases the component to other
    *  clients.
    */
-  void end_transaction(void);
+  void end_transaction(unsigned ss_deassert_time);
 
   /** Transfer a byte over the spi bus.
    *
@@ -49,14 +61,6 @@ interface spi_master_if {
    */
   uint32_t transfer32(uint32_t data);
 };
-
-/** This type indicates what mode an SPI component should use */
-typedef enum spi_mode_t {
-  SPI_MODE_0, /**< SPI Mode 0 - Polarity = 0, Clock Edge = 1 */
-  SPI_MODE_1, /**< SPI Mode 1 - Polarity = 0, Clock Edge = 0 */
-  SPI_MODE_2, /**< SPI Mode 2 - Polarity = 1, Clock Edge = 0 */
-  SPI_MODE_3, /**< SPI Mode 3 - Polarity = 1, Clock Edge = 1 */
-} spi_mode_t;
 
 /** Task that implements the SPI proctocol in master mode that is
     connected to a multiple slaves on the bus.
@@ -82,14 +86,13 @@ typedef enum spi_mode_t {
 */
 [[distributable]]
 void spi_master(server interface spi_master_if i[num_clients],
-                size_t num_clients,
-                out port sclk,
-                out port mosi,
-                in port miso,
-                out port p_ss[num_slaves],
-                size_t num_slaves,
-                clock clk);
-
+        static const size_t num_clients,
+        out buffered port:32 sclk,
+        out buffered port:32 ?mosi,
+        in buffered port:32 ?miso,
+        out port p_ss[num_slaves],
+        static const size_t num_slaves,
+        clock ?clk);
 
 /** Asynchronous interface to an SPI component.
  *
@@ -109,7 +112,6 @@ typedef interface spi_master_async_if  {
    *                       the transaction (in kHZ)
    *  \param mode          The mode of spi transfers during this transaction
    */
-  [[guarded]]
   void begin_transaction(unsigned device_index,
                          unsigned speed_in_khz, spi_mode_t mode);
 
@@ -117,8 +119,13 @@ typedef interface spi_master_async_if  {
    *
    *  This ends a transaction on the bus and releases the component to other
    *  clients.
+   *
+   *  \param ss_deassert_time    The minimum time in reference clock ticks between
+   *                             assertions of the selected slave select. This time
+   *                             will be ignored if the next transaction is to a
+   *                             different slave select.
    */
-  void end_transaction(void);
+  void end_transaction(unsigned ss_deassert_time);
 
   /** Initialize Transfer an array of bytes over the spi bus.
    *
@@ -154,8 +161,8 @@ typedef interface spi_master_async_if  {
    *                  transfer will consist of undefined values.
    *  \param nwords   The number of words to transfer over the bus.
    */
-  void init_transfer_array_32(uint8_t * movable inbuf,
-                              uint8_t * movable outbuf,
+  void init_transfer_array_32(uint32_t * movable inbuf,
+                              uint32_t * movable outbuf,
                               size_t nwords);
 
 
@@ -164,7 +171,7 @@ typedef interface spi_master_async_if  {
    *  This notification occurs when a transfer is completed.
    */
   [[notification]]
-  slave void operation_complete(void);
+  slave void transfer_complete(void);
 
   /** Retrieve transfer buffers.
    *
@@ -194,8 +201,8 @@ typedef interface spi_master_async_if  {
    *                  pointer that was transmitted during the transfer.
    */
   [[clears_notification]]
-  void retrieve_transfer_buffers_32(uint8_t * movable &inbuf,
-                                    uint8_t * movable &outbuf);
+  void retrieve_transfer_buffers_32(uint32_t * movable &inbuf,
+                                    uint32_t * movable &outbuf);
 } spi_master_async_if;
 
 
@@ -207,24 +214,25 @@ typedef interface spi_master_async_if  {
  *  \param i             an array of interface connection to the
  *                       clients of the task.
  *  \param num_clients   the number of clients connected to the task.
- *  \param clk           a clock block used by the task.
  *  \param sclk          the SPI clock port.
  *  \param mosi          the SPI MOSI (master out, slave in) port.
  *  \param miso          the SPI MISO (master in, slave out) port.
  *  \param p_ss          an array of ports connected to the slave select signals
  *                       of the slave.
  *  \param num_slaves    The number of slave devices on the bus.
- *  \param clk           a clock for the component to use.
+ *  \param clk0           a clock for the component to use.
+ *  \param clk1           a clock for the component to use.
  */
 [[combinable]]
 void spi_master_async(server interface spi_master_async_if i[num_clients],
-                      size_t num_clients,
-                      out port sclk,
-                      out port mosi,
-                      in port miso,
-                      out port p_ss[num_slaves],
-                      size_t num_slaves,
-                      clock clk);
+        static const size_t num_clients,
+        out buffered port:32 sclk,
+        out buffered port:32 ?mosi,
+        in buffered port:32 miso,
+        out port p_ss[num_slaves],
+        static const size_t num_slaves,
+        clock clk0,
+        clock clk1);
 
 /**** SLAVE ****/
 
@@ -233,15 +241,10 @@ void spi_master_async(server interface spi_master_async_if i[num_clients],
  */
 typedef interface spi_slave_callback_if {
 
-  /** This callback will get called when the master asserts on the slave
-   *  select line to start a transaction.
-   */
-  void master_starts_transaction(void);
-
-  /** This callback will get called when the master de-asserts on teh slave
+  /** This callback will get called when the master de-asserts on the slave
    *  select line to end a transaction.
    */
-  vois master_ends_transaction(void);
+  void master_ends_transaction(void);
 
   /** This callback will get called when the master initiates a bus transfer
    *  or when more data is required during a transaction.
@@ -254,17 +257,7 @@ typedef interface spi_slave_callback_if {
    *
    *  \returns the 8-bit value to transmit.
    */
-  uint8_t master_requires_data(void);
-
-  /** This callback will get called when the master initiates a bus transfer.
-   *  The application must supply the data to transmit to the master.
-   *  Data is transmitted for the least significant bit first. If the
-   *  master completes the transaction before 32 bits are
-   *  transferred the remaining bits are discarded.
-   *
-   *  \returns the 32-bit value to transmit.
-   */
-  uint32_t master_requires_data32(size_t &num_bytes);
+  uint32_t master_requires_data(void);
 
   /** This callback will get called after a transfer. It will occur after
    *  every 8 bits transferred if the slave component is set to
@@ -273,16 +266,9 @@ typedef interface spi_slave_callback_if {
    *  transaction before 32 bits are transferred.
    *
    *  \param datum the data received from the master.
+   *  \param valid_bits the number of valid bits of data received from the master.
    */
-  void master_supplied_data(uint8_t datum);
-
-  /** This callback will get called after a transfer. It will only occur
-   *  if the slave component is set to ``SPI_TRANSFER_SIZE_32`` mode and
-   *  will occur after every 32 bits received.
-   *
-   *  \param datum the data received from the master.
-   */
-  void master_supplied_data32(uint32_t datum);
+  void master_supplied_data(uint32_t datum, uint32_t valid_bits);
 
 } spi_slave_callback_if;
 
@@ -297,7 +283,7 @@ typedef enum spi_transfer_type_t {
  *
  *  This function implements an SPI slave bus.
  *
- *  \param i   The interface to connect to the user of the component.
+ *  \param spi_i   The interface to connect to the user of the component.
  *             The component acts as the client and will make callbacks to
  *             the application.
  *  \param p_sclk        the SPI clock port.
@@ -310,10 +296,13 @@ typedef enum spi_transfer_type_t {
  *                       ``SPI_TRANSFER_SIZE_8`` or ``SPI_TRANSFER_SIZE_32``.
  */
  [[combinable]]
-void spi_slave(client spi_slave_callback_if i,
-               in port p_sclk, in port p_mosi, out port p_miso, in port p_ss,
-               clock clk,
-               spi_mode_t mode,
-               spi_transfer_type_t transfer_type);
+  void spi_slave(client spi_slave_callback_if spi_i,
+                 in port p_sclk,
+                 in buffered port:32 p_mosi,
+                 out buffered port:32 ?p_miso,
+                 in port p_ss,
+                 clock clk,
+                 static const spi_mode_t mode,
+                 static const spi_transfer_type_t transfer_type);
 
 #endif // _spi_h_

@@ -1,33 +1,102 @@
 .. include:: ../../../README.rst
 
-Resource Usage
-..............
+Typical Resource Usage
+......................
 
-TODO
+.. resusage::
 
+  * - configuration: Master (synchronous, zero clock blocks, MISO enabled, MOSI enabled)
+    - globals: out buffered port:32 p_sclk = XS1_PORT_1A; out buffered port:32 p_mosi =  XS1_PORT_1B; in buffered port:32 p_miso = XS1_PORT_1C; out port p_ss[1] = {XS1_PORT_1D};
+    - locals: interface spi_master_if i[1];
+    - fn: spi_master(i, 1, p_sclk, p_mosi, p_miso, p_ss, 1, null);
+    - pins: 4
+    - ports: 4 (1-bit)
+  * - configuration: Master (synchronous, one clock block, MISO enabled, MOSI enabled)
+    - globals: out buffered port:32 p_sclk = XS1_PORT_1A; out buffered port:32 p_mosi =  XS1_PORT_1B; in buffered port:32 p_miso = XS1_PORT_1C; out port p_ss[1] = {XS1_PORT_1D};clock cb = XS1_CLKBLK_1;
+    - locals: interface spi_master_if i[1];
+    - fn: spi_master(i, 1, p_sclk, p_mosi, p_miso, p_ss, 1, cb);
+    - pins: 4
+    - ports: 4 (1-bit)
+  * - configuration: Master (synchronous, zero clock blocks, MISO enabled, MOSI disabled)
+    - globals: out buffered port:32 p_sclk = XS1_PORT_1A; in buffered port:32 p_miso = XS1_PORT_1C; out port p_ss[1] = {XS1_PORT_1D};
+    - locals: interface spi_master_if i[1];
+    - fn: spi_master(i, 1, p_sclk, null, p_miso, p_ss, 1, null);
+    - pins: 3
+    - ports: 3 (1-bit)
+  * - configuration: Master (synchronous, one clock block, MISO enabled, MOSI enabled)
+    - globals: out buffered port:32 p_sclk = XS1_PORT_1A; in buffered port:32 p_miso = XS1_PORT_1C; out port p_ss[1] = {XS1_PORT_1D};clock cb = XS1_CLKBLK_1;
+    - locals: interface spi_master_if i[1];
+    - fn: spi_master(i, 1, p_sclk, null, p_miso, p_ss, 1, cb);
+    - pins: 3
+    - ports: 3 (1-bit)
+  * - configuration: Master (synchronous, zero clock blocks, MISO disabled, MOSI enabled)
+    - globals: out buffered port:32 p_sclk = XS1_PORT_1A; out buffered port:32 p_mosi =  XS1_PORT_1B; out port p_ss[1] = {XS1_PORT_1D};
+    - locals: interface spi_master_if i[1];
+    - fn: spi_master(i, 1, p_sclk, p_mosi, null, p_ss, 1, null);
+    - pins: 3
+    - ports: 3 (1-bit)
+  * - configuration: Master (synchronous, one clock block, MISO disabled, MOSI enabled)
+    - globals: out buffered port:32 p_sclk = XS1_PORT_1A; out buffered port:32 p_mosi =  XS1_PORT_1B; out port p_ss[1] = {XS1_PORT_1D};clock cb = XS1_CLKBLK_1;
+    - locals: interface spi_master_if i[1];
+    - fn: spi_master(i, 1, p_sclk, p_mosi, null, p_ss, 1, cb);
+    - pins: 3
+    - ports: 3 (1-bit)
+  * - configuration: Master (asynchronous, MISO enabled, MOSI enabled)
+    - globals: out buffered port:32 p_sclk = XS1_PORT_1A; out buffered port:32 p_mosi =  XS1_PORT_1B; in buffered port:32 p_miso = XS1_PORT_1C; out port p_ss[1] = {XS1_PORT_1D};clock cb0 = XS1_CLKBLK_1; clock cb1 = XS1_CLKBLK_2;
+    - locals: interface spi_master_async_if i[1];
+    - fn: spi_master_async(i, 1, p_sclk, p_mosi, p_miso, p_ss, 1, cb0, cb1);
+    - pins: 4
+    - ports: 4 (1-bit)
+  * - configuration: Master (asynchronous, MISO enabled, MOSI disabled)
+    - globals: out buffered port:32 p_sclk = XS1_PORT_1A; in buffered port:32 p_miso = XS1_PORT_1C; out port p_ss[1] = {XS1_PORT_1D};clock cb0 = XS1_CLKBLK_1; clock cb1 = XS1_CLKBLK_2;
+    - locals: interface spi_master_async_if i[1];
+    - fn: spi_master_async(i, 1, p_sclk, null, p_miso, p_ss, 1, cb0, cb1);
+    - pins: 3
+    - ports: 3 (1-bit)
+  * - configuration: Slave (MISO Enabled, 32 bit transfer mode)
+    - globals: in port p_sclk = XS1_PORT_1A; in buffered port:32 p_mosi = XS1_PORT_1B; out buffered port:32 p_miso = XS1_PORT_1C; in port p_ss = XS1_PORT_1D;clock cb = XS1_CLKBLK_1;
+    - locals: interface spi_slave_callback_if i;
+    - fn: spi_slave(i, p_sclk, p_mosi, p_miso, p_ss, cb, SPI_MODE_0, SPI_TRANSFER_SIZE_32);
+    - pins: 4
+    - ports: 4 (1-bit)
+  * - configuration: Slave (MISO Disabled, 32 bit transfer mode)
+    - globals: in port p_sclk = XS1_PORT_1A; in buffered port:32 p_mosi = XS1_PORT_1B; in port p_ss = XS1_PORT_1D;clock cb = XS1_CLKBLK_1;
+    - locals: interface spi_slave_callback_if i;
+    - fn: spi_slave(i, p_sclk, p_mosi, null, p_ss, cb, SPI_MODE_0, SPI_TRANSFER_SIZE_32);
+    - pins: 3
+    - ports: 3 (1-bit)
+  * - configuration: Slave (MISO Enabled, 8 bit transfer mode)
+    - globals: in port p_sclk = XS1_PORT_1A; in buffered port:32 p_mosi = XS1_PORT_1B; out buffered port:32 p_miso = XS1_PORT_1C; in port p_ss = XS1_PORT_1D;clock cb = XS1_CLKBLK_1;
+    - locals: interface spi_slave_callback_if i;
+    - fn: spi_slave(i, p_sclk, p_mosi, p_miso, p_ss, cb, SPI_MODE_0, SPI_TRANSFER_SIZE_8);
+    - pins: 4
+    - ports: 4 (1-bit)
+  * - configuration: Slave (MISO Disabled, 8 bit transfer mode)
+    - globals: in port p_sclk = XS1_PORT_1A; in buffered port:32 p_mosi = XS1_PORT_1B; in port p_ss = XS1_PORT_1D;clock cb = XS1_CLKBLK_1;
+    - locals: interface spi_slave_callback_if i;
+    - fn: spi_slave(i, p_sclk, p_mosi, null, p_ss, cb, SPI_MODE_0, SPI_TRANSFER_SIZE_8);
+    - pins: 3
+    - ports: 3 (1-bit)
 
 Software version and dependencies
 .................................
 
-This document pertains to version |version| of the SPI library. It is
-intended to be used with version 13.x of the xTIMEcomposer studio tools.
-
-The library does not have any dependencies (i.e. it does not rely on any
-other libraries).
+.. libdeps::
 
 Related application notes
 .........................
 
 The following application notes use this library:
 
-  * AN00052 - How to use the SPI master component
-  * AN00057 - How to use the SPI slave component
+  * AN00000 - How to use the SPI master component
+  * AN00000 - How to use the SPI slave component
 
 Hardware characteristics
 ------------------------
 
-The SPI protocol requires two wires to be connected to the xCORE
-device: a clock line and data line as shown in
+The SPI protocol requires a clock, one or more slave selects
+and either one or two data wires. 
+
 :ref:`spi_wire_table`.
 
 .. _spi_wire_table:
@@ -44,12 +113,110 @@ device: a clock line and data line as shown in
      * - *SS*
        - Slave select line, driven by the master
 
+SPI modes
+.........
+The data sample points for SPI are defined by the clock ploarity (CPOL) and clock phase (CPHA) 
+parameters. SPI clock polarity may be inverted or non-inverted by the CPOL and the CPHA parameter 
+is used to shift the sampling phase. The following for sections illustrate the MISO and MOSI data lines
+relative to the clock. The timings are given by::
+
+  * t1 - The minimum time from the start of the transaction to data being valid on the data pins,
+  * t2 - The inter-transmission gap. This is the minimum amount of time that the slave select must be desserted,
+  * Max clock rate - This is the maximum clock rate supported by the configuration.
+
+For setup and hold timing characteristics, refer to ...FIXME
+
+Mode 0 - CPOL: 0 CPHA 1
+=======================
+{signal: [
+  {name: 'CLK',  wave: '0..101010|10....', node: '...B'},spi modes
+  {name: 'MOSI', wave: 'x..2.2.2.|2.x...', data: ['MSB',,, 'LSB'] },
+  {name: 'MISO', wave: 'x..2.2.2.|2.x...', data: ['MSB',,, 'LSB'], node: '...................'},
+  {name: 'CS',   wave: '10.......|..1..0', node: '.A..........C..D..'},
+  {              node: '.a.b........c..d'}
+],
+  edge: [ 'A|a','B|b', 'C|c','D|d','a<->b t1',  'c<->d t2']
+}
+The master and slave will drive out their first data bit on the first rising edge of the clock and sample 
+on the subsequent falling edge.
+
+Mode 1 - CPOL: 0 CPHA 0
+=======================
+{signal: [
+  {name: 'CLK',  wave: '0...10101|010...', node: '...B'},
+  {name: 'MOSI', wave: 'x..2.2.2.|2.x...', data: ['MSB',,, 'LSB'] },
+  {name: 'MISO', wave: 'x..2.2.2.|2.x...', data: ['MSB',,, 'LSB'], node: '...................'},
+  {name: 'CS',   wave: '10.......|..1..0', node: '.A..........C..D..'},
+  {              node: '.a.b........c..d'}
+],
+  edge: [ 'A|a','B|b', 'C|c','D|d','a<->b t1',  'c<->d t2']
+}
+
+The master and slave will drive out their first data bit before the first rising edge of the clock then drive on 
+subsequent falling edges. They will sample on rising edges.
+
+Mode 2 - CPOL: 1 CPHA 0
+=======================
+{signal: [
+  {name: 'CLK',  wave: '1...01010|101...', node: '...B'},
+  {name: 'MOSI', wave: 'x..2.2.2.|2.x...', data: ['MSB',,, 'LSB'] },
+  {name: 'MISO', wave: 'x..2.2.2.|2.x...', data: ['MSB',,, 'LSB'], node: '...................'},
+  {name: 'CS',   wave: '10.......|..1..0', node: '.A..........C..D..'},
+  {              node: '.a.b........c..d'}
+],
+  edge: [ 'A|a','B|b', 'C|c','D|d','a<->b t1',  'c<->d t2']
+}
+
+The master and slave will drive out their first data bit before the first falling edge of the clock then drive on 
+subsequent rising edges. They will sample on falling edges.
+
+Mode 3 - CPOL: 1 CPHA 1
+=======================
+{signal: [
+  {name: 'CLK',  wave: '1..010101|01..', node: '...B'},
+  {name: 'MOSI', wave: 'x..2.2.2.|2.x...', data: ['MSB',,, 'LSB'] },
+  {name: 'MISO', wave: 'x..2.2.2.|2.x...', data: ['MSB',,, 'LSB'], node: '...................'},
+  {name: 'CS',   wave: '10.......|..1..0', node: '.A..........C..D..'},
+  {              node: '.a.b........c..d'}
+],
+  edge: [ 'A|a','B|b', 'C|c','D|d','a<->b t1',  'c<->d t2']
+}
+
+The master and slave will drive out their first data bit on the first falling edge of the clock and sample 
+on the subsequent rising edge.
+
+SPI master timing characteristics
+=================================
+For all spi master configurations t1 is limited by the time between the client of the SPI master server calling
+`begin_transaction` and one fo the data transfer initialisation methods. The inter-transmission gap, t2, is also 
+
+Synchronous SPI master clock speeds
+....................................
+| Clock blocks| MISO enabled | MOSI enabled  | 62.5 MIPS max kbps | 125 MIPS max kbps |
+| 0           | 1            | 0             |        2497        |            3366   |
+| 0           | 1            | 1             |        1765        |            3366   |
+| 1           | 1            | 0             |        2149        |            2149   |
+| 1           | 1            | 1             |        2149        |            2149   |
+  
+Asynchronous SPI master clock speeds
+....................................
+The asynchronous master is limited only by the clock divider on the clock block. This mease for the 100MHz reference
+clock that the asynchronous master can output a clock at up to 100MHz
+
+SPI slave timings
+.................
+
+
+
 TODO:
 
   * diagrams showing connections of ports to lines (including optional
     tying down of slave select for single slave)
-  * mode descriptions (polarity and phase) with timing diags
   * description of connecting multiple devices to the same bus
+
+The master component of this library supports multiple slaves on unique 
+slave select wires. This means that a single slave select assertion 
+cannot be used to communicate with multiple slaves at the same time.
 
 Usage
 -----
@@ -79,15 +246,15 @@ For example, the following code instantiates an SPI master component
 and connect to it::
 
   port p_miso    = XS1_PORT_1A;
-  port p_ss[1]   = XS1_PORT_1B;
+  port p_ss[1]   = {XS1_PORT_1B};
   port p_sclk    = XS1_PORT_1C;
   port p_mosi    = XS1_PORT_1D;
-  clock clk_spi  = XS1_CLKBLK_1B;
+  clock clk_spi  = XS1_CLKBLK_1;
 
   int main(void) {
     spi_master_if i_spi[1];
     par {
-      spi_master(i_spi, 1, p_sclk, p_mosi, p_miso, p_ss, 1, clk_spi);
+      spi_master(i, 1, p_sclk, p_mosi, p_miso , p_ss, 1, clk_spi);
       my_application(i_spi[0]);
     }
     return 0;
@@ -106,7 +273,7 @@ perform SPI bus operations e.g.::
     printf("Doing one byte transfer. Sending 0x22.\n");
     spi.begin_transaction(0, 100, SPI_MODE_0);
     val = spi.transfer8(0x22);
-    spi.end_transaction()
+    spi.end_transaction(1000);
     printf("Read data %d from the bus.\n", val);
   }
 
@@ -124,6 +291,25 @@ own. It is a *distributed* task which means it will perform its
 function on the logical core of the application task connected to
 it (provided the application task is on the same tile).
 
+Synchronous master state machine
+................................
+
+digraph g {
+	begin_transaction -> transfer8
+	begin_transaction -> transfer32
+
+	transfer8 -> transfer8
+	transfer8 -> transfer32
+	transfer32 -> transfer8
+	transfer32 -> transfer32
+
+	transfer32 -> end_transaction
+	transfer32 -> end_transaction
+
+	end_transaction -> begin_transaction 
+}
+
+|newpage|
 
 SPI master asynchronous operation
 .................................
@@ -143,16 +329,16 @@ Setting up an asynchronous SPI master component is done in the same
 manner as the synchronous component::
 
   port p_miso    = XS1_PORT_1A;
-  port p_ss      = XS1_PORT_1B;
+  port p_ss[1]   = {XS1_PORT_1B};
   port p_sclk    = XS1_PORT_1C;
   port p_mosi    = XS1_PORT_1D;
-  clock clk_spi  = XS1_CLKBLK_1B;
+  clock cb0      = XS1_CLKBLK_1;
+  clock cb1      = XS1_CLKBLK_2;
 
   int main(void) {
     i2c_master_async_if i_spi[1];
     par {
-      spi_master_async(i_spi, 1, p_sclk, p_mosi, p_miso, p_ss,
-                       clk_spi, 100,
+      spi_master_async(i_spi, 1, p_sclk, p_mosi, p_miso, p_ss, 1, cb0, cb1);
       my_application(i_spi[0]);
     }
     return 0;
@@ -200,6 +386,53 @@ core with other tasks (including the application task it is connected to).
 
 |newpage|
 
+Asynchronous master command buffering
+.....................................
+
+In order to provide asynchronous behaviour for multiple clients the asynchronous master 
+will store up to one ``begin_transaction`` and one ``init_transfer_array_8`` or 
+``init_transfer_array_32`` from each client. This means that if the master is busy 
+doing a transfer for client x, then client y will still be able to begin a transaction 
+and send data fully asynchronously. Consequently, after client y has issued 
+``init_transfer_array_8`` or ``init_transfer_array_32`` the it will be able to get 
+back to work whilst waiting for the notification.
+
+Asynchronous master state machine
+.................................
+
+digraph g {
+	begin_transaction -> init_transfer_array_8
+	begin_transaction -> init_transfer_array_32
+
+	init_transfer_array_8 -> transfer_complete
+	transfer_complete -> retrieve_transfer_buffers_8
+	retrieve_transfer_buffers_8 -> end_transaction
+
+	init_transfer_array_32 -> transfer_complete
+	transfer_complete -> retrieve_transfer_buffers_32
+	retrieve_transfer_buffers_32 -> end_transaction
+
+	retrieve_transfer_buffers_32 -> retrieve_transfer_buffers_32
+	retrieve_transfer_buffers_32 -> retrieve_transfer_buffers_8
+	retrieve_transfer_buffers_8 -> retrieve_transfer_buffers_32
+	retrieve_transfer_buffers_8 -> retrieve_transfer_buffers_8
+
+	end_transaction -> begin_transaction 
+}
+
+Master inter-transaction gap
+............................
+
+For both synchronous and asynchronous modes the ``end_transaction`` requires a  
+slave select deassert time. This parameter will provide a minimum deassert time between
+two transaction on the same slave select. In the case where a ``begin_transaction`` 
+asserting the slave select would violate the previous ``end_transaction`` then the 
+``begin_transaction`` will block until the slave select deassert time has been 
+satisified.
+
+
+|newpage|
+
 Slave usage
 ...........
 
@@ -214,16 +447,16 @@ connection.
 For example, the following code instantiates an SPI slave component
 and connect to it::
 
-  port p_miso    = XS1_PORT_1A;
-  port p_ss      = XS1_PORT_1B;
-  port p_sclk    = XS1_PORT_1C;
-  port p_mosi    = XS1_PORT_1D;
-  clock clk_spi  = XS1_CLKBLK_1B;
+  out buffered port:32    miso = XS1_PORT_1A;
+  in port                 p_ss = XS1_PORT_1B;
+  in port                 sclk = XS1_PORT_1C;
+  in buffered port:32     mosi = XS1_PORT_1D;
+  clock                   cb   = XS1_CLKBLK_1;
 
   int main(void) {
-    spi_slave_if spi;
+    interface spi_slave_callback_if spi_i;
     par {
-      spi_slave(i_spi, p_sclk, p_mosi, p_miso, p_ss, clk, SPI_MODE_0,
+      spi_slave(i, p_sclk, p_mosi, p_miso, p_ss, cb, SPI_MODE_0,
                 SPI_TRANSFER_SIZE_8);
       my_application(i2c);
     }
