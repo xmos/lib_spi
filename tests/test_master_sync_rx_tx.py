@@ -24,6 +24,8 @@ def do_rx_tx_sync(burnt_threads, cb_enabled, miso_enabled, mosi_enable):
                                      'spi_master_sim_tests',
                                      'spi_master_sync_rx_tx_{burnt}{cb}{miso}{mosi}'.format(burnt=burnt_threads,cb=cb_enabled,miso=miso_enabled,mosi=mosi_enable), 
                                      regexp=True)
+    if burnt_threads != 3:
+      tester.set_min_testlevel('nightly')
 
     xmostest.run_on_simulator(resources['xsim'], binary,
                               simthreads = [checker],

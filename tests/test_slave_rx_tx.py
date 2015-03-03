@@ -5,6 +5,7 @@ import os
 
 
 def do_slave_rx_tx(combined, burnt_threads, miso_enable, mode, transfer_size):
+
     resources = xmostest.request_resource("xsim")
 
     xmostest.build('spi_slave_rx_tx', build_config="{com}{burnt}{miso}{m}{t}".format(com=combined,burnt=burnt_threads,miso=miso_enable,m=mode,t=transfer_size))
@@ -23,6 +24,18 @@ def do_slave_rx_tx(combined, burnt_threads, miso_enable, mode, transfer_size):
                                      'spi_slave_sim_tests',
                                      'rx_tx_slave_{com}{burnt}{miso}{m}{t}.xe'.format(com=combined,burnt=burnt_threads,miso=miso_enable,m=mode,t=transfer_size),
                                      regexp=True)
+
+    if burnt_threads != 2:
+      tester.set_min_testlevel('nightly')
+
+    if mode != 0:
+      tester.set_min_testlevel('nightly')
+
+    if combined != 1:
+      tester.set_min_testlevel('nightly')
+
+    if miso_enable != 1:
+      tester.set_min_testlevel('nightly')
 
     xmostest.run_on_simulator(resources['xsim'], binary,
                               simthreads = [checker],

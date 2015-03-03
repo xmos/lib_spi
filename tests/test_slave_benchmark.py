@@ -23,7 +23,8 @@ def do_slave_benchmark(combined, burnt_threads, miso_enable, mode, transfer_size
                                      'spi_slave_sim_tests',
                                      'spi_slave_benchmark_{com}{burnt}{miso}{m}{t}.xe'.format(com=combined,burnt=burnt_threads,miso=miso_enable,m=mode,t=transfer_size),
                                      regexp=True)
-
+ 
+    tester.set_min_testlevel('nightly')
     xmostest.run_on_simulator(resources['xsim'], binary,
                               simthreads = [checker],
                               #simargs=['--vcd-tracing', '-o ./spi_slave_benchmark/trace.vcd -tile tile[0] -pads -functions -clock-blocks -ports-detailed -instructions'],

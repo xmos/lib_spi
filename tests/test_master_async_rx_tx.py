@@ -24,6 +24,10 @@ def do_rx_tx_async(burnt_threads, mosi_enable, speed_tests, combine):
                                      'spi_master_sim_tests',
                                      'spi_master_async_rx_tx_{burnt}{mosi}{speed}{combined}'.format(burnt=burnt_threads,mosi=mosi_enable, combined=combine, speed=speed_tests), 
                                      regexp=True)
+    if burnt_threads != 2:
+      tester.set_min_testlevel('nightly')
+    if combine != 1:
+      tester.set_min_testlevel('nightly')
 
     xmostest.run_on_simulator(resources['xsim'], binary,
                               simthreads = [checker],

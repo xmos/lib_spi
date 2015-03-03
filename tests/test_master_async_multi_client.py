@@ -23,7 +23,7 @@ def do_multi_client_async(burnt_threads, mosi_enable, combine):
                                      'spi_master_sim_tests',
                                      'multi_client_async_{burnt}{mosi}{combined}'.format(burnt=burnt_threads, mosi=mosi_enable, combined=combine), 
                                      regexp=True)
-
+    tester.set_min_testlevel('nightly')
     xmostest.run_on_simulator(resources['xsim'], binary,
                               simthreads = [checker],
                               #simargs=['--vcd-tracing', '-o ./spi_master_async_multi_client/trace.vcd -tile tile[0] -pads -functions'],

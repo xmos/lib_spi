@@ -25,6 +25,7 @@ def do_multi_client_sync(burnt_threads, cb_enabled, miso_enabled, mosi_enable):
                                      'spi_master_sync_multi_client_{burnt}{cb}{miso}{mosi}'.format(burnt=burnt_threads,cb=cb_enabled,miso=miso_enabled,mosi=mosi_enable), 
                                      regexp=True)
 
+    tester.set_min_testlevel('nightly')
     xmostest.run_on_simulator(resources['xsim'], binary,
                               simthreads = [checker],
                               #simargs=['--vcd-tracing', '-o ./spi_master_sync_multi_client/trace.vcd -tile tile[0] -pads -functions'],
