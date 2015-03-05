@@ -7,8 +7,6 @@ import os
 def do_multi_device_sync(burnt_threads, cb_enabled, miso_enabled, mosi_enable):
     resources = xmostest.request_resource("xsim")
 
-    xmostest.build('spi_master_sync_multi_device', build_config="{burnt}{cb}{miso}{mosi}".format(burnt=burnt_threads,cb=cb_enabled,miso=miso_enabled,mosi=mosi_enable))
-
     binary = "spi_master_sync_multi_device/bin/{burnt}{cb}{miso}{mosi}/spi_master_sync_multi_device_{burnt}{cb}{miso}{mosi}.xe".format(burnt=burnt_threads,cb=cb_enabled,miso=miso_enabled,mosi=mosi_enable)
 
     checker = SPIMasterChecker("tile[0]:XS1_PORT_1C",

@@ -7,8 +7,6 @@ import os
 def do_multi_client_async(burnt_threads, mosi_enable, combine):
     resources = xmostest.request_resource("xsim")
 
-    xmostest.build('spi_master_async_multi_client', build_config="{burnt}{mosi}{combined}".format(burnt=burnt_threads, mosi=mosi_enable, combined=combine))
-
     binary = "spi_master_async_multi_client/bin/{burnt}{mosi}{combined}/spi_master_async_multi_client_{burnt}{mosi}{combined}.xe".format(burnt=burnt_threads,mosi=mosi_enable, combined=combine)
 
     checker = SPIMasterChecker("tile[0]:XS1_PORT_1C",

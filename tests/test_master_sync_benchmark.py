@@ -7,8 +7,6 @@ import os
 def do_benchmark_sync(burnt_threads, cb_enabled, miso_enabled, mosi_enable):
     resources = xmostest.request_resource("xsim")
 
-    xmostest.build('spi_master_sync_benchmark', build_config="{burnt}{cb}{miso}{mosi}".format(burnt=burnt_threads,cb=cb_enabled,miso=miso_enabled,mosi=mosi_enable))
-
     binary = "spi_master_sync_benchmark/bin/{burnt}{cb}{miso}{mosi}/spi_master_sync_benchmark_{burnt}{cb}{miso}{mosi}.xe".format(burnt=burnt_threads,cb=cb_enabled,miso=miso_enabled,mosi=mosi_enable)
 
 

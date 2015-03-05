@@ -7,8 +7,6 @@ import os
 def do_rx_tx_async(burnt_threads, mosi_enable, speed_tests, combine):
     resources = xmostest.request_resource("xsim")
 
-    xmostest.build('spi_master_async_rx_tx', build_config="{burnt}{mosi}{speed}{combined}".format(burnt=burnt_threads, mosi=mosi_enable, combined=combine, speed=speed_tests))
-
     binary = "spi_master_async_rx_tx/bin/{burnt}{mosi}{speed}{combined}/spi_master_async_rx_tx_{burnt}{mosi}{speed}{combined}.xe".format(burnt=burnt_threads,mosi=mosi_enable, combined=combine, speed=speed_tests)
 
 

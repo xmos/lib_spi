@@ -7,8 +7,6 @@ import os
 def do_multi_device_async(burnt_threads, mosi_enable):
     resources = xmostest.request_resource("xsim")
 
-    xmostest.build('spi_master_async_multi_device', build_config="{burnt}{mosi}".format(burnt=burnt_threads, mosi=mosi_enable))
-
     binary = "spi_master_async_multi_device/bin/{burnt}{mosi}/spi_master_async_multi_device_{burnt}{mosi}.xe".format(burnt=burnt_threads,mosi=mosi_enable)
 
     checker = SPIMasterChecker("tile[0]:XS1_PORT_1C",

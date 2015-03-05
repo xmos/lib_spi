@@ -7,7 +7,6 @@ import os
 def do_slave_benchmark(combined, burnt_threads, miso_enable, mode, transfer_size):
     resources = xmostest.request_resource("xsim")
 
-    xmostest.build('spi_slave_benchmark', build_config="{com}{burnt}{miso}{m}{t}".format(com=combined,burnt=burnt_threads,miso=miso_enable,m=mode,t=transfer_size))
     binary = "spi_slave_benchmark/bin/{com}{burnt}{miso}{m}{t}/spi_slave_benchmark_{com}{burnt}{miso}{m}{t}.xe".format(com=combined,burnt=burnt_threads,miso=miso_enable,m=mode,t=transfer_size)
 
     checker = SPISlaveChecker("tile[0]:XS1_PORT_1C",
