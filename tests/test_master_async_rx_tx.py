@@ -4,7 +4,7 @@ from spi_master_checker import SPIMasterChecker
 import os
 
 
-def do_rx_tx_async(burnt_threads, mosi_enable, speed_tests, combine):
+def do_rx_tx_async(burnt_threads, mosi_enable, speed_tests, combine, testlevel):
     resources = xmostest.request_resource("xsim")
 
     binary = "spi_master_async_rx_tx/bin/{burnt}{mosi}{speed}{combined}/spi_master_async_rx_tx_{burnt}{mosi}{speed}{combined}.xe".format(burnt=burnt_threads,mosi=mosi_enable, combined=combine, speed=speed_tests)
@@ -22,20 +22,19 @@ def do_rx_tx_async(burnt_threads, mosi_enable, speed_tests, combine):
                                      'spi_master_sim_tests',
                                      'spi_master_async_rx_tx_{burnt}{mosi}{speed}{combined}'.format(burnt=burnt_threads,mosi=mosi_enable, combined=combine, speed=speed_tests), 
                                      regexp=True)
-    if burnt_threads != 2:
-      tester.set_min_testlevel('nightly')
-    if combine != 1:
-      tester.set_min_testlevel('nightly')
 
+    tester.set_min_testlevel(testlevel)
     xmostest.run_on_simulator(resources['xsim'], binary,
                               simthreads = [checker],
-                              #simargs=['--vcd-tracing', '-o ./spi_master_async_rx_tx/trace.vcd -tile tile[0] -pads -functions -ports -instructions','--gprof'],
                               simargs=[],
                               suppress_multidrive_messages = False,
                               tester = tester)
 
 def runtest():
+    for mosi_enabled in [0, 1]:
+       do_rx_tx_async(6 + 1, mosi_enabled, 1, 1, "smoke")
+      
     for burnt_threads in [2, 6]:
       for combined in [0, 1]:
         for mosi_enabled in [0, 1]:
-          do_rx_tx_async(burnt_threads + combined, mosi_enabled, 1, combined)
+          do_rx_tx_async(burnt_threads + combined, mosi_enabled, 1, combined, "nightly")

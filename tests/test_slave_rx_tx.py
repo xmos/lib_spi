@@ -4,7 +4,7 @@ from spi_slave_checker import SPISlaveChecker
 import os
 
 
-def do_slave_rx_tx(combined, burnt_threads, miso_enable, mode, transfer_size):
+def do_slave_rx_tx(combined, burnt_threads, miso_enable, mode, transfer_size, testlevel):
 
     resources = xmostest.request_resource("xsim")
 
@@ -24,17 +24,7 @@ def do_slave_rx_tx(combined, burnt_threads, miso_enable, mode, transfer_size):
                                      'rx_tx_slave_{com}{burnt}{miso}{m}{t}.xe'.format(com=combined,burnt=burnt_threads,miso=miso_enable,m=mode,t=transfer_size),
                                      regexp=True)
 
-    if burnt_threads != 2:
-      tester.set_min_testlevel('nightly')
-
-    if mode != 0:
-      tester.set_min_testlevel('nightly')
-
-    if combined != 1:
-      tester.set_min_testlevel('nightly')
-
-    if miso_enable != 1:
-      tester.set_min_testlevel('nightly')
+    tester.set_min_testlevel(testlevel)
 
     xmostest.run_on_simulator(resources['xsim'], binary,
                               simthreads = [checker],
@@ -44,9 +34,13 @@ def do_slave_rx_tx(combined, burnt_threads, miso_enable, mode, transfer_size):
                               tester = tester)
 
 def runtest():
+  for transfer_size in [8, 32]: 
+    for miso_enable in [0, 1]: 
+      do_slave_rx_tx(1, 2+1, miso_enable, 3, transfer_size, "smoke")   
+
   for combined in [0,1]:  
     for mode in range(0, 4): 
       for burnt_threads in [2, 6]: 
         for transfer_size in [8, 32]: 
           for miso_enable in [0, 1]: 
-            do_slave_rx_tx(combined, burnt_threads+combined, miso_enable, mode, transfer_size)     
+            do_slave_rx_tx(combined, burnt_threads+combined, miso_enable, mode, transfer_size, "nightly")     
