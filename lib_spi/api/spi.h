@@ -14,7 +14,7 @@ typedef enum spi_mode_t {
 
 
 /** This interface allows clients to interact with SPI master task. */
-interface spi_master_if {
+typedef interface spi_master_if {
 
   /** Begin a transaction.
    *
@@ -60,7 +60,7 @@ interface spi_master_if {
    *  \returns       the data read in from the MISO port.
    */
   uint32_t transfer32(uint32_t data);
-};
+} spi_master_if;
 
 /** Task that implements the SPI proctocol in master mode that is
     connected to a multiple slaves on the bus.
