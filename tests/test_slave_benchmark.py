@@ -17,7 +17,7 @@ def do_slave_benchmark(combined, burnt_threads, miso_enable, mode, transfer_size
                                "tile[0]:XS1_PORT_16B",
                                "tile[0]:XS1_PORT_1F")
 
-    tester = xmostest.ComparisonTester(open('slave.expect'),
+    tester = xmostest.ComparisonTester(open('slave_benchmark.expect'),
                                      'lib_spi', 
                                      'spi_slave_sim_tests',
                                      'spi_slave_benchmark_{com}{burnt}{miso}{m}{t}.xe'.format(com=combined,burnt=burnt_threads,miso=miso_enable,m=mode,t=transfer_size),
