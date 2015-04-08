@@ -295,11 +295,11 @@ connect via an interface connection using the ``spi_master_if`` interface type:
 For example, the following code instantiates an SPI master component
 and connect to it::
 
-  port p_miso    = XS1_PORT_1A;
-  port p_ss[1]   = {XS1_PORT_1B};
-  port p_sclk    = XS1_PORT_1C;
-  port p_mosi    = XS1_PORT_1D;
-  clock clk_spi  = XS1_CLKBLK_1;
+  out buffered port:32 p_miso    = XS1_PORT_1A;
+  out port p_ss[1]               = {XS1_PORT_1B};
+  out buffered port:22 p_sclk    = XS1_PORT_1C;
+  out buffered port:32 p_mosi    = XS1_PORT_1D;
+  clock clk_spi                  = XS1_CLKBLK_1;
 
   int main(void) {
     spi_master_if i_spi[1];
@@ -380,10 +380,11 @@ being used for continuous data transfer.
 Setting up an asynchronous SPI master component is done in the same
 manner as the synchronous component::
 
-  port p_miso    = XS1_PORT_1A;
-  port p_ss[1]   = {XS1_PORT_1B};
-  port p_sclk    = XS1_PORT_1C;
-  port p_mosi    = XS1_PORT_1D;
+  out buffered port:32 p_miso    = XS1_PORT_1A;
+  out port p_ss[1]               = {XS1_PORT_1B};
+  out buffered port:22 p_sclk    = XS1_PORT_1C;
+  out buffered port:32 p_mosi    = XS1_PORT_1D;
+
   clock cb0      = XS1_CLKBLK_1;
   clock cb1      = XS1_CLKBLK_2;
 
@@ -491,18 +492,18 @@ connection.
 For example, the following code instantiates an SPI slave component
 and connect to it::
 
-  out buffered port:32    miso = XS1_PORT_1A;
-  in port                 p_ss = XS1_PORT_1B;
-  in port                 sclk = XS1_PORT_1C;
-  in buffered port:32     mosi = XS1_PORT_1D;
+  out buffered port:32    p_miso = XS1_PORT_1E;
+  in port                 p_ss = XS1_PORT_1F;
+  in port                 p_sclk = XS1_PORT_1G;
+  in buffered port:32     p_mosi = XS1_PORT_1H;
   clock                   cb   = XS1_CLKBLK_1;
 
   int main(void) {
-    interface spi_slave_callback_if spi_i;
+    interface spi_slave_callback_if i_spi;
     par {
-      spi_slave(i, p_sclk, p_mosi, p_miso, p_ss, cb, SPI_MODE_0,
+      spi_slave(i_spi, p_sclk, p_mosi, p_miso, p_ss, cb, SPI_MODE_0,
                 SPI_TRANSFER_SIZE_8);
-      my_application(i2c);
+      my_application(i_spi);
     }
     return 0;
   }
