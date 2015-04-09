@@ -1,7 +1,7 @@
 // Copyright (c) 2015, XMOS Ltd, All rights reserved
 #include <xs1.h>
 #include <spi.h>
-#include <stdlib.h>
+#include <syscall.h>
 #include <timer.h>
 #include <print.h>
 #include <platform.h>
@@ -37,7 +37,7 @@ void app(client spi_master_if spi)
     spi.end_transaction(100);
 
     printstrln("Done.");
-    exit(0);
+    _exit(0);
 }
 
 /* This application function sends some traffic as SPI master using
@@ -87,7 +87,7 @@ void async_app(client spi_master_async_if spi)
 
     delay_microseconds(40);
     spi.begin_transaction(0, 100, SPI_MODE_0);
-    outbuf[0] - 0x22;
+    outbuf[0] = 0x22;
     spi.init_transfer_array_8(move(inbuf),
                               move(outbuf),
                               1);
@@ -99,7 +99,7 @@ void async_app(client spi_master_async_if spi)
     spi.end_transaction(100);
 
     printstrln("Done.");
-    exit(0);
+    _exit(0);
 }
 
 int main(void) {
@@ -119,10 +119,10 @@ int main(void) {
 int main(void) {
   interface spi_master_async_if i_spi_async[1];
   par {
+    on tile[0]: async_app(i_spi_async[0]);
     on tile[0]: spi_master_async(i_spi_async, 1,
                                  p_sclk, p_mosi, p_miso, p_ss, 1,
                                  clk0, clk1);
-    on tile[0]: async_app(i_spi_async[0]);
   }
   return 0;
 }

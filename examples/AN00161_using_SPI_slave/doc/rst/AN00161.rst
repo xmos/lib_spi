@@ -39,8 +39,8 @@ act as SPI slave. It maintains a register file which can be read and
 written by the internal application *or* by the master on the SPI bus.
 To show the bus functioning the demo application also has a tester
 component connected to an SPI master bus which is connected (in
-simulation) to the the SPI slave. This allows use to generate traffic
-to show the communication functioning.
+simulation) to the the SPI slave. This allows the generation of
+traffic to show the the communication functioning.
 
 The application consists of five tasks:
 
@@ -277,7 +277,9 @@ Setting up the run configuration for the application
 To run the application binary in the simulator, first the application
 must be built by pressing the :menuitem:`Build` button in the
 xTIMEcomposer. This will create the ``AN00161_using_SPI_slave.xe``
-binary in the ``bin`` folder of the project.
+binary in the ``bin`` folder of the project. The xTIMEcomposer may
+have to import the SPI library if you do not already have it in your
+workspace; this will occur automatically on build.
 
 Then a *Run Configuration* needs to be set up. This can be done by
 selecting the :menuitem:`Run,Run Configurations..` menu. You can
@@ -310,7 +312,9 @@ to the corresponding SPI slave ports:
 Running the application
 .......................
 
-By clicking on the :menuitem:`Run` icon (a green arrow), the program
+By clicking on the :menuitem:`Run` icon (a green arrow) in the Edit
+Perspective of the xTIMEcomposer or by clicking the :menuitem:`Run`
+button in the run configuration dialog, the program
 will run. In the console window you will get this output::
 
   APP: Set register 1 to 0xFE
