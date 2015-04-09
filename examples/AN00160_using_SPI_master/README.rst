@@ -9,7 +9,7 @@ Summary
 This application note shows how to use the SPI library to make the
 xCORE drive an SPI bus as SPI master. The application is the simplest
 example of setting up the library and performing a couple of
-transaction. The code can then be run in simulation to see the
+transactions. The code can then be run in simulation to see the
 outputted waveforms.
 
 The note covers both the synchronous and asynchronous use of the SPI
