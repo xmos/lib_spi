@@ -105,7 +105,7 @@ Looking at this in more detail you can see the following:
 
   - The ``app`` task communicates to the ``spi_master`` task via the
     shared interface argument ``i_spi``. This is an array since the
-    SPI master tasks could connect to many other tasks in parallel.
+    SPI master task could connect to many other tasks in parallel.
 
 The app() function
 ..................
@@ -135,7 +135,9 @@ Setting up the run configuration for the application
 To run the application binary in the simulator, first the application
 must be built by pressing the :menuitem:`Build` button in the
 xTIMEcomposer. This will create the ``AN00160_using_SPI_master.xe``
-binary in the ``bin`` folder of the project.
+binary in the ``bin`` folder of the project. The xTIMEcomposer may
+have to import the SPI library if you do not already have it in your
+workspace; this will occur automatically on build.
 
 Then a *Run Configuration* needs to be set up. This can be done by
 selecting the :menuitem:`Run,Run Configurations..` menu. You can

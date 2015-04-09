@@ -132,10 +132,10 @@ Looking at this in a more detail you can see the following:
     parallel; three are for the main application and two are for the
     tester.
 
-  - The ``spi_slave`` tasks controls the application
+  - The ``spi_slave`` task controls the application
     SPI bus and takes the ports it will use as arguments.
 
-  - The ``reg_file`` task is connected to the ``app`` tasks and the
+  - The ``reg_file`` task is connected to the ``app`` task and the
     ``spi_slave`` task.
 
   - The ``spi_slave`` task has an argument for the mode is expects -
@@ -146,7 +146,7 @@ Looking at this in a more detail you can see the following:
     ``SPI_TRANSFER_SIZE_8`` which specifies the size of data chunk it
     will use when making callbacks to the application.
 
-  - The ``spi_master`` tasks controls the test SPI bus and takes
+  - The ``spi_master`` task controls the test SPI bus and takes
     different ports to the SPI slave bus as arguments. For details on
     using SPI master see application note AN00160.
 
