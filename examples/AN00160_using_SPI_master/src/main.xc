@@ -1,3 +1,4 @@
+// Copyright (c) 2015, XMOS Ltd, All rights reserved
 #include <xs1.h>
 #include <spi.h>
 #include <stdlib.h>
