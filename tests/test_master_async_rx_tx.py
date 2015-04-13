@@ -27,7 +27,7 @@ def do_rx_tx_async(burnt_threads, mosi_enable, speed_tests, combine, testlevel):
     xmostest.run_on_simulator(resources['xsim'], binary,
                               simthreads = [checker],
                               simargs=[],
-                              suppress_multidrive_messages = False,
+                              timeout=1200,
                               tester = tester)
 
 def runtest():
