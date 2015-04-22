@@ -16,7 +16,7 @@ and either one or two data wires.
      * - *MOSI*
        - Master Output, Slave Input data line, driven by the master
      * - *MISO*
-       - Master Output, Slave Input data line, driven by the slave
+       - Master Input, Slave Output data line, driven by the slave
      * - *SS*
        - Slave select line, driven by the master
 
@@ -32,7 +32,7 @@ ignore any transitions on the other lines.
 SPI modes
 .........
 
-The data sample points for SPI are defined by the clock ploarity (CPOL) and clock phase (CPHA)
+The data sample points for SPI are defined by the clock polarity (CPOL) and clock phase (CPHA)
 parameters. SPI clock polarity may be inverted or non-inverted by the CPOL and the CPHA parameter 
 is used to shift the sampling phase. The following for sections illustrate the MISO and MOSI data lines
 relative to the clock. The timings are given by:
@@ -43,7 +43,7 @@ relative to the clock. The timings are given by:
      * - *t1*
        - The minimum time from the start of the transaction to data being valid on the data pins.
      * - *t2*
-       - The inter-transmission gap. This is the minimum amount of time that the slave select must be desserted.
+       - The inter-transmission gap. This is the minimum amount of time that the slave select must be de-asserted.
      * - *MAX CLOCK RATE*
        - This is the maximum clock rate supported by the configuration.
 
@@ -131,7 +131,7 @@ between these (*t1*) can be controlled by the application.
 The inter-transmission gap (*t2*) is also controlled by the user
 application since the function to specify the end of the transaction
 (i.e. the de-assertion of the slave select line) has an argument which
-is the mininum amount of time before which another transaction can start.
+is the minimum amount of time before which another transaction can start.
 
 Synchronous SPI master clock speeds
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -224,7 +224,7 @@ SPI slave timings
 
 The logical core running the SPI slave task will wait for the slave
 select line to assert and then begin processing the transaction. At
-this point is will call the ``master_requires_data`` callback to
+this point it will call the ``master_requires_data`` callback to
 application code. The time taken for the application to perform this
 call will affect how long the logical core has to resume processing
 SPI data. This will affect the minimum allowable time between slave
@@ -234,7 +234,7 @@ time based on their application.
 
 After slave select is de-asserted the SPI slave task will call the
 ``master_ends_transaction`` callback. The time the application takes
-to process this will affect the minimum allowable inter-transmiision
+to process this will affect the minimum allowable inter-transmission
 gap between transactions (*t2*).  The user of the library will also need to
 determine this time based on their application.
 
@@ -265,7 +265,7 @@ ports and are all on the same tile.
 The slave will only send and receive data when the slave select is
 driven high.
 
-If the *MISO* line is not required then is need not be connected. The
+If the *MISO* line is not required then it need not be connected. The
 *MOSI* line must always be connected.
 
 Usage
@@ -389,7 +389,7 @@ manner as the synchronous component::
   clock cb1      = XS1_CLKBLK_2;
 
   int main(void) {
-    i2c_master_async_if i_spi[1];
+    spi_master_async_if i_spi[1];
     par {
       spi_master_async(i_spi, 1, p_sclk, p_mosi, p_miso, p_ss, 1, cb0, cb1);
       my_application(i_spi[0]);
@@ -419,7 +419,7 @@ bytes coming back from the slave::
     while (1) {
       select {
         case spi.operation_complete():
-          retreive_transfer_buffers_8(buf_in, buf_out);
+          retrieve_transfer_buffers_8(buf_in, buf_out);
           spi.end_transaction();
 
           // Handle the data that has come in
@@ -474,7 +474,7 @@ slave select deassert time. This parameter will provide a minimum deassert time 
 two transaction on the same slave select. In the case where a ``begin_transaction`` 
 asserting the slave select would violate the previous ``end_transaction`` then the 
 ``begin_transaction`` will block until the slave select deassert time has been 
-satisified.
+satisfied.
 
 |newpage|
 
