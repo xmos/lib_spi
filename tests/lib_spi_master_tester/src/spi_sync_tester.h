@@ -1,4 +1,4 @@
-// Copyright (c) 2015, XMOS Ltd, All rights reserved
+// Copyright (c) 2016, XMOS Ltd, All rights reserved
 #ifndef SPI_SYNC_TESTER_H_
 #define SPI_SYNC_TESTER_H_
 
