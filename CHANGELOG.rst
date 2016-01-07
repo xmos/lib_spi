@@ -1,6 +1,11 @@
 SPI library change log
 ======================
 
+3.0.2
+-----
+
+  * Update to source code license and copyright
+
 3.0.1
 -----
 
