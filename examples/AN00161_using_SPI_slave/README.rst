@@ -1,7 +1,7 @@
 How to use the SPI library as SPI slave
 ========================================
 
-.. version:: 1.0.0
+.. version:: 1.0.1
 
 Summary
 -------
