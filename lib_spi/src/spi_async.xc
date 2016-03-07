@@ -421,6 +421,13 @@ void spi_master_async(server interface spi_master_async_if i[num_clients],
                 outbuf = move(buffer_tx);
                 break;
             }
+            case i[int x].drive_1bit_of_ss_port(uint32_t p_ss_index,
+                                                uint32_t p_ss_bit,
+                                                uint32_t bit_value):{
+                drive_1bit_of_ss_port(p_ss, num_slaves, p_ss_index, p_ss_bit,
+                                      bit_value, SPI_SS_DRIVE_NOW, NULL);
+                break;
+            }
         }
     }
 

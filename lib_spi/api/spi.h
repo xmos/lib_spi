@@ -61,6 +61,14 @@ typedef interface spi_master_if {
    *  \returns       the data read in from the MISO port.
    */
   uint32_t transfer32(uint32_t data);
+
+  /** Set 1-bit of salve select port to specified value
+   *
+   * As the p_ss array of ports may contain multi-bit ports, this function
+   * provides a mechanism to allow the other bits of port to be driven.
+   */
+  void drive_1bit_of_ss_port(uint32_t p_ss_index, uint32_t p_ss_bit,
+                             uint32_t bit_value);
 } spi_master_if;
 
 /** Task that implements the SPI proctocol in master mode that is
@@ -204,6 +212,14 @@ typedef interface spi_master_async_if  {
   [[clears_notification]]
   void retrieve_transfer_buffers_32(uint32_t * movable &inbuf,
                                     uint32_t * movable &outbuf);
+
+  /** Set 1-bit of salve select port to specified value
+   *
+   * As the p_ss array of ports may contain multi-bit ports, this function
+   * provides a mechanism to allow the other bits of port to be driven.
+   */
+  void drive_1bit_of_ss_port(uint32_t p_ss_index, uint32_t p_ss_bit,
+                             uint32_t bit_value);
 } spi_master_async_if;
 
 
