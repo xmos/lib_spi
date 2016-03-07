@@ -55,7 +55,8 @@ static void transfer32_async(
 
 static void setup_new_transaction(
         out buffered port:32 sclk,
-        out port p_ss[],
+        out port p_ss[num_slaves],
+        static const size_t num_slaves,
         clock cb0,
         spi_mode_t mode,
         unsigned new_device_index,
@@ -215,8 +216,8 @@ void spi_master_async(server interface spi_master_async_if i[num_clients],
 
                 active_client = x;
                 active_device = device_index;
-                setup_new_transaction(sclk, p_ss, cb0, mode, device_index,
-                        speed_in_khz, active_device);
+                setup_new_transaction(sclk, p_ss, num_slaves, cb0, mode,
+                                      device_index, speed_in_khz, active_device);
                 active_mode = mode;
 
                 current_index = 0;
@@ -267,8 +268,8 @@ void spi_master_async(server interface spi_master_async_if i[num_clients],
                     tr_fill--;
                     tr_tail++;
 
-                    setup_new_transaction(sclk, p_ss, cb0, mode, new_device_index,
-                            speed_in_khz, active_device);
+                    setup_new_transaction(sclk, p_ss, num_slaves, cb0, mode,
+                                          new_device_index, speed_in_khz, active_device);
                     active_device = new_device_index;
                     active_mode = mode;
 
