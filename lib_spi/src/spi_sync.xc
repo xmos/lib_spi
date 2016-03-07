@@ -231,6 +231,33 @@ static void get_mode_bits(spi_mode_t mode, unsigned &cpol, unsigned &cpha){
     }
 }
 
+#define SPI_SS_DRIVE_NOW     (0)
+#define SPI_SS_DRIVE_AT_TIME (0x80000000)
+#define SPI_SS_GET_TIMESTAMP (0x40000000)
+
+static void drive_1bit_of_ss_port(out port p_ss[num_slaves],
+                                  static const size_t num_slaves,
+                                  uint32_t p_ss_index,
+                                  uint32_t p_ss_bit,
+                                  uint32_t bit_value,
+                                  unsigned port_time_mode,
+                                  unsigned *time) {
+    // Get the current state of the port
+    unsigned current_port_value = peek(p_ss[p_ss_index]);
+    // Zero the p_ss_bit
+    unsigned new_port_value = (current_port_value & ~(1 << p_ss_bit));
+    // Or desired bit value into p_ss_bit
+    new_port_value = new_port_value | (bit_value << p_ss_bit);
+    // Drive the pin
+    if (port_time_mode == SPI_SS_DRIVE_AT_TIME) {
+        p_ss[p_ss_index] <: new_port_value @ *time;
+    } else if (port_time_mode == SPI_SS_GET_TIMESTAMP) {
+        p_ss[p_ss_index] @ *time <: new_port_value;
+    } else {
+        p_ss[p_ss_index] <: new_port_value;
+    }
+}
+
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 #pragma unsafe arrays
 [[distributable]]
@@ -243,8 +270,10 @@ void spi_master(server interface spi_master_if i[num_clients],
         static const size_t num_slaves,
         clock ?cb){
 
-    for(unsigned i=0;i<num_slaves;i++)
-        p_ss[i] <: 1;
+    for(unsigned i=0;i<num_slaves;i++) {
+        // SS line assumed to always be wired bit 0 of port
+        drive_1bit_of_ss_port(p_ss, num_slaves, i, 0, 1, SPI_SS_DRIVE_NOW, NULL);
+    }
 
     if(!isnull(cb)){
         stop_clock(cb);
@@ -298,7 +327,8 @@ void spi_master(server interface spi_master_if i[num_clients],
 
                 //Do a slave select
                 selected_device = device_index;
-                p_ss[selected_device] <: 0;
+                drive_1bit_of_ss_port(p_ss, num_slaves, selected_device, 0, 0,
+                                      SPI_SS_DRIVE_NOW, NULL);
                 break;
             }
             case i[int x].end_transaction(unsigned ss_deassert_time):{
@@ -308,7 +338,8 @@ void spi_master(server interface spi_master_if i[num_clients],
                 unsigned time;
                 partout(sclk, 1, cpol);
                 sync(sclk);
-                p_ss[selected_device] <: 1 @ time;
+                drive_1bit_of_ss_port(p_ss, num_slaves, selected_device, 0, 1,
+                                      SPI_SS_DRIVE_AT_TIME, &time);
 
                 //TODO should this be allowed? (0.6ms max without it)
                 if(ss_deassert_time > 0xffff)
@@ -316,7 +347,8 @@ void spi_master(server interface spi_master_if i[num_clients],
 
                 time += ss_deassert_time;
 
-                p_ss[selected_device] @ time <: 1;
+                drive_1bit_of_ss_port(p_ss, num_slaves, selected_device, 0, 1,
+                                      SPI_SS_GET_TIMESTAMP, &time);
                 break;
             }
             case i[int x].transfer8(uint8_t data)-> uint8_t r :{

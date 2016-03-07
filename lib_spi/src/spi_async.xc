@@ -53,6 +53,33 @@ static void transfer32_async(
     sclk <: 0xaaaaaaaa;
 }
 
+#define SPI_SS_DRIVE_NOW     (0)
+#define SPI_SS_DRIVE_AT_TIME (0x80000000)
+#define SPI_SS_GET_TIMESTAMP (0x40000000)
+
+static void drive_1bit_of_ss_port(out port p_ss[num_slaves],
+                                  static const size_t num_slaves,
+                                  uint32_t p_ss_index,
+                                  uint32_t p_ss_bit,
+                                  uint32_t bit_value,
+                                  unsigned port_time_mode,
+                                  unsigned *time) {
+    // Get the current state of the port
+    unsigned current_port_value = peek(p_ss[p_ss_index]);
+    // Zero the p_ss_bit
+    unsigned new_port_value = (current_port_value & ~(1 << p_ss_bit));
+    // Or desired bit value into p_ss_bit
+    new_port_value = new_port_value | (bit_value << p_ss_bit);
+    // Drive the pin
+    if (port_time_mode == SPI_SS_DRIVE_AT_TIME) {
+        p_ss[p_ss_index] <: new_port_value @ *time;
+    } else if (port_time_mode == SPI_SS_GET_TIMESTAMP) {
+        p_ss[p_ss_index] @ *time <: new_port_value;
+    } else {
+        p_ss[p_ss_index] <: new_port_value;
+    }
+}
+
 static void setup_new_transaction(
         out buffered port:32 sclk,
         out port p_ss[num_slaves],
@@ -95,7 +122,8 @@ static void setup_new_transaction(
 
     //Do a slave select
     currently_selected_device = new_device_index;
-    p_ss[currently_selected_device] <: 0;
+    drive_1bit_of_ss_port(p_ss, num_slaves, currently_selected_device, 0, 0,
+                          SPI_SS_DRIVE_NOW, NULL);
     sync(p_ss[currently_selected_device]);
 }
 
@@ -172,8 +200,10 @@ void spi_master_async(server interface spi_master_async_if i[num_clients],
     unsigned active_mode;
     int currently_performing_a_transaction = 0;
 
-    for(unsigned i=0;i<num_slaves;i++)
-        p_ss[i] <: 1;
+    for(unsigned i=0;i<num_slaves;i++) {
+        // SS line assumed to always be wired bit 0 of port
+        drive_1bit_of_ss_port(p_ss, num_slaves, i, 0, 1, SPI_SS_DRIVE_NOW, NULL);
+    }
 
     stop_clock(cb0);
 
@@ -248,13 +278,15 @@ void spi_master_async(server interface spi_master_async_if i[num_clients],
                 }
                 sync(sclk);
                 unsigned time;
-                p_ss[active_device] <: 1 @ time;
+                drive_1bit_of_ss_port(p_ss, num_slaves, active_device, 0, 1,
+                                      SPI_SS_DRIVE_AT_TIME, &time);
 
                 //TODO should this be allowed? (0.6ms max without it)
                 if(ss_deassert_time > 0xffff)
                    delay_ticks(ss_deassert_time&0xffff0000);
                 time += ss_deassert_time;
-                p_ss[active_device] @ time <: 1;
+                drive_1bit_of_ss_port(p_ss, num_slaves, active_device, 0, 1,
+                                      SPI_SS_GET_TIMESTAMP, &time);
 
                 if(tr_fill > 0){
                     //begin a new transaction - the tail of the list is the next one to go
