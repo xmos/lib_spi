@@ -188,7 +188,7 @@ the asynchronous master can output a clock at up to 100MHz
    - MOSI enabled
    - Max kbps (62.5 MHz core)
    - Max kbps (125 MHz core)
- * - 1
+ * - 2
    - x
    - x
    - 100000
