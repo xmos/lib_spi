@@ -418,8 +418,8 @@ bytes coming back from the slave::
     spi.init_transfer_array_8(move(buf_in), move(buf_out), 100);
     while (1) {
       select {
-        case spi.operation_complete():
-          retrieve_transfer_buffers_8(buf_in, buf_out);
+        case spi.transfer_complete():
+          spi.retrieve_transfer_buffers_8(buf_in, buf_out);
           spi.end_transaction();
 
           // Handle the data that has come in
