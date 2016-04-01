@@ -251,12 +251,16 @@ static void drive_1bit_of_ss_port(out port p_ss[num_slaves],
     // Or desired bit value into p_ss_bit
     new_port_value = new_port_value | (bit_value << p_ss_bit);
     // Drive the pin
-    if (port_time_mode == SPI_SS_DRIVE_AT_TIME) {
-        p_ss[p_ss_index] <: new_port_value @ *time;
-    } else if (port_time_mode == SPI_SS_GET_TIMESTAMP) {
-        p_ss[p_ss_index] @ *time <: new_port_value;
-    } else {
-        p_ss[p_ss_index] <: new_port_value;
+    switch (port_time_mode) {
+        case SPI_SS_DRIVE_NOW:
+            p_ss[p_ss_index] <: new_port_value;
+            break;
+        case SPI_SS_GET_TIMESTAMP:
+            p_ss[p_ss_index] <: new_port_value @ *time;
+            break;
+        case SPI_SS_DRIVE_AT_TIME:
+            p_ss[p_ss_index] @ *time <: new_port_value;
+            break;
     }
 }
 
@@ -341,7 +345,7 @@ void spi_master(server interface spi_master_if i[num_clients],
                 partout(sclk, 1, cpol);
                 sync(sclk);
                 drive_1bit_of_ss_port(p_ss, num_slaves, selected_device, 0, 1,
-                                      SPI_SS_DRIVE_AT_TIME, &time);
+                                      SPI_SS_GET_TIMESTAMP, &time);
 
                 //TODO should this be allowed? (0.6ms max without it)
                 if(ss_deassert_time > 0xffff)
@@ -350,7 +354,7 @@ void spi_master(server interface spi_master_if i[num_clients],
                 time += ss_deassert_time;
 
                 drive_1bit_of_ss_port(p_ss, num_slaves, selected_device, 0, 1,
-                                      SPI_SS_GET_TIMESTAMP, &time);
+                                      SPI_SS_DRIVE_AT_TIME, &time);
                 break;
             }
             case i[int x].transfer8(uint8_t data)-> uint8_t r :{
