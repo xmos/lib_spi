@@ -53,16 +53,18 @@ static void transfer32_async(
     sclk <: 0xaaaaaaaa;
 }
 
-#define SPI_SS_DRIVE_NOW     (0)
-#define SPI_SS_DRIVE_AT_TIME (0x80000000)
-#define SPI_SS_GET_TIMESTAMP (0x40000000)
+typedef enum {
+    SPI_SS_DRIVE_NOW,
+    SPI_SS_DRIVE_AT_TIME,
+    SPI_SS_GET_TIMESTAMP
+} port_time_mode_t;
 
 static void drive_1bit_of_ss_port(out port p_ss[num_slaves],
                                   static const size_t num_slaves,
                                   uint32_t p_ss_index,
                                   uint32_t p_ss_bit,
                                   uint32_t bit_value,
-                                  unsigned port_time_mode,
+                                  port_time_mode_t port_time_mode,
                                   unsigned *time) {
     // Get the current state of the port
     unsigned current_port_value = peek(p_ss[p_ss_index]);
