@@ -37,6 +37,11 @@ typedef interface spi_master_if {
    *
    *  This ends a transaction on the bus and releases the component to other
    *  clients.
+   *
+   *  \param ss_deassert_time  The minimum time in reference clock ticks between
+   *                           assertions of the selected slave select. This
+   *                           time will be ignored if the next transaction is
+   *                           to a different slave select.
    */
   void end_transaction(unsigned ss_deassert_time);
 
@@ -121,10 +126,10 @@ typedef interface spi_master_async_if  {
    *  This ends a transaction on the bus and releases the component to other
    *  clients.
    *
-   *  \param ss_deassert_time    The minimum time in reference clock ticks between
-   *                             assertions of the selected slave select. This time
-   *                             will be ignored if the next transaction is to a
-   *                             different slave select.
+   *  \param ss_deassert_time  The minimum time in reference clock ticks between
+   *                           assertions of the selected slave select. This
+   *                           time will be ignored if the next transaction is
+   *                           to a different slave select.
    */
   void end_transaction(unsigned ss_deassert_time);
 
