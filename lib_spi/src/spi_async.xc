@@ -214,7 +214,7 @@ void spi_master_async(server interface spi_master_async_if i[num_clients],
     stop_clock(cb0);
 
     configure_clock_ref(cb0, 1);
-    configure_in_port(sclk,  cb0);
+    configure_out_port(sclk, cb0, 0);
 
     stop_clock(cb1);
     configure_clock_src(cb1, sclk);
