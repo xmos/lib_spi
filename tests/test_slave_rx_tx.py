@@ -22,6 +22,7 @@ def do_slave_rx_tx(combined, burnt_threads, miso_enable, mode, transfer_size, te
                                      'lib_spi', 
                                      'spi_slave_sim_tests',
                                      'rx_tx_slave_{com}{burnt}{miso}{m}{t}.xe'.format(com=combined,burnt=burnt_threads,miso=miso_enable,m=mode,t=transfer_size),
+                                     {'combined': combined, 'burnt_threads': burnt_threads, 'miso_enable': miso_enable, 'mode': mode, 'transfer_size': transfer_size},
                                      regexp=True)
 
     tester.set_min_testlevel(testlevel)
