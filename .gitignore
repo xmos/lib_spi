@@ -16,3 +16,4 @@
 **/.settings*
 Installs/*
 test_results.csv
+.*.swp
