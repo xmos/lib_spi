@@ -1,5 +1,5 @@
-**/.build*/*
-**/bin/*
+.build*
+bin
 *.o
 *.xe
 *.vcd
@@ -7,12 +7,12 @@
 *.xi
 *.i
 *.a
-**/_build/
-**/run_*.log
-**/pdf/*
-**/html/*
-**/html/*
+_build
+run_*.log
+pdf
+html
 *.pyc
-**/.settings*
-Installs/*
+.settings
+Installs
 test_results.csv
+.*.swp
