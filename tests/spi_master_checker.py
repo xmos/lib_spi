@@ -44,9 +44,9 @@ class SPIMasterChecker(xmostest.SimThread):
             expected_num_bytes = self.get_setup_data(xsi, self._setup_strobe_port, self._setup_data_port)
 
             clock_half_period = 1000000/(expected_frequency_in_khz*2)
-           
+
             all_ss_deserted = True
-            for i in range(len(self._ss_ports)):  
+            for i in range(len(self._ss_ports)):
                if (xsi.sample_port_pins(self._ss_ports[i]) == 0):
 		 all_ss_deserted = False
                  break
@@ -54,7 +54,7 @@ class SPIMasterChecker(xmostest.SimThread):
             while not all_ss_deserted:
               self.wait_for_port_pins_change(self._ss_ports)
               all_ss_deserted = True
-              for i in range(len(self._ss_ports)):  
+              for i in range(len(self._ss_ports)):
                 all_ss_deserted = all_ss_deserted and (xsi.sample_port_pins(self._ss_ports[i]) == 1)
 
             error = False
@@ -64,7 +64,7 @@ class SPIMasterChecker(xmostest.SimThread):
             while(active_slave == -1):
               self.wait_for_port_pins_change(self._ss_ports)
 
-              for i in range(len(self._ss_ports)):  
+              for i in range(len(self._ss_ports)):
                 if xsi.sample_port_pins(self._ss_ports[i]) == 0:
                   active_slave = i
                   break
@@ -130,10 +130,10 @@ class SPIMasterChecker(xmostest.SimThread):
                     if (tx_bit_counter%8) == 0:
                       index = tx_bit_counter/8
                       if index < 16:
-                        tx_byte = tx_data[tx_bit_counter/8] 
+                        tx_byte = tx_data[tx_bit_counter/8]
                       else:
                         tx_byte = 0;
-                    
+
                 else:
                   #clock data in
                   if expected_mosi_enabled == 1:
@@ -144,8 +144,8 @@ class SPIMasterChecker(xmostest.SimThread):
                       expected_rx_byte = rx_data[(rx_bit_counter/8) - 1]
                       #print "slave got {seen} and expected {expect}".format(seen=rx_byte, expect=expected_rx_byte)
                       if expected_rx_byte != rx_byte:
-                        print "ERROR: slave recieved incorrect data Got:%02x Expected:%02x"%(rx_byte, expected_rx_byte)       
-                        error = True             
+                        print "ERROR: slave recieved incorrect data Got:%02x Expected:%02x"%(rx_byte, expected_rx_byte)
+                        error = True
                       rx_byte = 0
               else:
                 if clock_edge_number != expected_num_bytes*2*8:
@@ -156,5 +156,3 @@ class SPIMasterChecker(xmostest.SimThread):
 			cpol=expected_cpol, cpha=expected_cpha,
                         mosi_enabled = expected_mosi_enabled, miso_enabled = expected_miso_enabled,
                         freq=expected_frequency_in_khz)
-            
-

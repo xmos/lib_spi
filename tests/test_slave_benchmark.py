@@ -18,11 +18,11 @@ def do_slave_benchmark(combined, burnt_threads, miso_enable, mode, transfer_size
                                "tile[0]:XS1_PORT_1F")
 
     tester = xmostest.ComparisonTester(open('slave_benchmark.expect'),
-                                     'lib_spi', 
+                                     'lib_spi',
                                      'spi_slave_sim_tests',
                                      'spi_slave_benchmark_{com}{burnt}{miso}{m}{t}.xe'.format(com=combined,burnt=burnt_threads,miso=miso_enable,m=mode,t=transfer_size),
                                      regexp=True)
- 
+
     tester.set_min_testlevel('nightly')
     xmostest.run_on_simulator(resources['xsim'], binary,
                               simthreads = [checker],
@@ -32,9 +32,9 @@ def do_slave_benchmark(combined, burnt_threads, miso_enable, mode, transfer_size
                               tester = tester)
 
 def runtest():
-  for combined in [0,1]:  
-    for mode in range(0, 4): 
-      for burnt_threads in [2, 6]: 
-        for transfer_size in [8, 32]: 
-          for miso_enable in [0, 1]: 
+  for combined in [0,1]:
+    for mode in range(0, 4):
+      for burnt_threads in [2, 6]:
+        for transfer_size in [8, 32]:
+          for miso_enable in [0, 1]:
             do_slave_benchmark(combined, burnt_threads+combined, miso_enable, mode, transfer_size)

@@ -17,9 +17,9 @@ def do_multi_client_async(burnt_threads, mosi_enable, combine):
                                "tile[0]:XS1_PORT_16B")
 
     tester = xmostest.ComparisonTester(open('master.expect'),
-                                     'lib_spi', 
+                                     'lib_spi',
                                      'spi_master_sim_tests',
-                                     'multi_client_async_{burnt}{mosi}{combined}'.format(burnt=burnt_threads, mosi=mosi_enable, combined=combine), 
+                                     'multi_client_async_{burnt}{mosi}{combined}'.format(burnt=burnt_threads, mosi=mosi_enable, combined=combine),
                                      regexp=True)
     tester.set_min_testlevel('nightly')
     xmostest.run_on_simulator(resources['xsim'], binary,

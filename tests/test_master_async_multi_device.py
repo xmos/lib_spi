@@ -17,9 +17,9 @@ def do_multi_device_async(burnt_threads, mosi_enable):
                                "tile[0]:XS1_PORT_16B")
 
     tester = xmostest.ComparisonTester(open('master.expect'),
-                                     'lib_spi', 
+                                     'lib_spi',
                                      'spi_master_sim_tests',
-                                     'spi_master_async_multi_device_{burnt}{mosi}'.format(burnt=burnt_threads, mosi=mosi_enable), 
+                                     'spi_master_async_multi_device_{burnt}{mosi}'.format(burnt=burnt_threads, mosi=mosi_enable),
                                      regexp=True)
 
     tester.set_min_testlevel('nightly')
