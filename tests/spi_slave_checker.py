@@ -54,7 +54,7 @@ class SPISlaveChecker(xmostest.SimThread):
 
             ss_value = xsi.sample_port_pins(self._ss_port)
             sck_value = xsi.sample_port_pins(self._sck_port)
-               
+
             clock_val = (expected_cpol^expected_cpha)&1
             bit_count = 0
             total_bit_count = 0
@@ -62,7 +62,7 @@ class SPISlaveChecker(xmostest.SimThread):
 
             half_clock = 1000000/(2*kbps)
             error = 0
-            
+
             while total_bit_count < expected_num_bits:
                 #clock edge and drive data out
                 xsi.drive_port_pins(self._sck_port, clock_val)
@@ -101,7 +101,3 @@ class SPISlaveChecker(xmostest.SimThread):
             self.wait_for_port_pins_change([self._setup_strobe_port])
             xsi.drive_port_pins(self._setup_resp_port, error)
             self.wait_for_port_pins_change([self._setup_strobe_port])
-                
-              
-            
-

@@ -19,7 +19,7 @@ def do_slave_rx_tx(combined, burnt_threads, miso_enable, mode, transfer_size, te
                                "tile[0]:XS1_PORT_1F")
 
     tester = xmostest.ComparisonTester(open('slave.expect'),
-                                     'lib_spi', 
+                                     'lib_spi',
                                      'spi_slave_sim_tests',
                                      'rx_tx_slave_{com}{burnt}{miso}{m}{t}.xe'.format(com=combined,burnt=burnt_threads,miso=miso_enable,m=mode,t=transfer_size),
                                      {'combined': combined, 'burnt_threads': burnt_threads, 'miso_enable': miso_enable, 'mode': mode, 'transfer_size': transfer_size},
@@ -35,13 +35,13 @@ def do_slave_rx_tx(combined, burnt_threads, miso_enable, mode, transfer_size, te
                               tester = tester)
 
 def runtest():
-  for transfer_size in [8, 32]: 
-    for miso_enable in [0, 1]: 
-      do_slave_rx_tx(1, 2+1, miso_enable, 3, transfer_size, "smoke")   
+  for transfer_size in [8, 32]:
+    for miso_enable in [0, 1]:
+      do_slave_rx_tx(1, 2+1, miso_enable, 3, transfer_size, "smoke")
 
-  for combined in [0,1]:  
-    for mode in range(0, 4): 
-      for burnt_threads in [2, 6]: 
-        for transfer_size in [8, 32]: 
-          for miso_enable in [0, 1]: 
-            do_slave_rx_tx(combined, burnt_threads+combined, miso_enable, mode, transfer_size, "nightly")     
+  for combined in [0,1]:
+    for mode in range(0, 4):
+      for burnt_threads in [2, 6]:
+        for transfer_size in [8, 32]:
+          for miso_enable in [0, 1]:
+            do_slave_rx_tx(combined, burnt_threads+combined, miso_enable, mode, transfer_size, "nightly")

@@ -18,9 +18,9 @@ def do_benchmark_sync(burnt_threads, cb_enabled, miso_enabled, mosi_enable):
                                "tile[0]:XS1_PORT_16B")
 
     tester = xmostest.ComparisonTester(open('master_benchmark.expect'),
-                                     'lib_spi', 
+                                     'lib_spi',
                                      'spi_master_sim_tests',
-                                     'spi_master_sync_benchmark_{burnt}{cb}{miso}{mosi}'.format(burnt=burnt_threads,cb=cb_enabled,miso=miso_enabled,mosi=mosi_enable), 
+                                     'spi_master_sync_benchmark_{burnt}{cb}{miso}{mosi}'.format(burnt=burnt_threads,cb=cb_enabled,miso=miso_enabled,mosi=mosi_enable),
                                      regexp=True)
 
     tester.set_min_testlevel('nightly')

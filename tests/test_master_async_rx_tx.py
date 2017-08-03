@@ -18,9 +18,9 @@ def do_rx_tx_async(burnt_threads, mosi_enable, speed_tests, combine, testlevel):
                                "tile[0]:XS1_PORT_16B")
 
     tester = xmostest.ComparisonTester(open('master.expect'),
-                                     'lib_spi', 
+                                     'lib_spi',
                                      'spi_master_sim_tests',
-                                     'spi_master_async_rx_tx_{burnt}{mosi}{speed}{combined}'.format(burnt=burnt_threads,mosi=mosi_enable, combined=combine, speed=speed_tests), 
+                                     'spi_master_async_rx_tx_{burnt}{mosi}{speed}{combined}'.format(burnt=burnt_threads,mosi=mosi_enable, combined=combine, speed=speed_tests),
                                      regexp=True)
 
     tester.set_min_testlevel(testlevel)
@@ -33,7 +33,7 @@ def do_rx_tx_async(burnt_threads, mosi_enable, speed_tests, combine, testlevel):
 def runtest():
     for mosi_enabled in [0, 1]:
        do_rx_tx_async(6 + 1, mosi_enabled, 1, 1, "smoke")
-      
+
     for burnt_threads in [2, 6]:
       for combined in [0, 1]:
         for mosi_enabled in [0, 1]:
