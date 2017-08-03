@@ -3,6 +3,7 @@ SPI library change log
 
 3.0.3
 -----
+
   * Documentation fixes and improvements
   * Fix initial asynchronous SCLK port configuration
 
@@ -20,4 +21,3 @@ SPI library change log
 -----
 
   * Consolidated version, major rework from previous SPI components
-
