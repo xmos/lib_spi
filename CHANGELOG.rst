@@ -1,6 +1,11 @@
 SPI library change log
 ======================
 
+3.0.3
+-----
+  * Documentation fixes and improvements
+  * Fix initial asynchronous SCLK port configuration
+
 3.0.2
 -----
 
