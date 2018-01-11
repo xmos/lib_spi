@@ -4,7 +4,7 @@ External signal description
 ---------------------------
 
 The SPI protocol requires a clock, one or more slave selects
-and either one or two data wires. 
+and either one or two data wires.
 
 .. _spi_wire_table:
 
@@ -33,7 +33,7 @@ SPI modes
 .........
 
 The data sample points for SPI are defined by the clock polarity (CPOL) and clock phase (CPHA)
-parameters. SPI clock polarity may be inverted or non-inverted by the CPOL and the CPHA parameter 
+parameters. SPI clock polarity may be inverted or non-inverted by the CPOL and the CPHA parameter
 is used to shift the sampling phase. The following for sections illustrate the MISO and MOSI data lines
 relative to the clock. The timings are given by:
 
@@ -53,73 +53,42 @@ device. For details on these timing please refer to the device datasheet.
 Mode 0 - CPOL: 0 CPHA 1
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-.. wavedrom:: Mode 0
+.. figure:: images/wavedrom_mode0.png
+   :width: 100%
 
-  {signal: [
-  {name: 'CLK',  wave: '0..101010|10....', node: '...B'},
-  {name: 'MOSI', wave: 'x..2.2.2.|2.x...', data: ['MSB',,, 'LSB'] },
-  {name: 'MISO', wave: 'x..2.2.2.|2.x...', data: ['MSB',,, 'LSB'], node: '...................'},
-  {name: 'CS',   wave: '10.......|..1..0', node: '.A..........C..D..'},
-  {              node: '.a.b........c..d'}  ],
-  edge: [ 'A|a','B|b', 'C|c','D|d','a<->b t1',  'c<->d t2']
-  }
+   Mode 0
 
-The master and slave will drive out their first data bit on the first rising edge of the clock and sample 
-on the subsequent falling edge.
+The master and slave will drive out their first data bit on the first rising edge of the clock and sample on the subsequent falling edge.
 
 Mode 1 - CPOL: 0 CPHA 0
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-.. wavedrom:: Mode 1
+.. figure:: images/wavedrom_mode1.png
+   :width: 100%
 
-   {signal: [
-     {name: 'CLK',  wave: '0...10101|010...', node: '...B'},
-     {name: 'MOSI', wave: 'x..2.2.2.|2.x...', data: ['MSB',,, 'LSB'] },
-     {name: 'MISO', wave: 'x..2.2.2.|2.x...', data: ['MSB',,, 'LSB'], node: '...................'},
-     {name: 'CS',   wave: '10.......|..1..0', node: '.A..........C..D..'},
-     {              node: '.a.b........c..d'}
-   ],
-     edge: [ 'A|a','B|b', 'C|c','D|d','a<->b t1',  'c<->d t2']
-   }
+   Mode 1
 
-The master and slave will drive out their first data bit before the first rising edge of the clock then drive on 
-subsequent falling edges. They will sample on rising edges.
+The master and slave will drive out their first data bit before the first rising edge of the clock then drive on subsequent falling edges. They will sample on rising edges.
 
 Mode 2 - CPOL: 1 CPHA 0
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-.. wavedrom:: Mode 2
+.. figure:: images/wavedrom_mode2.png
+   :width: 100%
 
-   {signal: [
-     {name: 'CLK',  wave: '1...01010|101...', node: '...B'},
-     {name: 'MOSI', wave: 'x..2.2.2.|2.x...', data: ['MSB',,, 'LSB'] },
-     {name: 'MISO', wave: 'x..2.2.2.|2.x...', data: ['MSB',,, 'LSB'], node: '...................'},
-     {name: 'CS',   wave: '10.......|..1..0', node: '.A..........C..D..'},
-     {              node: '.a.b........c..d'}
-   ],
-     edge: [ 'A|a','B|b', 'C|c','D|d','a<->b t1',  'c<->d t2']
-   }
+   Mode 2
 
-The master and slave will drive out their first data bit before the first falling edge of the clock then drive on 
-subsequent rising edges. They will sample on falling edges.
+The master and slave will drive out their first data bit before the first falling edge of the clock then drive on subsequent rising edges. They will sample on falling edges.
 
 Mode 3 - CPOL: 1 CPHA 1
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-.. wavedrom:: Mode 3
+.. figure:: images/wavedrom_mode3.png
+   :width: 100%
 
-   {signal: [
-     {name: 'CLK',  wave: '1..010101|01..', node: '...B'},
-     {name: 'MOSI', wave: 'x..2.2.2.|2.x...', data: ['MSB',,, 'LSB'] },
-     {name: 'MISO', wave: 'x..2.2.2.|2.x...', data: ['MSB',,, 'LSB'], node: '...................'},
-     {name: 'CS',   wave: '10.......|..1..0', node: '.A..........C..D..'},
-     {              node: '.a.b........c..d'}
-   ],
-     edge: [ 'A|a','B|b', 'C|c','D|d','a<->b t1',  'c<->d t2']
-   }
+   Mode 3
 
-The master and slave will drive out their first data bit on the first falling edge of the clock and sample 
-on the subsequent rising edge.
+The master and slave will drive out their first data bit on the first falling edge of the clock and sample on the subsequent rising edge.
 
 SPI master timing characteristics
 .................................
@@ -151,7 +120,7 @@ timings can be seen in :ref:`spi_master_sync_timings`.
    - MOSI enabled
    - Max kbps (62.5 MHz core)
    - Max kbps (125 MHz core)
- * - 0           
+ * - 0
    - 1
    - 0
    - 2497
@@ -172,7 +141,7 @@ timings can be seen in :ref:`spi_master_sync_timings`.
    - 2149
    - 2149
 
-  
+
 Asynchronous SPI master clock speeds
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -215,8 +184,8 @@ If only one data direction is required then the *MOSI* or *MISO* line
 need not be connected. However, **asynchronous mode is only supported
 if the MISO line is connected**.
 
-The master component of this library supports multiple slaves on unique 
-slave select wires. This means that a single slave select assertion 
+The master component of this library supports multiple slaves on unique
+slave select wires. This means that a single slave select assertion
 cannot be used to communicate with multiple slaves at the same time.
 
 SPI slave timings
@@ -442,8 +411,8 @@ core with other tasks (including the application task it is connected to).
 Asynchronous master command buffering
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-In order to provide asynchronous behaviour for multiple clients the asynchronous master 
-will store up to one ``begin_transaction`` and one ``init_transfer_array_8`` or 
+In order to provide asynchronous behaviour for multiple clients the asynchronous master
+will store up to one ``begin_transaction`` and one ``init_transfer_array_8`` or
 ``init_transfer_array_32`` from each client. This means that if the
 master is busy  doing a transfer for client *X*, then client *Y* will
 still be able to begin a transaction and send data fully
@@ -469,11 +438,11 @@ If this sequence is not followed then the behavior is undefined.
 Master inter-transaction gap
 ............................
 
-For both synchronous and asynchronous modes the ``end_transaction`` requires a  
+For both synchronous and asynchronous modes the ``end_transaction`` requires a
 slave select deassert time. This parameter will provide a minimum deassert time between
-two transaction on the same slave select. In the case where a ``begin_transaction`` 
-asserting the slave select would violate the previous ``end_transaction`` then the 
-``begin_transaction`` will block until the slave select deassert time has been 
+two transaction on the same slave select. In the case where a ``begin_transaction``
+asserting the slave select would violate the previous ``end_transaction`` then the
+``begin_transaction`` will block until the slave select deassert time has been
 satisfied.
 
 |newpage|
@@ -649,4 +618,3 @@ Known Issues
 There are no known issues with this library.
 
 .. include:: ../../../CHANGELOG.rst
-
