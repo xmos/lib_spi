@@ -3,4 +3,4 @@ def use_module(bld):
         '-Wno-reinterpret-alignment'
     ]
     source = bld.path.ant_glob('src/*.xc')
-    bld.module(source=source, includes=['api'], version='3.0.3')
+    bld.module(source=source, includes=['api'], version='3.0.4')
