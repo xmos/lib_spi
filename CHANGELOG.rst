@@ -1,6 +1,12 @@
 SPI library change log
 ======================
 
+3.0.4
+-----
+
+  * Make use of Wavedrom in documentation generation offline (fixes automated
+    build due to a known Wavevedrom issue where it would generate zero size PNG)
+
 3.0.3
 -----
 
