@@ -1,21 +1,19 @@
 // Copyright (c) 2017-2018, XMOS Ltd, All rights reserved
 
-//In this example we are going to connect to the quad spi flash part on the
-//XCORE-200-EXPLORER board at 25MHz, erase it, write some data to it and finally
-//read the data back from flash in quad spi mode before disconnecting from flash.
-
-#include <print.h>
 #include <xclib.h>
 
 #include "xmos_spi.h"
 
-//We need to initialise our qspi ports out in a c file because XC does not
-//support designated union initialisation.
-extern spi_ports_t qspi_ports;
+out port qspi_cs = XS1_PORT_1B;
+out buffered port:32 qspi_sclk = XS1_PORT_1C;
+[[bidirectional]] buffered port:32 qspi_sio = XS1_PORT_4B;
+clock qspi_clock = XS1_CLKBLK_5;
 
 int main()
 {
   char data[1] = {0xAB};
-  spi_tx_bytes(&qspi_ports, spi_mode_0, data, 1);
+  struct spi_handle_t spi_handle;
+  CREATE_QSPI_HANDLE(&spi_handle, spi_mode_0, qspi_cs, qspi_sclk, qspi_sio, qspi_clock);
+  spi_tx_bytes(&spi_handle, data, 1);
   return 0;
 }
