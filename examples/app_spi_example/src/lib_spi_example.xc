@@ -15,6 +15,6 @@ int main()
   char data[1] = {0xAB};
   spi_handle_t spi_handle;
   CREATE_SPI_HANDLE(&spi_handle, spi_mode_0, spi_cs, spi_sclk, spi_mosi, spi_miso, spi_clock);
-  spi_tx_bytes(&spi_handle, data, 1);
+  spi_rx_bytes(&spi_handle, data, 1);
   return 0;
 }

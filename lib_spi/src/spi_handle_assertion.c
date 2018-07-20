@@ -1,4 +1,5 @@
 // Copyright (c) 2018, XMOS Ltd, All rights reserved
+
 #include "spi_impl.h"
 
 //Issue a compile time error if the size of the internal spi_handle

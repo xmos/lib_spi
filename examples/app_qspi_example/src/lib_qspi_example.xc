@@ -14,6 +14,6 @@ int main()
   char data[1] = {0xAB};
   struct spi_handle_t spi_handle;
   CREATE_QSPI_HANDLE(&spi_handle, spi_mode_0, qspi_cs, qspi_sclk, qspi_sio, qspi_clock);
-  spi_tx_bytes(&spi_handle, data, 1);
+  spi_rx_bytes(&spi_handle, data, 1);
   return 0;
 }

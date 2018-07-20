@@ -1,4 +1,5 @@
 // Copyright (c) 2018, XMOS Ltd, All rights reserved
+
 #ifndef _SPI_IMPL_H_
 #define _SPI_IMPL_H_
 
@@ -47,9 +48,6 @@ typedef struct spi_handle_t
   const unsigned x[SIZEOF_SPI_HANDLE];
 } spi_handle_t;
 
-/**
- * SPI port implementation (4 wires)
-**/
 typedef struct spi_ports_impl_t
 {
 #ifdef __XC__
@@ -67,9 +65,6 @@ typedef struct spi_ports_impl_t
 #endif
 } spi_ports_impl_t;
 
-/**
- * QSPI port implementation (6 wires)
-**/
 typedef struct qspi_ports_impl_t
 {
 #ifdef __XC__
@@ -85,9 +80,6 @@ typedef struct qspi_ports_impl_t
 #endif
 } qspi_ports_impl_t;
 
-/**
- * Port union
-**/
 typedef union ports_union_t
 {
   spi_ports_impl_t spi_ports_impl;
@@ -101,8 +93,17 @@ typedef struct spi_handle_impl_t
   spi_mode_t    spi_mode;
 } spi_handle_impl_t;
 
+
+//SPI handle creation...
+
+//These are all defined in spi_func_ptrs.c
+extern void set_spi_mode_zero_fptrs(void);
+extern void set_spi_mode_one_fptrs(void);
+extern void set_spi_mode_two_fptrs(void);
+extern void set_spi_mode_three_fptrs(void);
+
 inline void create_spi_handle(spi_handle_t * const handle,
-                              spi_mode_t mode,
+                              const spi_mode_t mode,
                               out port cs,
                               out_buffered_port_32_t sclk,
                               out_buffered_port_32_t mosi,
@@ -120,11 +121,40 @@ inline void create_spi_handle(spi_handle_t * const handle,
     internal_handle->ports_union.spi_ports_impl.spi_mosi = mosi;
     internal_handle->ports_union.spi_ports_impl.spi_miso = miso;
     internal_handle->ports_union.spi_ports_impl.spi_clk_blk = clk_blk;
+
+    switch(mode)
+    {
+      case spi_mode_0:
+        set_spi_mode_zero_fptrs();
+        break;
+      case spi_mode_1:
+        set_spi_mode_one_fptrs();
+        break;
+      case spi_mode_2:
+        set_spi_mode_two_fptrs();
+        break;
+      case spi_mode_3:
+        set_spi_mode_three_fptrs();
+        break;
+      default:
+        __builtin_unreachable();
+        break;
+    }
   }
 }
 
+//QSPI handle creation...
+
+#if defined(__XS2A__)
+
+//These are all defined in spi_func_ptrs.c
+extern void set_qspi_mode_zero_fptrs(void);
+extern void set_qspi_mode_one_fptrs(void);
+extern void set_qspi_mode_two_fptrs(void);
+extern void set_qspi_mode_three_fptrs(void);
+
 inline void create_qspi_handle(spi_handle_t * const handle,
-                               spi_mode_t mode,
+                               const spi_mode_t mode,
                                out port cs,
                                out_buffered_port_32_t sclk,
                                bidirectional_buffered_port_t sio,
@@ -140,7 +170,28 @@ inline void create_qspi_handle(spi_handle_t * const handle,
     internal_handle->ports_union.qspi_ports_impl.qspi_sclk = sclk;
     internal_handle->ports_union.qspi_ports_impl.qspi_sio = sio;
     internal_handle->ports_union.qspi_ports_impl.qspi_clk_blk = clk_blk;
+
+    switch(mode)
+    {
+      case spi_mode_0:
+        set_qspi_mode_zero_fptrs();
+        break;
+      case spi_mode_1:
+        set_qspi_mode_one_fptrs();
+        break;
+      case spi_mode_2:
+        set_qspi_mode_two_fptrs();
+        break;
+      case spi_mode_3:
+        set_qspi_mode_three_fptrs();
+        break;
+      default:
+        __builtin_unreachable();
+        break;
+    }
   }
 }
+
+#endif //defined(__XS2A__)
 
 #endif //_SPI_IMPL_H_
