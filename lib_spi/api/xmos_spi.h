@@ -47,8 +47,6 @@
 /**
  * spi_tx_bytes: transmit a sequence of 1..N bytes
  *
- * Note: The parameter spi_ports must be declared as a global.
- *
  *  \param spi_handle       The handle obtained from create_spi_ports/create_qspi_ports.
  *  \param tx_bytes         The bytes to be transmitted.
  *  \param num_bytes        The number of bytes that are to be transmitted.
@@ -57,14 +55,35 @@ void spi_tx_bytes(const spi_handle_t * const spi_handle,
                   ARRAY_OF_SIZE(char, tx_bytes, num_bytes),
                   size_t num_bytes);
 
+/**
+ * spi_rx_bytes: receive a sequence of 1..N bytes
+ *
+ *  \param spi_handle       The handle obtained from create_spi_ports/create_qspi_ports.
+ *  \param rx_bytes         An array for the bytes to be received into.
+ *  \param num_bytes        The number of bytes that are to be received.
+ **/
 void spi_rx_bytes(const spi_handle_t * const spi_handle,
                   ARRAY_OF_SIZE(char, rx_bytes, num_bytes),
                   size_t num_bytes);
 
+/**
+ * spi_tx_words: transmit a sequence of 1..N words
+ *
+ *  \param spi_handle       The handle obtained from create_spi_ports/create_qspi_ports.
+ *  \param tx_words         An array of words to be transmitted.
+ *  \param num_words        The number of words that are to be transmitted.
+ **/
 void spi_tx_words(const spi_handle_t * const spi_handle,
                   ARRAY_OF_SIZE(unsigned, tx_words, num_words),
                   size_t num_words);
 
+/**
+ * spi_rx_words: receive a sequence of 1..N words
+ *
+ *  \param spi_handle       The handle obtained from create_spi_ports/create_qspi_ports.
+ *  \param rx_words         An array for the words to be received into.
+ *  \param num_words        The number of words that are to be received.
+ **/
 void spi_rx_words(const spi_handle_t * const spi_handle,
                   ARRAY_OF_SIZE(unsigned, rx_words, num_words),
                   size_t num_words);
