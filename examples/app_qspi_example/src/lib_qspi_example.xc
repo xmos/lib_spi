@@ -45,14 +45,24 @@ int main()
   struct spi_handle_t spi_handle;
   CREATE_QSPI_HANDLE(&spi_handle, spi_mode_0, qspi_cs, qspi_sclk, qspi_sio, qspi_clock);
 
-  char data_single[1];
+  char output_data_single[1] = {0x9F};
   drive_cs_lo();
-  spi_rx_bytes(&spi_handle, data_single, 1);
+  spi_tx_bytes(&spi_handle, output_data_single, 1);
   drive_cs_hi();
 
-  char data_multi[5];
+  char output_data_multi[5] = {0x9F, 0xEB, 0xA4, 0x71, 0x63};
   drive_cs_lo();
-  spi_rx_bytes(&spi_handle, data_multi, 5);
+  spi_tx_bytes(&spi_handle, output_data_multi, 5);
+  drive_cs_hi();
+
+  char input_data_single[1];
+  drive_cs_lo();
+  spi_rx_bytes(&spi_handle, input_data_single, 1);
+  drive_cs_hi();
+
+  char input_data_multi[5];
+  drive_cs_lo();
+  spi_rx_bytes(&spi_handle, input_data_multi, 5);
   drive_cs_hi();
 
   return 0;
