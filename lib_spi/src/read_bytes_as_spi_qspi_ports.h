@@ -1,7 +1,7 @@
 // Copyright (c) 2017-2018, XMOS Ltd, All rights reserved
 
-#ifndef _READ_BYTES_QSPI_H_
-#define _READ_BYTES_QSPI_H_
+#ifndef _READ_BYTES_AS_SPI_QSPI_PORTS_H_
+#define _READ_BYTES_AS_SPI_QSPI_PORTS_H_
 
 #if defined(__XS2A__)
 
@@ -23,4 +23,4 @@ void qspi_port_spi_mode_three_read_bytes_asm(const spi_handle_t * const internal
 
 #endif //defined(__XS2A__)
 
-#endif //_READ_BYTES_QSPI_H_
+#endif //_READ_BYTES_AS_SPI_QSPI_PORTS_H_

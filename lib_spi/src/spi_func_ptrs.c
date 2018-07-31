@@ -3,7 +3,7 @@
 #include "spi_func_ptrs.h"
 
 #include "read_bytes_spi.h"
-#include "read_bytes_qspi.h"
+#include "read_bytes_as_spi_qspi_ports.h"
 
 #ifdef __XC__
 extern "C" {
