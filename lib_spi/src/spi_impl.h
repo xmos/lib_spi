@@ -38,8 +38,8 @@ typedef enum spi_mode_t
 
 typedef enum ports_type_t
 {
-  spi_ports_impl,
-  qspi_ports_impl,
+  ports_type_spi,
+  ports_type_qspi,
 } ports_type_t;
 
 #define SIZEOF_SPI_HANDLE 7
@@ -114,7 +114,7 @@ inline void create_spi_handle(spi_handle_t * const handle,
   {
     spi_handle_impl_t *unsafe internal_handle = (spi_handle_impl_t *unsafe)handle;
 
-    internal_handle->port_type = spi_ports_impl;
+    internal_handle->port_type = ports_type_spi;
     internal_handle->spi_mode = mode;
     internal_handle->ports_union.spi_ports_impl.spi_cs = cs;
     internal_handle->ports_union.spi_ports_impl.spi_sclk = sclk;
@@ -164,7 +164,7 @@ inline void create_qspi_handle(spi_handle_t * const handle,
   {
     spi_handle_impl_t *unsafe internal_handle = (spi_handle_impl_t *unsafe)handle;
 
-    internal_handle->port_type = qspi_ports_impl;
+    internal_handle->port_type = ports_type_qspi;
     internal_handle->spi_mode = mode;
     internal_handle->ports_union.qspi_ports_impl.qspi_cs = cs;
     internal_handle->ports_union.qspi_ports_impl.qspi_sclk = sclk;
