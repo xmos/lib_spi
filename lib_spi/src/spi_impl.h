@@ -42,6 +42,12 @@ typedef enum ports_type_t
   ports_type_qspi,
 } ports_type_t;
 
+typedef enum transaction_type_t
+{
+  transaction_type_spi,
+  transaction_type_qspi,
+} transaction_type_t;
+
 #define SIZEOF_SPI_HANDLE 7
 typedef struct spi_handle_t
 {
@@ -97,10 +103,10 @@ typedef struct spi_handle_impl_t
 //SPI handle creation...
 
 //These are all defined in spi_func_ptrs.c
-extern void set_spi_mode_zero_fptrs(void);
-extern void set_spi_mode_one_fptrs(void);
-extern void set_spi_mode_two_fptrs(void);
-extern void set_spi_mode_three_fptrs(void);
+extern void set_spi_port_mode_zero_fptrs(void);
+extern void set_spi_port_mode_one_fptrs(void);
+extern void set_spi_port_mode_two_fptrs(void);
+extern void set_spi_port_mode_three_fptrs(void);
 
 inline void create_spi_handle(spi_handle_t * const handle,
                               const spi_mode_t mode,
@@ -125,16 +131,16 @@ inline void create_spi_handle(spi_handle_t * const handle,
     switch(mode)
     {
       case spi_mode_0:
-        set_spi_mode_zero_fptrs();
+        set_spi_port_mode_zero_fptrs();
         break;
       case spi_mode_1:
-        set_spi_mode_one_fptrs();
+        set_spi_port_mode_one_fptrs();
         break;
       case spi_mode_2:
-        set_spi_mode_two_fptrs();
+        set_spi_port_mode_two_fptrs();
         break;
       case spi_mode_3:
-        set_spi_mode_three_fptrs();
+        set_spi_port_mode_three_fptrs();
         break;
       default:
         __builtin_unreachable();
@@ -148,10 +154,10 @@ inline void create_spi_handle(spi_handle_t * const handle,
 #if defined(__XS2A__)
 
 //These are all defined in spi_func_ptrs.c
-extern void set_qspi_mode_zero_fptrs(void);
-extern void set_qspi_mode_one_fptrs(void);
-extern void set_qspi_mode_two_fptrs(void);
-extern void set_qspi_mode_three_fptrs(void);
+extern void set_qspi_port_mode_zero_fptrs(void);
+extern void set_qspi_port_mode_one_fptrs(void);
+extern void set_qspi_port_mode_two_fptrs(void);
+extern void set_qspi_port_mode_three_fptrs(void);
 
 inline void create_qspi_handle(spi_handle_t * const handle,
                                const spi_mode_t mode,
@@ -174,16 +180,16 @@ inline void create_qspi_handle(spi_handle_t * const handle,
     switch(mode)
     {
       case spi_mode_0:
-        set_qspi_mode_zero_fptrs();
+        set_qspi_port_mode_zero_fptrs();
         break;
       case spi_mode_1:
-        set_qspi_mode_one_fptrs();
+        set_qspi_port_mode_one_fptrs();
         break;
       case spi_mode_2:
-        set_qspi_mode_two_fptrs();
+        set_qspi_port_mode_two_fptrs();
         break;
       case spi_mode_3:
-        set_qspi_mode_three_fptrs();
+        set_qspi_port_mode_three_fptrs();
         break;
       default:
         __builtin_unreachable();

@@ -47,22 +47,22 @@ int main()
 
   char output_data_single[1] = {0x9F};
   drive_cs_lo();
-  spi_tx_bytes(&spi_handle, output_data_single, 1);
+  spi_tx_bytes(&spi_handle, transaction_type_spi, output_data_single, 1);
   drive_cs_hi();
 
   char output_data_multi[5] = {0x9F, 0xEB, 0xA4, 0x71, 0x63};
   drive_cs_lo();
-  spi_tx_bytes(&spi_handle, output_data_multi, 5);
+  spi_tx_bytes(&spi_handle, transaction_type_spi, output_data_multi, 5);
   drive_cs_hi();
 
   char input_data_single[1];
   drive_cs_lo();
-  spi_rx_bytes(&spi_handle, input_data_single, 1);
+  spi_rx_bytes(&spi_handle, transaction_type_spi, input_data_single, 1);
   drive_cs_hi();
 
   char input_data_multi[5];
   drive_cs_lo();
-  spi_rx_bytes(&spi_handle, input_data_multi, 5);
+  spi_rx_bytes(&spi_handle, transaction_type_spi, input_data_multi, 5);
   drive_cs_hi();
 
   return 0;

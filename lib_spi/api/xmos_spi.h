@@ -48,10 +48,12 @@
  * spi_tx_bytes: transmit a sequence of 1..N bytes
  *
  *  \param spi_handle       The handle obtained from create_spi_ports/create_qspi_ports.
+ *  \param transaction_type The type of transaction of the data.
  *  \param tx_bytes         The bytes to be transmitted.
  *  \param num_bytes        The number of bytes that are to be transmitted.
  **/
 void spi_tx_bytes(const spi_handle_t * const spi_handle,
+                  transaction_type_t transaction_type,
                   ARRAY_OF_SIZE(char, tx_bytes, num_bytes),
                   size_t num_bytes);
 
@@ -59,10 +61,12 @@ void spi_tx_bytes(const spi_handle_t * const spi_handle,
  * spi_rx_bytes: receive a sequence of 1..N bytes
  *
  *  \param spi_handle       The handle obtained from create_spi_ports/create_qspi_ports.
+ *  \param transaction_type The type of transaction of the data.
  *  \param rx_bytes         An array for the bytes to be received into.
  *  \param num_bytes        The number of bytes that are to be received.
  **/
 void spi_rx_bytes(const spi_handle_t * const spi_handle,
+                  transaction_type_t transaction_type,
                   ARRAY_OF_SIZE(char, rx_bytes, num_bytes),
                   size_t num_bytes);
 
@@ -70,10 +74,12 @@ void spi_rx_bytes(const spi_handle_t * const spi_handle,
  * spi_tx_words: transmit a sequence of 1..N words
  *
  *  \param spi_handle       The handle obtained from create_spi_ports/create_qspi_ports.
+ *  \param transaction_type The type of transaction of the data.
  *  \param tx_words         An array of words to be transmitted.
  *  \param num_words        The number of words that are to be transmitted.
  **/
 void spi_tx_words(const spi_handle_t * const spi_handle,
+                  transaction_type_t transaction_type,
                   ARRAY_OF_SIZE(unsigned, tx_words, num_words),
                   size_t num_words);
 
@@ -81,10 +87,12 @@ void spi_tx_words(const spi_handle_t * const spi_handle,
  * spi_rx_words: receive a sequence of 1..N words
  *
  *  \param spi_handle       The handle obtained from create_spi_ports/create_qspi_ports.
+ *  \param transaction_type The type of transaction of the data.
  *  \param rx_words         An array for the words to be received into.
  *  \param num_words        The number of words that are to be received.
  **/
 void spi_rx_words(const spi_handle_t * const spi_handle,
+                  transaction_type_t transaction_type,
                   ARRAY_OF_SIZE(unsigned, rx_words, num_words),
                   size_t num_words);
 
