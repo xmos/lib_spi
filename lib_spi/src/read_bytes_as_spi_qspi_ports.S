@@ -271,6 +271,26 @@ qspi_port_read_bytes_asm:
   //skip on down to read the final(only) byte...
   bf NUM_DATA, qspi_port_spi_mode_zero_read_bytes_asm_final_byte
 
+//To successfully write at our intended top speed of 50MHz we need to get round
+//this loop within 160ns (i.e if cycle time at 50MHz = 20ns and 1 byte is output
+//as 8 bits then 20 * 8 = 160ns).  The XTA currently times this loop as follows:
+//  xta 1>load bin/lib_qspi_example.xe
+//  xta 2>config tasks tile[0] 8
+//  xta 3>add exclusion qspi_port_spi_mode_zero_read_bytes_asm_final_byte
+//  xta 4>analyze endpoints qspi_port_spi_mode_zero_read_bytes_asm_loop qspi_port_spi_mode_zero_read_bytes_asm_loop
+//  xta 5>print trace -
+//  *        0.0: ( 16.0ns) 0x4030c qspi_port_read_bytes_asm + 48 outpw (l2rus) res[r3], r5, 0x10 (P)
+//  *       16.0: ( 16.0ns) 0x40310 qspi_port_read_bytes_asm + 52 { in (2r)      r6, res[r4]  ; add (2rus)   r9, r9, 0x1  } (P)
+//  *       32.0: ( 16.0ns) 0x40314 qspi_port_read_bytes_asm + 56 { in (2r)      r7, res[r4]  ; sub (2rus)   r2, r2, 0x1  } (P)
+//          48.0: ( 16.0ns) 0x40318 qspi_port_read_bytes_asm + 60 unzip (l2rus) r7, r6, 0x2
+//          64.0: ( 16.0ns) 0x4031c qspi_port_read_bytes_asm + 64 unzip (l2rus) r7, r6, 0x1
+//          80.0: ( 16.0ns) 0x40320 qspi_port_read_bytes_asm + 68 unzip (l2rus) r7, r6, 0x0
+//          96.0: ( 16.0ns) 0x40324 qspi_port_read_bytes_asm + 72 { bitrev (2r)  r8, r7       ; nop (0r)                  }
+//         112.0: ( 16.0ns) 0x40328 qspi_port_read_bytes_asm + 76 { shr (2rus)   r8, r8, 0x18 ; nop (0r)                  }
+//         128.0: ( 16.0ns) 0x4032c qspi_port_read_bytes_asm + 80 st8 (l3r)    r8, r1[r9]
+//         144.0: ( 16.0ns) 0x40330 qspi_port_read_bytes_asm + 84 bt (lru6)    r2, -0xa
+//
+//  xta 6>quit
 qspi_port_spi_mode_zero_read_bytes_asm_loop:
 
   //Output clock edges to carry data that will be input on the next iteration
@@ -294,7 +314,6 @@ qspi_port_spi_mode_zero_read_bytes_asm_loop:
   //Store the result in the destination
   st8 BYTE_IN, RX_DATA[INDEX]
 
-  .Lxta.endpoint_labels1:
   //Go back around the loop if more data to read...
   bt NUM_DATA, qspi_port_spi_mode_zero_read_bytes_asm_loop
 
