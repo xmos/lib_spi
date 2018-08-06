@@ -19,7 +19,8 @@
 #define SCLK                r3
 #define SIO                 r4
 #define CLK_EDGES           r5
-#define CLK_START_END       r6
+#define CLK_START_END       r6 //Saved onto the stack!
+#define PORT_MODE           r6
 #define PORT_TIME           r6
 #define WORD_OUT_ONE        r7
 #define WORD_OUT_TWO        r8
@@ -304,7 +305,8 @@ qspi_port_write_bytes_asm:
 
   //Line the QSPI_PORTS up to output the clock edges and start outputting
   //at the required times
-  setc res[SIO], 0x1   //TODO: find docs on what 0x1 means for port resource type
+  ldc PORT_MODE, XS1_SETC_COND_NONE
+  setc res[SIO], PORT_MODE
   in PORT_TIME, res[SIO]
   getts PORT_TIME, res[SIO]
   ldc PORT_DELAY, 0x96 //TODO: configurable port setup delay
@@ -332,8 +334,7 @@ qspi_port_write_bytes_asm:
 //        64.0: ( 16.0ns) 0x404ec qspi_port_write_bytes_asm + 72 { sub (2rus)   r2, r2, 0x1  ; ldw (3r)     r8, r11[r8]  }
 //*       80.0: ( 16.0ns) 0x404f0 qspi_port_write_bytes_asm + 76 outpw (l2rus) res[r3], r5, 0x10 (P)
 //        96.0: ( 16.0ns) 0x404f4 qspi_port_write_bytes_asm + 80 bt (lru6)    r2, -0x7
-
-xta 6>quit
+//xta 6>quit
 qspi_port_spi_mode_zero_write_bytes_asm_loop:
 
   {out res[SIO], WORD_OUT_ONE; add INDEX, INDEX, 1}

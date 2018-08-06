@@ -5,9 +5,11 @@
 //up the required byte.  The data we're actually interested in comes from
 //pin IO1 (SO) of the 4 pin port.
 
+#include <xs1.h>
+
 #if defined(__XS2A__)
 
-#define STACKWORDS          8 //TODO: how to calculate?
+#define STACKWORDS          8
 
 #define EIGHT_CLOCK_EDGES   16 //doubled up
 
@@ -18,6 +20,7 @@
 #define SCLK                r3
 #define SIO                 r4
 #define CLK_EDGES           r5
+#define PORT_MODE           r6
 #define PORT_TIME           r6
 #define WORD_IN_ONE         r6
 #define PORT_DELAY          r7
@@ -57,7 +60,7 @@ qspi_port_spi_mode_zero_read_bytes_asm:
 .issue_mode dual
   DUALENTSP_lu6 STACKWORDS
 
-  //Callee save registers: TODO: why SP[1]..SP[3]
+  //Dont touch sp[0] as thats used for the lr
   std r4, r5, sp[1]
   std r6, r7, sp[2]
   std r8, r9, sp[3]
@@ -107,7 +110,7 @@ qspi_port_spi_mode_one_read_bytes_asm:
 .issue_mode dual
   DUALENTSP_lu6 STACKWORDS
 
-  //Callee save registers: TODO: why SP[1]..SP[3]
+  //Dont touch sp[0] as thats used for the lr
   std r4, r5, sp[1]
   std r6, r7, sp[2]
   std r8, r9, sp[3]
@@ -159,7 +162,7 @@ qspi_port_spi_mode_two_read_bytes_asm:
 .issue_mode dual
   DUALENTSP_lu6 STACKWORDS
 
-  //Callee save registers: TODO: why SP[1]..SP[3]
+  //Dont touch sp[0] as thats used for the lr
   std r4, r5, sp[1]
   std r6, r7, sp[2]
   std r8, r9, sp[3]
@@ -209,7 +212,7 @@ qspi_port_spi_mode_three_read_bytes_asm:
 .issue_mode dual
   DUALENTSP_lu6 STACKWORDS
 
-  //Callee save registers: TODO: why SP[1]..SP[3]
+  //Dont touch sp[0] as thats used for the lr
   std r4, r5, sp[1]
   std r6, r7, sp[2]
   std r8, r9, sp[3]
@@ -256,7 +259,8 @@ qspi_port_read_bytes_asm:
 
   //Line the QSPI_PORTS up to output the clock edges and start inputting
   //at the required times
-  setc res[SIO], 0x1   //TODO: find docs on what 0x1 means for port resource type
+  ldc PORT_MODE, XS1_SETC_COND_FULL
+  setc res[SIO], PORT_MODE
   in PORT_TIME, res[SIO]
   getts PORT_TIME, res[SIO]
   ldc PORT_DELAY, 0x96 //TODO: configurable port setup delay
