@@ -21,11 +21,9 @@
 #define CLK_EDGES           r5
 #define CLK_START_END       r6
 #define PORT_TIME           r6
-#define BYTE_MASK           r6
 #define WORD_OUT_ONE        r7
 #define WORD_OUT_TWO        r8
 #define PORT_DELAY          r9
-#define BYTE_OUT            r9
 #define INDEX               r10
 #define LUT_SI_PIN          r11
 
@@ -79,7 +77,7 @@ qspi_port_spi_mode_zero_write_bytes_asm:
 
   //Store the CLK_START_END to the stack as we'll clobber this register in the
   //loop below.  We can restore it from the stack at the end of the loop.
-  stw CLK_START_END, sp[CLK_START_END_STACK_LOCATION]
+  {stw CLK_START_END, sp[CLK_START_END_STACK_LOCATION]; add INDEX, INDEX, 1}
 
   bl qspi_port_write_bytes_asm
 
@@ -133,7 +131,7 @@ qspi_port_spi_mode_one_write_bytes_asm:
 
   //Store the CLK_START_END to the stack as we'll clobber this register in the
   //loop below.  We can restore it from the stack at the end of the loop.
-  stw CLK_START_END, sp[CLK_START_END_STACK_LOCATION]
+  {stw CLK_START_END, sp[CLK_START_END_STACK_LOCATION]; add INDEX, INDEX, 1}
 
   //TODO: Offset cpha
 
@@ -189,7 +187,7 @@ qspi_port_spi_mode_two_write_bytes_asm:
 
   //Store the CLK_START_END to the stack as we'll clobber this register in the
   //loop below.  We can restore it from the stack at the end of the loop.
-  stw CLK_START_END, sp[CLK_START_END_STACK_LOCATION]
+  {stw CLK_START_END, sp[CLK_START_END_STACK_LOCATION]; add INDEX, INDEX, 1}
 
   bl qspi_port_write_bytes_asm
 
@@ -243,7 +241,7 @@ qspi_port_spi_mode_three_write_bytes_asm:
 
   //Store the CLK_START_END to the stack as we'll clobber this register in the
   //loop below.  We can restore it from the stack at the end of the loop.
-  stw CLK_START_END, sp[CLK_START_END_STACK_LOCATION]
+  {stw CLK_START_END, sp[CLK_START_END_STACK_LOCATION]; add INDEX, INDEX, 1}
 
   //TODO: Offset cpha
 
@@ -299,11 +297,10 @@ qspi_port_write_bytes_asm:
   DUALENTSP_lu6 STACKWORDS_NONE
 
   //Format the first byte so that it is all lined up on the SI pin
-  {add INDEX, INDEX, 1; mkmsk BYTE_MASK, 0x4}
-  {ld8u BYTE_OUT, TX_DATA[INDEX]; ldap LUT_SI_PIN, lut_align_byte_to_si_pin}
-  {shr WORD_OUT_ONE, BYTE_OUT, 0x4; and WORD_OUT_TWO, BYTE_OUT, BYTE_MASK}
-  ldw WORD_OUT_ONE, LUT_SI_PIN[WORD_OUT_ONE]
-  ldw WORD_OUT_TWO, LUT_SI_PIN[WORD_OUT_TWO]
+  {ld8u WORD_OUT_ONE, TX_DATA[INDEX]; ldap LUT_SI_PIN, lut_align_byte_to_si_pin}
+  {ld8u WORD_OUT_TWO, TX_DATA[INDEX]; shr WORD_OUT_ONE, WORD_OUT_ONE, 0x4}
+  {ldw WORD_OUT_ONE, LUT_SI_PIN[WORD_OUT_ONE]; zext WORD_OUT_TWO, 0x4}
+  ldw WORD_OUT_TWO, LUT_SI_PIN[WORD_OUT_TWO];
 
   //Line the QSPI_PORTS up to output the clock edges and start outputting
   //at the required times
@@ -323,29 +320,29 @@ qspi_port_write_bytes_asm:
 //To successfully write at our intended top speed of 50MHz we need to get round
 //this loop within 160ns (i.e if cycle time at 50MHz = 20ns and 1 byte is output
 //as 8 bits then 20 * 8 = 160ns).  The XTA currently times this loop as follows:
-//  xta 1>load bin/lib_qspi_example.xe
-//  xta 2>config tasks tile[0] 8
-//  xta 3>add exclusion qspi_port_spi_mode_zero_write_bytes_asm_final_byte
-//  xta 4>analyze endpoints qspi_port_spi_mode_zero_write_bytes_asm_loop qspi_port_spi_mode_zero_write_bytes_asm_loop
-//  xta 5>print trace -
-//  *        0.0: ( 16.0ns) 0x404e0 qspi_port_write_bytes_asm + 60 { out (r2r)    res[r4], r7  ; add (2rus)   r10, r10, 0x1 } (P)
-//  *       16.0: ( 16.0ns) 0x404e4 qspi_port_write_bytes_asm + 64 { out (r2r)    res[r4], r8  ; ld8u (3r)    r9, r1[r10]  } (P)
-//          32.0: ( 16.0ns) 0x404e8 qspi_port_write_bytes_asm + 68 { shr (2rus)   r7, r9, 0x4  ; mkmsk (rus)  r6, 0x4      }
-//          48.0: ( 16.0ns) 0x404ec qspi_port_write_bytes_asm + 72 { and (3r)     r8, r9, r6   ; ldw (3r)     r7, r11[r7]  }
-//          64.0: ( 16.0ns) 0x404f0 qspi_port_write_bytes_asm + 76 { sub (2rus)   r2, r2, 0x1  ; ldw (3r)     r8, r11[r8]  }
-//  *       80.0: ( 16.0ns) 0x404f4 qspi_port_write_bytes_asm + 80 outpw (l2rus) res[r3], r5, 0x10 (P)
-//          96.0: ( 16.0ns) 0x404f8 qspi_port_write_bytes_asm + 84 bt (lru6)    r2, -0x7
-//
-//  xta 6>quit
+//xta 1>load bin/lib_qspi_example.xe
+//xta 2>config tasks tile[0] 8
+//xta 3>add exclusion qspi_port_spi_mode_zero_write_bytes_asm_final_byte
+//xta 4>analyze endpoints qspi_port_spi_mode_zero_write_bytes_asm_loop qspi_port_spi_mode_zero_write_bytes_asm_loop
+//xta 5>print trace -
+//*        0.0: ( 16.0ns) 0x404dc qspi_port_write_bytes_asm + 56 { out (r2r)    res[r4], r7  ; add (2rus)   r10, r10, 0x1 } (P)
+//*       16.0: ( 16.0ns) 0x404e0 qspi_port_write_bytes_asm + 60 { out (r2r)    res[r4], r8  ; ld8u (3r)    r7, r1[r10]  } (P)
+//        32.0: ( 16.0ns) 0x404e4 qspi_port_write_bytes_asm + 64 { add (2rus)   r8, r7, 0x0  ; shr (2rus)   r7, r7, 0x4  }
+//        48.0: ( 16.0ns) 0x404e8 qspi_port_write_bytes_asm + 68 { zext (rus)   r8, 0x4      ; ldw (3r)     r7, r11[r7]  }
+//        64.0: ( 16.0ns) 0x404ec qspi_port_write_bytes_asm + 72 { sub (2rus)   r2, r2, 0x1  ; ldw (3r)     r8, r11[r8]  }
+//*       80.0: ( 16.0ns) 0x404f0 qspi_port_write_bytes_asm + 76 outpw (l2rus) res[r3], r5, 0x10 (P)
+//        96.0: ( 16.0ns) 0x404f4 qspi_port_write_bytes_asm + 80 bt (lru6)    r2, -0x7
+
+xta 6>quit
 qspi_port_spi_mode_zero_write_bytes_asm_loop:
 
-  {out res[SIO], WORD_OUT_ONE; add INDEX, INDEX, 1 }
-  {out res[SIO], WORD_OUT_TWO; ld8u BYTE_OUT, TX_DATA[INDEX] }
+  {out res[SIO], WORD_OUT_ONE; add INDEX, INDEX, 1}
+  {out res[SIO], WORD_OUT_TWO; ld8u WORD_OUT_ONE, TX_DATA[INDEX]}
 
   //Format the next byte so that it is all lined up on the SI pin
-  {shr WORD_OUT_ONE, BYTE_OUT, 0x4; mkmsk BYTE_MASK, 0x4}
-  {ldw WORD_OUT_ONE, LUT_SI_PIN[WORD_OUT_ONE]; and WORD_OUT_TWO, BYTE_OUT, BYTE_MASK}
-  {ldw WORD_OUT_TWO, LUT_SI_PIN[WORD_OUT_TWO] ; sub NUM_DATA, NUM_DATA, 1 }
+  {mov WORD_OUT_TWO, WORD_OUT_ONE; shr WORD_OUT_ONE, WORD_OUT_ONE, 0x4}
+  {ldw WORD_OUT_ONE, LUT_SI_PIN[WORD_OUT_ONE]; zext WORD_OUT_TWO, 0x4}
+  {ldw WORD_OUT_TWO, LUT_SI_PIN[WORD_OUT_TWO]; sub NUM_DATA, NUM_DATA, 1}
 
   //Output clock edges to carry data that will be input on the next iteration
   //Go back around the loop if more data to read...
