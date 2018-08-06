@@ -5,7 +5,7 @@
 #include "spi_func_ptrs.h"
 
 void spi_tx_bytes(const spi_handle_t * const spi_handle,
-                  transaction_type_t transaction_type,
+                  const transaction_type_t transaction_type,
                   ARRAY_OF_SIZE(char, tx_bytes, num_bytes),
                   const size_t num_bytes)
 {
@@ -33,7 +33,7 @@ void spi_tx_bytes(const spi_handle_t * const spi_handle,
 }
 
 void spi_rx_bytes(const spi_handle_t * const spi_handle,
-                  transaction_type_t transaction_type,
+                  const transaction_type_t transaction_type,
                   ARRAY_OF_SIZE(char, rx_bytes, num_bytes),
                   const size_t num_bytes)
 {
@@ -61,7 +61,7 @@ void spi_rx_bytes(const spi_handle_t * const spi_handle,
 }
 
 void spi_tx_words(const spi_handle_t * const spi_handle,
-                  transaction_type_t transaction_type,
+                  const transaction_type_t transaction_type,
                   ARRAY_OF_SIZE(unsigned, tx_words, num_words),
                   const size_t num_words)
 {
@@ -89,7 +89,7 @@ void spi_tx_words(const spi_handle_t * const spi_handle,
 }
 
 void spi_rx_words(const spi_handle_t * const spi_handle,
-                  transaction_type_t transaction_type,
+                  const transaction_type_t transaction_type,
                   ARRAY_OF_SIZE(unsigned, rx_words, num_words),
                   const size_t num_words)
 {
