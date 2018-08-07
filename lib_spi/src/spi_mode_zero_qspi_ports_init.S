@@ -6,8 +6,8 @@
 .issue_mode dual
 
 //Deducting one from NUM_DATA from the get-go to enable 1 byte reads below...
-{ldw SCLK, QSPI_PORTS[1]; sub NUM_DATA, NUM_DATA, 1}
-{ldw SIO, QSPI_PORTS[2]; mkmsk INDEX, 32}
+{ldw SCLK, QSPI_PORTS[0]; sub NUM_DATA, NUM_DATA, 1}
+{ldw SIO, QSPI_PORTS[1]; mkmsk INDEX, 32}
 //Mode 0 requires cpol 0 clock edges
 //cpol 0 starts/finish low
 {ldw CLK_EDGES, dp[clock_edges_cpol_zero]; ldc CLK_START_END, 0}

@@ -48,7 +48,7 @@ typedef enum transaction_type_t
   transaction_type_qspi,
 } transaction_type_t;
 
-#define SIZEOF_SPI_HANDLE 7
+#define SIZEOF_SPI_HANDLE 6
 typedef struct spi_handle_t
 {
   const unsigned x[SIZEOF_SPI_HANDLE];
@@ -63,13 +63,11 @@ typedef struct port_timings_t
 typedef struct spi_ports_impl_t
 {
 #ifdef __XC__
-  unsafe out port                     spi_cs;
   unsafe out buffered port:32         spi_sclk;
   unsafe out buffered port:32         spi_mosi;
   unsafe in buffered port:32          spi_miso;
   unsafe clock                        spi_clk_blk;
 #else
-  unsigned                            spi_cs;
   unsigned                            spi_sclk;
   unsigned                            spi_mosi;
   unsigned                            spi_miso;
@@ -80,12 +78,10 @@ typedef struct spi_ports_impl_t
 typedef struct qspi_ports_impl_t
 {
 #ifdef __XC__
-  unsafe out port                             qspi_cs;
   unsafe out buffered port:32                 qspi_sclk;
   unsafe [[bidirectional]]buffered port:32    qspi_sio;
   unsafe clock                                qspi_clk_blk;
 #else
-  unsigned                                    qspi_cs;
   unsigned                                    qspi_sclk;
   unsigned                                    qspi_sio;
   unsigned                                    qspi_clk_blk;
@@ -116,7 +112,6 @@ extern void set_spi_port_mode_three_fptrs(void);
 
 inline void create_spi_handle(spi_handle_t * const handle,
                               const spi_mode_t mode,
-                              out port cs,
                               out_buffered_port_32_t sclk,
                               out_buffered_port_32_t mosi,
                               in_buffered_port_32_t miso,
@@ -128,7 +123,6 @@ inline void create_spi_handle(spi_handle_t * const handle,
 
     internal_handle->port_type = ports_type_spi;
     internal_handle->spi_mode = mode;
-    internal_handle->ports_union.spi_ports_impl.spi_cs = cs;
     internal_handle->ports_union.spi_ports_impl.spi_sclk = sclk;
     internal_handle->ports_union.spi_ports_impl.spi_mosi = mosi;
     internal_handle->ports_union.spi_ports_impl.spi_miso = miso;
@@ -167,7 +161,6 @@ extern void set_qspi_port_mode_three_fptrs(void);
 
 inline void create_qspi_handle(spi_handle_t * const handle,
                                const spi_mode_t mode,
-                               out port cs,
                                out_buffered_port_32_t sclk,
                                bidirectional_buffered_port_t sio,
                                const clock clk_blk)
@@ -178,7 +171,6 @@ inline void create_qspi_handle(spi_handle_t * const handle,
 
     internal_handle->port_type = ports_type_qspi;
     internal_handle->spi_mode = mode;
-    internal_handle->ports_union.qspi_ports_impl.qspi_cs = cs;
     internal_handle->ports_union.qspi_ports_impl.qspi_sclk = sclk;
     internal_handle->ports_union.qspi_ports_impl.qspi_sio = sio;
     internal_handle->ports_union.qspi_ports_impl.qspi_clk_blk = clk_blk;

@@ -16,14 +16,13 @@
  *
  *  \param handle: spi_handle_t                       The handle obtained from create_spi_ports/create_qspi_ports.
  *  \param mode: spi_mode_t                           The mode SPI will operate in.
- *  \param cs: out port                               The port connected to the chip-select of the device.
  *  \param sclk: out buffered port:32                 The port connected to the clock input for the device.
  *  \param mosi: out buffered port:32                 The port connected to the master output slave input for the device.
  *  \param miso: in buffered port:32                  The port connected to the master input slave output for the device.
  *  \param clk_blk: clock                             The clock resource for the device.
  **/
-#define CREATE_SPI_HANDLE(handle, mode, cs, sclk, mosi, miso, clk_blk) \
-  (create_spi_handle(handle, mode, cs, sclk, mosi, miso, clk_blk))
+#define CREATE_SPI_HANDLE(handle, mode, sclk, mosi, miso, clk_blk) \
+  (create_spi_handle(handle, mode, sclk, mosi, miso, clk_blk))
 
 /**
  * CREATE_QSPI_HANDLE: Create a handle using Quad-SPI ports to be used within this library
@@ -32,14 +31,13 @@
  *
  *  \param handle: spi_handle_t                       The handle obtained from create_spi_ports/create_qspi_ports.
  *  \param mode: spi_mode_t                           The mode SPI will operate in.
- *  \param cs: out port                               The port connected to the chip-select of the device.
  *  \param sclk: out buffered port:32                 The port connected to the clock input for the device.
  *  \param sio: [[bidirectional]] buffered port:32    The port connected to the master output slave input for the device.
  *  \param clk_blk: clock                             The clock resource for the device.
  **/
 #if defined(__XS2A__)
-#define CREATE_QSPI_HANDLE(handle, mode, cs, sclk, sio, clk_blk) \
-  (create_qspi_handle(handle, mode, cs, sclk, sio, clk_blk))
+#define CREATE_QSPI_HANDLE(handle, mode, sclk, sio, clk_blk) \
+  (create_qspi_handle(handle, mode, sclk, sio, clk_blk))
 #else //defined(__XS2A__)
 #error "CREATE_QSPI_HANDLE() may only be used for XS2 devices"
 #endif //defined(__XS2A__)
