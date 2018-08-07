@@ -18,34 +18,42 @@ extern "C" {
 //Function pointers for the actual SPI/QSPI implementation
 
 void (*fptr_spi_tx_bytes_impl)(const spi_handle_t * const internal_handle,
+                               const port_timings_t port_timings,
                                char * tx_bytes,
                                const unsigned int num_bytes);
 
 void (*fptr_spi_rx_bytes_impl)(const spi_handle_t * const internal_handle,
+                               const port_timings_t port_timings,
                                char * rx_bytes,
                                const unsigned int num_bytes);
 
 void (*fptr_spi_tx_words_impl)(const spi_handle_t * const internal_handle,
+                               const port_timings_t port_timings,
                                unsigned * tx_words,
                                const unsigned int num_words);
 
 void (*fptr_spi_rx_words_impl)(const spi_handle_t * const internal_handle,
+                               const port_timings_t port_timings,
                                unsigned * rx_words,
                                const unsigned int num_words);
 
 void (*fptr_qspi_tx_bytes_impl)(const spi_handle_t * const internal_handle,
+                                const port_timings_t port_timings,
                                 char * tx_bytes,
                                 const unsigned int num_bytes);
 
 void (*fptr_qspi_rx_bytes_impl)(const spi_handle_t * const internal_handle,
+                                const port_timings_t port_timings,
                                 char * rx_bytes,
                                 const unsigned int num_bytes);
 
 void (*fptr_qspi_tx_words_impl)(const spi_handle_t * const internal_handle,
+                                const port_timings_t port_timings,
                                 unsigned * tx_words,
                                 const unsigned int num_words);
 
 void (*fptr_qspi_rx_words_impl)(const spi_handle_t * const internal_handle,
+                                const port_timings_t port_timings,
                                 unsigned * rx_words,
                                 const unsigned int num_words);
 
@@ -53,73 +61,81 @@ void (*fptr_qspi_rx_words_impl)(const spi_handle_t * const internal_handle,
 //Accessors for the function pointers
 
 void spi_tx_bytes_impl(const spi_handle_t * const internal_handle,
+                       const port_timings_t port_timings,
                        char * tx_bytes,
                        const unsigned int num_bytes)
 {
-  (*fptr_spi_tx_bytes_impl)(internal_handle, tx_bytes, num_bytes);
+  (*fptr_spi_tx_bytes_impl)(internal_handle, port_timings, tx_bytes, num_bytes);
 }
 
 
 
 void spi_rx_bytes_impl(const spi_handle_t * const internal_handle,
+                       const port_timings_t port_timings,
                        char * rx_bytes,
                        const unsigned int num_bytes)
 {
-  (*fptr_spi_rx_bytes_impl)(internal_handle, rx_bytes, num_bytes);
+  (*fptr_spi_rx_bytes_impl)(internal_handle, port_timings, rx_bytes, num_bytes);
 }
 
 
 
 void spi_tx_words_impl(const spi_handle_t * const internal_handle,
+                       const port_timings_t port_timings,
                        unsigned * tx_words,
                        const unsigned int num_words)
 {
-  (*fptr_spi_tx_words_impl)(internal_handle, tx_words, num_words);
+  (*fptr_spi_tx_words_impl)(internal_handle, port_timings, tx_words, num_words);
 }
 
 
 
 void spi_rx_words_impl(const spi_handle_t * const internal_handle,
+                       const port_timings_t port_timings,
                        unsigned * rx_words,
                        const unsigned int num_words)
 {
-  (*fptr_spi_rx_words_impl)(internal_handle, rx_words, num_words);
+  (*fptr_spi_rx_words_impl)(internal_handle, port_timings, rx_words, num_words);
 }
 
 
 
 void qspi_tx_bytes_impl(const spi_handle_t * const internal_handle,
+                        const port_timings_t port_timings,
                         char * tx_bytes,
                         const unsigned int num_bytes)
 {
-  (*fptr_qspi_tx_bytes_impl)(internal_handle, tx_bytes, num_bytes);
+  (*fptr_qspi_tx_bytes_impl)(internal_handle, port_timings, tx_bytes, num_bytes);
 }
 
 
 
 void qspi_rx_bytes_impl(const spi_handle_t * const internal_handle,
+                        const port_timings_t port_timings,
                         char * rx_bytes,
                         const unsigned int num_bytes)
 {
-  (*fptr_qspi_rx_bytes_impl)(internal_handle, rx_bytes, num_bytes);
+  (*fptr_qspi_rx_bytes_impl)(internal_handle, port_timings, rx_bytes, num_bytes);
 }
 
 
 
 void qspi_tx_words_impl(const spi_handle_t * const internal_handle,
+                        const port_timings_t port_timings,
                         unsigned * tx_words,
                         const unsigned int num_words)
 {
-  (*fptr_qspi_tx_words_impl)(internal_handle, tx_words, num_words);
+  (*fptr_qspi_tx_words_impl)(internal_handle, port_timings, tx_words, num_words);
 }
 
 
 
 void qspi_rx_words_impl(const spi_handle_t * const internal_handle,
+                        const port_timings_t port_timings,
                         unsigned * rx_words,
                         const unsigned int num_words)
 {
-  (*fptr_qspi_rx_words_impl)(internal_handle, rx_words, num_words);
+  (*fptr_qspi_rx_words_impl)(internal_handle, port_timings, rx_words, num_words);
 }
 
 

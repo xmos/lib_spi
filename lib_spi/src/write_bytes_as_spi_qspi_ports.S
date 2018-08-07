@@ -5,31 +5,34 @@
 //up the required byte.  The data must be transmitted from pin IO0 (SI) of the
 //4 pin port.
 
+#include <xs1.h>
+
 #if defined(__XS2A__)
 
-#define STACKWORDS          10
+#define STACKWORDS_TEN      10
 #define STACKWORDS_NONE     0
 
 #define EIGHT_CLOCK_EDGES   16 //doubled up
 
+#define CLK_START_END_STACK_LOCATION 9
+
+#define PORT_SETUP_DELAYS_OFFSET 0
+
 //Registers
 #define QSPI_PORTS          r0
-#define TX_DATA             r1
-#define NUM_DATA            r2
-#define SCLK                r3
-#define SIO                 r4
-#define CLK_EDGES           r5
-#define CLK_START_END       r6 //Saved onto the stack!
-#define PORT_MODE           r6
-#define PORT_TIME           r6
-#define WORD_OUT_ONE        r7
-#define WORD_OUT_TWO        r8
-#define PORT_DELAY          r9
+#define PORT_TIMINGS        r1
+#define TX_DATA             r2
+#define NUM_DATA            r3
+#define SCLK                r4
+#define SIO                 r5
+#define CLK_EDGES           r6
+#define CLK_START_END       r7 //Saved onto the stack!
+#define PORT_MODE           r7
+#define PORT_TIME           r7
+#define WORD_OUT_ONE        r8
+#define WORD_OUT_TWO        r9
 #define INDEX               r10
 #define LUT_SI_PIN          r11
-
-#define CLK_START_END_STACK_LOCATION 8
-
 
 //Data Pool for clock edges
 .section  .dp.data,"awd",@progbits
@@ -48,6 +51,7 @@ clock_edges_cpol_one:
 //Writes bytes from memory up to and including speeds of 50MHz
 //
 //in      - internal_handle : spi_handle_t
+//in      - port_timings : port_timings_t
 //out     - tx_bytes : char*
 //in      - num_bytes : unsigned
 //return  - void
@@ -60,16 +64,17 @@ clock_edges_cpol_one:
 
 qspi_port_spi_mode_zero_write_bytes_asm:
 .issue_mode dual
-  DUALENTSP_lu6 STACKWORDS
+  DUALENTSP_lu6 STACKWORDS_TEN
 
+  //Callee save registers
   //Dont touch sp[0] as thats used for the lr
-  std r4, r5, sp[1]
-  std r6, r7, sp[2]
-  std r8, r9, sp[3]
+  std r4, r5, sp[1] //sp[2]..sp[3]
+  std r6, r7, sp[2] //sp[4]..sp[5]
+  std r8, r9, sp[3] //sp[6]..sp[7]
+  stw r10, sp[8]    //sp[8]
 
   //Deducting one from NUM_DATA from the get-go to enable 1 byte reads below...
   {ldw SCLK, QSPI_PORTS[1]; sub NUM_DATA, NUM_DATA, 1}
-  //Initialising the INDEX to -1
   {ldw SIO, QSPI_PORTS[2]; mkmsk INDEX, 32}
   //Mode 0 requires cpol 0 clock edges
   //cpol 0 starts/finish low
@@ -78,16 +83,17 @@ qspi_port_spi_mode_zero_write_bytes_asm:
 
   //Store the CLK_START_END to the stack as we'll clobber this register in the
   //loop below.  We can restore it from the stack at the end of the loop.
-  {stw CLK_START_END, sp[CLK_START_END_STACK_LOCATION]; add INDEX, INDEX, 1}
+  stw CLK_START_END, sp[CLK_START_END_STACK_LOCATION]
 
   bl qspi_port_write_bytes_asm
 
   //Callee restore registers
-  ldd r4, r5, sp[1]
-  ldd r6, r7, sp[2]
-  ldd r8, r9, sp[3]
+  ldd r4, r5, sp[1] //sp[2]..sp[3]
+  ldd r6, r7, sp[2] //sp[4]..sp[5]
+  ldd r8, r9, sp[3] //sp[6]..sp[7]
+  ldw r10, sp[8]    //sp[8]
 
-  retsp STACKWORDS
+  retsp STACKWORDS_TEN
 
 .qspi_port_spi_mode_zero_write_bytes_asm_tmp:
   .size qspi_port_spi_mode_zero_write_bytes_asm, .qspi_port_spi_mode_zero_write_bytes_asm_tmp - qspi_port_spi_mode_zero_write_bytes_asm
@@ -101,6 +107,7 @@ qspi_port_spi_mode_zero_write_bytes_asm:
 //Writes bytes from memory up to and including speeds of 50MHz
 //
 //in      - internal_handle : spi_handle_t
+//in      - port_timings : port_timings_t
 //out     - tx_bytes : char*
 //in      - num_bytes : unsigned
 //return  - void
@@ -114,36 +121,38 @@ qspi_port_spi_mode_zero_write_bytes_asm:
 qspi_port_spi_mode_one_write_bytes_asm:
 
 .issue_mode dual
-  DUALENTSP_lu6 STACKWORDS
+  DUALENTSP_lu6 STACKWORDS_TEN
 
+  //Callee save registers
   //Dont touch sp[0] as thats used for the lr
-  std r4, r5, sp[1]
-  std r6, r7, sp[2]
-  std r8, r9, sp[3]
+  std r4, r5, sp[1] //sp[2]..sp[3]
+  std r6, r7, sp[2] //sp[4]..sp[5]
+  std r8, r9, sp[3] //sp[6]..sp[7]
+  stw r10, sp[8]    //sp[8]
 
   //Deducting one from NUM_DATA from the get-go to enable 1 byte reads below...
   {ldw SCLK, QSPI_PORTS[1]; sub NUM_DATA, NUM_DATA, 1}
-  //Initialising the INDEX to -1
   {ldw SIO, QSPI_PORTS[2]; mkmsk INDEX, 32}
-  //Mode 0 requires cpol 0 clock edges
+  //Mode 1 requires cpol 0 clock edges
   //cpol 0 starts/finish low
   {ldw CLK_EDGES, dp[clock_edges_cpol_zero]; ldc CLK_START_END, 0}
   outpw res[SCLK], CLK_START_END, 1
 
   //Store the CLK_START_END to the stack as we'll clobber this register in the
   //loop below.  We can restore it from the stack at the end of the loop.
-  {stw CLK_START_END, sp[CLK_START_END_STACK_LOCATION]; add INDEX, INDEX, 1}
+  stw CLK_START_END, sp[CLK_START_END_STACK_LOCATION]
 
   //TODO: Offset cpha
 
   bl qspi_port_write_bytes_asm
 
   //Callee restore registers
-  ldd r4, r5, sp[1]
-  ldd r6, r7, sp[2]
-  ldd r8, r9, sp[3]
+  ldd r4, r5, sp[1] //sp[2]..sp[3]
+  ldd r6, r7, sp[2] //sp[4]..sp[5]
+  ldd r8, r9, sp[3] //sp[6]..sp[7]
+  ldw r10, sp[8]    //sp[8]
 
-retsp STACKWORDS
+retsp STACKWORDS_TEN
 
 .qspi_port_spi_mode_one_write_bytes_asm_tmp:
   .size qspi_port_spi_mode_one_write_bytes_asm, .qspi_port_spi_mode_one_write_bytes_asm_tmp - qspi_port_spi_mode_one_write_bytes_asm
@@ -157,6 +166,7 @@ retsp STACKWORDS
 //Writes bytes from memory up to and including speeds of 50MHz
 //
 //in      - internal_handle : spi_handle_t
+//in      - port_timings : port_timings_t
 //out     - tx_bytes : char*
 //in      - num_bytes : unsigned
 //return  - void
@@ -170,34 +180,36 @@ retsp STACKWORDS
 qspi_port_spi_mode_two_write_bytes_asm:
 
 .issue_mode dual
-  DUALENTSP_lu6 STACKWORDS
+  DUALENTSP_lu6 STACKWORDS_TEN
 
+  //Callee save registers
   //Dont touch sp[0] as thats used for the lr
-  std r4, r5, sp[1]
-  std r6, r7, sp[2]
-  std r8, r9, sp[3]
+  std r4, r5, sp[1] //sp[2]..sp[3]
+  std r6, r7, sp[2] //sp[4]..sp[5]
+  std r8, r9, sp[3] //sp[6]..sp[7]
+  stw r10, sp[8]    //sp[8]
 
   //Deducting one from NUM_DATA from the get-go to enable 1 byte reads below...
   {ldw SCLK, QSPI_PORTS[1]; sub NUM_DATA, NUM_DATA, 1}
-  //Initialising the INDEX to -1
   {ldw SIO, QSPI_PORTS[2]; mkmsk INDEX, 32}
-  //Mode 0 requires cpol 0 clock edges
-  //cpol 0 starts/finish low
+  //Mode 2 requires cpol 1 clock edges
+  //cpol 1 starts/finish high
   {ldw CLK_EDGES, dp[clock_edges_cpol_one]; ldc CLK_START_END, 1}
   outpw res[SCLK], CLK_START_END, 1
 
   //Store the CLK_START_END to the stack as we'll clobber this register in the
   //loop below.  We can restore it from the stack at the end of the loop.
-  {stw CLK_START_END, sp[CLK_START_END_STACK_LOCATION]; add INDEX, INDEX, 1}
+  stw CLK_START_END, sp[CLK_START_END_STACK_LOCATION]
 
   bl qspi_port_write_bytes_asm
 
   //Callee restore registers
-  ldd r4, r5, sp[1]
-  ldd r6, r7, sp[2]
-  ldd r8, r9, sp[3]
+  ldd r4, r5, sp[1] //sp[2]..sp[3]
+  ldd r6, r7, sp[2] //sp[4]..sp[5]
+  ldd r8, r9, sp[3] //sp[6]..sp[7]
+  ldw r10, sp[8]    //sp[8]
 
-retsp STACKWORDS
+retsp STACKWORDS_TEN
 
 .qspi_port_spi_mode_two_write_bytes_asm_tmp:
   .size qspi_port_spi_mode_two_write_bytes_asm, .qspi_port_spi_mode_two_write_bytes_asm_tmp - qspi_port_spi_mode_two_write_bytes_asm
@@ -211,6 +223,7 @@ retsp STACKWORDS
 //Writes bytes from memory up to and including speeds of 50MHz
 //
 //in      - internal_handle : spi_handle_t
+//in      - port_timings : port_timings_t
 //out     - tx_bytes : char*
 //in      - num_bytes : unsigned
 //return  - void
@@ -224,36 +237,38 @@ retsp STACKWORDS
 qspi_port_spi_mode_three_write_bytes_asm:
 
 .issue_mode dual
-  DUALENTSP_lu6 STACKWORDS
+  DUALENTSP_lu6 STACKWORDS_TEN
 
+  //Callee save registers
   //Dont touch sp[0] as thats used for the lr
-  std r4, r5, sp[1]
-  std r6, r7, sp[2]
-  std r8, r9, sp[3]
+  std r4, r5, sp[1] //sp[2]..sp[3]
+  std r6, r7, sp[2] //sp[4]..sp[5]
+  std r8, r9, sp[3] //sp[6]..sp[7]
+  stw r10, sp[8]    //sp[8]
 
   //Deducting one from NUM_DATA from the get-go to enable 1 byte reads below...
   {ldw SCLK, QSPI_PORTS[1]; sub NUM_DATA, NUM_DATA, 1}
-  //Initialising the INDEX to -1
   {ldw SIO, QSPI_PORTS[2]; mkmsk INDEX, 32}
-  //Mode 0 requires cpol 0 clock edges
-  //cpol 0 starts/finish low
+  //Mode 3 requires cpol 1 clock edges
+  //cpol 1 starts/finish high
   {ldw CLK_EDGES, dp[clock_edges_cpol_one]; ldc CLK_START_END, 1}
   outpw res[SCLK], CLK_START_END, 1
 
   //Store the CLK_START_END to the stack as we'll clobber this register in the
   //loop below.  We can restore it from the stack at the end of the loop.
-  {stw CLK_START_END, sp[CLK_START_END_STACK_LOCATION]; add INDEX, INDEX, 1}
+  stw CLK_START_END, sp[CLK_START_END_STACK_LOCATION]
 
   //TODO: Offset cpha
 
   bl qspi_port_write_bytes_asm
 
   //Callee restore registers
-  ldd r4, r5, sp[1]
-  ldd r6, r7, sp[2]
-  ldd r8, r9, sp[3]
+  ldd r4, r5, sp[1] //sp[2]..sp[3]
+  ldd r6, r7, sp[2] //sp[4]..sp[5]
+  ldd r8, r9, sp[3] //sp[6]..sp[7]
+  ldw r10, sp[8]    //sp[8]
 
-retsp STACKWORDS
+retsp STACKWORDS_TEN
 
 .qspi_port_spi_mode_three_write_bytes_asm_tmp:
   .size qspi_port_spi_mode_three_write_bytes_asm, .qspi_port_spi_mode_three_write_bytes_asm_tmp - qspi_port_spi_mode_three_write_bytes_asm
@@ -298,6 +313,7 @@ qspi_port_write_bytes_asm:
   DUALENTSP_lu6 STACKWORDS_NONE
 
   //Format the first byte so that it is all lined up on the SI pin
+  add INDEX, INDEX, 1
   {ld8u WORD_OUT_ONE, TX_DATA[INDEX]; ldap LUT_SI_PIN, lut_align_byte_to_si_pin}
   {ld8u WORD_OUT_TWO, TX_DATA[INDEX]; shr WORD_OUT_ONE, WORD_OUT_ONE, 0x4}
   {ldw WORD_OUT_ONE, LUT_SI_PIN[WORD_OUT_ONE]; zext WORD_OUT_TWO, 0x4}
@@ -309,11 +325,12 @@ qspi_port_write_bytes_asm:
   setc res[SIO], PORT_MODE
   in PORT_TIME, res[SIO]
   getts PORT_TIME, res[SIO]
-  ldc PORT_DELAY, 0x96 //TODO: configurable port setup delay
-  add PORT_DELAY, PORT_TIME, PORT_DELAY
-  setpt res[SCLK], PORT_DELAY
-  setpt res[SIO], PORT_DELAY
+  ldw PORT_TIMINGS, PORT_TIMINGS[PORT_SETUP_DELAYS_OFFSET]
+  add PORT_TIME, PORT_TIME, PORT_TIMINGS
+  setpt res[SCLK], PORT_TIME
   outpw res[SCLK], CLK_EDGES, EIGHT_CLOCK_EDGES
+  setpt res[SIO], PORT_TIME
+
 
   //If there is only one byte of data to send:
   //skip on down to read the final(only) byte...

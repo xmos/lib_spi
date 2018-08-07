@@ -54,6 +54,12 @@ typedef struct spi_handle_t
   const unsigned x[SIZEOF_SPI_HANDLE];
 } spi_handle_t;
 
+typedef struct port_timings_t
+{
+  unsigned port_setup_delay;
+  unsigned port_input_delay;
+} port_timings_t;
+
 typedef struct spi_ports_impl_t
 {
 #ifdef __XC__
