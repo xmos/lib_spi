@@ -27,17 +27,6 @@
 #define INDEX               r9
 #define CLK_START_END       r10
 
-//Data Pool for clock edges
-.section  .dp.data,"awd",@progbits
-.align 4
-.cc_top clock_edge_data.datum
-clock_edges_cpol_zero:
-  .word 0xAAAA //8 edges (doubled up to 16)
-clock_edges_cpol_one:
-  .word 0x5555 //8 edges (doubled up to 16)
-.cc_bottom clock_edge_data.datum
-.text
-
 ////////////////////////////////////////////////////////////////////////////////
 //qspi_port_qspi_mode_zero_read_words_asm
 //
@@ -69,7 +58,8 @@ qspi_port_qspi_mode_zero_read_words_asm:
   {ldw SCLK, QSPI_PORTS[1]; mkmsk INDEX, 32}
   //Mode 0 requires cpol 0 clock edges
   //cpol 0 starts/finish low
-  {ldw CLK_EDGES, dp[clock_edges_cpol_zero]; ldc CLK_START_END, 0}
+  ldw CLK_EDGES, dp[clock_edges_cpol_zero]
+  ldc CLK_START_END, 0
   outpw res[SCLK], CLK_START_END, 1
 
   bl qspi_port_read_words_asm

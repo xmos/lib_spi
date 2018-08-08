@@ -10,7 +10,8 @@
 {ldw SIO, QSPI_PORTS[1]; mkmsk INDEX, 32}
 //Mode 2 requires cpol 1 clock edges
 //cpol 1 starts/finish high
-{ldw CLK_EDGES, dp[clock_edges_cpol_one]; ldc CLK_START_END, 1}
+ldw CLK_EDGES, dp[clock_edges_cpol_one]
+ldc CLK_START_END, 1
 outpw res[SCLK], CLK_START_END, 1
 
 //Store the CLK_START_END to the stack as we'll clobber this register in the
