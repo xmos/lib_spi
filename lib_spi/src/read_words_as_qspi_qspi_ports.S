@@ -8,6 +8,32 @@
 
 #if defined(__XS2A__)
 
+.weak       _fptrgroup.QSPI_RX_WORDS_IMPL.group
+.weak       _fptrgroup.QSPI_RX_WORDS_IMPL.nstackwords.group
+.weak       _fptrgroup.QSPI_RX_WORDS_IMPL.maxcores.group
+.weak       _fptrgroup.QSPI_RX_WORDS_IMPL.maxtimers.group
+.weak       _fptrgroup.QSPI_RX_WORDS_IMPL.maxchanends.group
+.add_to_set _fptrgroup.QSPI_RX_WORDS_IMPL.group, qspi_port_qspi_mode_zero_read_words_asm, qspi_port_qspi_mode_zero_read_words_asm
+.add_to_set _fptrgroup.QSPI_RX_WORDS_IMPL.nstackwords.group, qspi_port_qspi_mode_zero_read_words_asm.nstackwords, qspi_port_qspi_mode_zero_read_words_asm
+.add_to_set _fptrgroup.QSPI_RX_WORDS_IMPL.maxcores.group, qspi_port_qspi_mode_zero_read_words_asm.maxcores, qspi_port_qspi_mode_zero_read_words_asm
+.add_to_set _fptrgroup.QSPI_RX_WORDS_IMPL.maxtimers.group, qspi_port_qspi_mode_zero_read_words_asm.maxtimers, qspi_port_qspi_mode_zero_read_words_asm
+.add_to_set _fptrgroup.QSPI_RX_WORDS_IMPL.maxchanends.group, qspi_port_qspi_mode_zero_read_words_asm.maxchanends, qspi_port_qspi_mode_zero_read_words_asm
+.add_to_set _fptrgroup.QSPI_RX_WORDS_IMPL.group, qspi_port_qspi_mode_one_read_words_asm, qspi_port_qspi_mode_one_read_words_asm
+.add_to_set _fptrgroup.QSPI_RX_WORDS_IMPL.nstackwords.group, qspi_port_qspi_mode_one_read_words_asm.nstackwords, qspi_port_qspi_mode_one_read_words_asm
+.add_to_set _fptrgroup.QSPI_RX_WORDS_IMPL.maxcores.group, qspi_port_qspi_mode_one_read_words_asm.maxcores, qspi_port_qspi_mode_one_read_words_asm
+.add_to_set _fptrgroup.QSPI_RX_WORDS_IMPL.maxtimers.group, qspi_port_qspi_mode_one_read_words_asm.maxtimers, qspi_port_qspi_mode_one_read_words_asm
+.add_to_set _fptrgroup.QSPI_RX_WORDS_IMPL.maxchanends.group, qspi_port_qspi_mode_one_read_words_asm.maxchanends, qspi_port_qspi_mode_one_read_words_asm
+.add_to_set _fptrgroup.QSPI_RX_WORDS_IMPL.group, qspi_port_qspi_mode_two_read_words_asm, qspi_port_qspi_mode_two_read_words_asm
+.add_to_set _fptrgroup.QSPI_RX_WORDS_IMPL.nstackwords.group, qspi_port_qspi_mode_two_read_words_asm.nstackwords, qspi_port_qspi_mode_two_read_words_asm
+.add_to_set _fptrgroup.QSPI_RX_WORDS_IMPL.maxcores.group, qspi_port_qspi_mode_two_read_words_asm.maxcores, qspi_port_qspi_mode_two_read_words_asm
+.add_to_set _fptrgroup.QSPI_RX_WORDS_IMPL.maxtimers.group, qspi_port_qspi_mode_two_read_words_asm.maxtimers, qspi_port_qspi_mode_two_read_words_asm
+.add_to_set _fptrgroup.QSPI_RX_WORDS_IMPL.maxchanends.group, qspi_port_qspi_mode_two_read_words_asm.maxchanends, qspi_port_qspi_mode_two_read_words_asm
+.add_to_set _fptrgroup.QSPI_RX_WORDS_IMPL.group, qspi_port_qspi_mode_three_read_words_asm, qspi_port_qspi_mode_three_read_words_asm
+.add_to_set _fptrgroup.QSPI_RX_WORDS_IMPL.nstackwords.group, qspi_port_qspi_mode_three_read_words_asm.nstackwords, qspi_port_qspi_mode_three_read_words_asm
+.add_to_set _fptrgroup.QSPI_RX_WORDS_IMPL.maxcores.group, qspi_port_qspi_mode_three_read_words_asm.maxcores, qspi_port_qspi_mode_three_read_words_asm
+.add_to_set _fptrgroup.QSPI_RX_WORDS_IMPL.maxtimers.group, qspi_port_qspi_mode_three_read_words_asm.maxtimers, qspi_port_qspi_mode_three_read_words_asm
+.add_to_set _fptrgroup.QSPI_RX_WORDS_IMPL.maxchanends.group, qspi_port_qspi_mode_three_read_words_asm.maxchanends, qspi_port_qspi_mode_three_read_words_asm
+
 #define STACKWORDS          8
 
 #define EIGHT_CLOCK_EDGES   16 //doubled up

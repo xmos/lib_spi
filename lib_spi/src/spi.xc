@@ -4,6 +4,10 @@
 
 #include "spi_func_ptrs.h"
 
+#if defined(XASSERT_ENABLE_ASSERTIONS)
+#include <xassert.h>
+#endif //defined(XASSERT_ENABLE_ASSERTIONS)
+
 void spi_tx_bytes(const spi_handle_t * const spi_handle,
                   const transaction_type_t transaction_type,
                   const port_timings_t port_timings,
@@ -21,7 +25,7 @@ void spi_tx_bytes(const spi_handle_t * const spi_handle,
       #if defined(XASSERT_ENABLE_ASSERTIONS)
       unsafe
       {
-        spi_handle_impl_t *unsafe internal_handle = (spi_handle_impl_t *unsafe)handle;
+        spi_handle_impl_t *unsafe internal_handle = (spi_handle_impl_t *unsafe)spi_handle;
         assert(internal_handle->port_type == ports_type_qspi && msg("transaction_type_qspi can only be used in conjunction with QSPI ports"));
       }
       #endif //defined(XASSERT_ENABLE_ASSERTIONS)
@@ -50,7 +54,7 @@ void spi_rx_bytes(const spi_handle_t * const spi_handle,
       #if defined(XASSERT_ENABLE_ASSERTIONS)
       unsafe
       {
-        spi_handle_impl_t *unsafe internal_handle = (spi_handle_impl_t *unsafe)handle;
+        spi_handle_impl_t *unsafe internal_handle = (spi_handle_impl_t *unsafe)spi_handle;
         assert(internal_handle->port_type == ports_type_qspi && msg("transaction_type_qspi can only be used in conjunction with QSPI ports"));
       }
       #endif //defined(XASSERT_ENABLE_ASSERTIONS)
@@ -79,7 +83,7 @@ void spi_tx_words(const spi_handle_t * const spi_handle,
       #if defined(XASSERT_ENABLE_ASSERTIONS)
       unsafe
       {
-        spi_handle_impl_t *unsafe internal_handle = (spi_handle_impl_t *unsafe)handle;
+        spi_handle_impl_t *unsafe internal_handle = (spi_handle_impl_t *unsafe)spi_handle;
         assert(internal_handle->port_type == ports_type_qspi && msg("transaction_type_qspi can only be used in conjunction with QSPI ports"));
       }
       #endif //defined(XASSERT_ENABLE_ASSERTIONS)
@@ -108,7 +112,7 @@ void spi_rx_words(const spi_handle_t * const spi_handle,
       #if defined(XASSERT_ENABLE_ASSERTIONS)
       unsafe
       {
-        spi_handle_impl_t *unsafe internal_handle = (spi_handle_impl_t *unsafe)handle;
+        spi_handle_impl_t *unsafe internal_handle = (spi_handle_impl_t *unsafe)spi_handle;
         assert(internal_handle->port_type == ports_type_qspi && msg("transaction_type_qspi can only be used in conjunction with QSPI ports"));
       }
       #endif //defined(XASSERT_ENABLE_ASSERTIONS)

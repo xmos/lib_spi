@@ -10,6 +10,33 @@
 
 #if defined(__XS2A__)
 
+.weak       _fptrgroup.SPI_TX_BYTES_IMPL.group
+.weak       _fptrgroup.SPI_TX_BYTES_IMPL.nstackwords.group
+.weak       _fptrgroup.SPI_TX_BYTES_IMPL.maxcores.group
+.weak       _fptrgroup.SPI_TX_BYTES_IMPL.maxtimers.group
+.weak       _fptrgroup.SPI_TX_BYTES_IMPL.maxchanends.group
+.add_to_set _fptrgroup.SPI_TX_BYTES_IMPL.group, qspi_port_spi_mode_zero_write_bytes_asm, qspi_port_spi_mode_zero_write_bytes_asm
+.add_to_set _fptrgroup.SPI_TX_BYTES_IMPL.nstackwords.group, qspi_port_spi_mode_zero_write_bytes_asm.nstackwords, qspi_port_spi_mode_zero_write_bytes_asm
+.add_to_set _fptrgroup.SPI_TX_BYTES_IMPL.maxcores.group, qspi_port_spi_mode_zero_write_bytes_asm.maxcores, qspi_port_spi_mode_zero_write_bytes_asm
+.add_to_set _fptrgroup.SPI_TX_BYTES_IMPL.maxtimers.group, qspi_port_spi_mode_zero_write_bytes_asm.maxtimers, qspi_port_spi_mode_zero_write_bytes_asm
+.add_to_set _fptrgroup.SPI_TX_BYTES_IMPL.maxchanends.group, qspi_port_spi_mode_zero_write_bytes_asm.maxchanends, qspi_port_spi_mode_zero_write_bytes_asm
+.add_to_set _fptrgroup.SPI_TX_BYTES_IMPL.group, qspi_port_spi_mode_one_write_bytes_asm, qspi_port_spi_mode_one_write_bytes_asm
+.add_to_set _fptrgroup.SPI_TX_BYTES_IMPL.nstackwords.group, qspi_port_spi_mode_one_write_bytes_asm.nstackwords, qspi_port_spi_mode_one_write_bytes_asm
+.add_to_set _fptrgroup.SPI_TX_BYTES_IMPL.maxcores.group, qspi_port_spi_mode_one_write_bytes_asm.maxcores, qspi_port_spi_mode_one_write_bytes_asm
+.add_to_set _fptrgroup.SPI_TX_BYTES_IMPL.maxtimers.group, qspi_port_spi_mode_one_write_bytes_asm.maxtimers, qspi_port_spi_mode_one_write_bytes_asm
+.add_to_set _fptrgroup.SPI_TX_BYTES_IMPL.maxchanends.group, qspi_port_spi_mode_one_write_bytes_asm.maxchanends, qspi_port_spi_mode_one_write_bytes_asm
+.add_to_set _fptrgroup.SPI_TX_BYTES_IMPL.group, qspi_port_spi_mode_two_write_bytes_asm, qspi_port_spi_mode_two_write_bytes_asm
+.add_to_set _fptrgroup.SPI_TX_BYTES_IMPL.nstackwords.group, qspi_port_spi_mode_two_write_bytes_asm.nstackwords, qspi_port_spi_mode_two_write_bytes_asm
+.add_to_set _fptrgroup.SPI_TX_BYTES_IMPL.maxcores.group, qspi_port_spi_mode_two_write_bytes_asm.maxcores, qspi_port_spi_mode_two_write_bytes_asm
+.add_to_set _fptrgroup.SPI_TX_BYTES_IMPL.maxtimers.group, qspi_port_spi_mode_two_write_bytes_asm.maxtimers, qspi_port_spi_mode_two_write_bytes_asm
+.add_to_set _fptrgroup.SPI_TX_BYTES_IMPL.maxchanends.group, qspi_port_spi_mode_two_write_bytes_asm.maxchanends, qspi_port_spi_mode_two_write_bytes_asm
+.add_to_set _fptrgroup.SPI_TX_BYTES_IMPL.group, qspi_port_spi_mode_three_write_bytes_asm, qspi_port_spi_mode_three_write_bytes_asm
+.add_to_set _fptrgroup.SPI_TX_BYTES_IMPL.nstackwords.group, qspi_port_spi_mode_three_write_bytes_asm.nstackwords, qspi_port_spi_mode_three_write_bytes_asm
+.add_to_set _fptrgroup.SPI_TX_BYTES_IMPL.maxcores.group, qspi_port_spi_mode_three_write_bytes_asm.maxcores, qspi_port_spi_mode_three_write_bytes_asm
+.add_to_set _fptrgroup.SPI_TX_BYTES_IMPL.maxtimers.group, qspi_port_spi_mode_three_write_bytes_asm.maxtimers, qspi_port_spi_mode_three_write_bytes_asm
+.add_to_set _fptrgroup.SPI_TX_BYTES_IMPL.maxchanends.group, qspi_port_spi_mode_three_write_bytes_asm.maxchanends, qspi_port_spi_mode_three_write_bytes_asm
+
+
 ////////////////////////////////////////////////////////////////////////////////
 //qspi_port_spi_mode_zero_write_bytes_asm
 //

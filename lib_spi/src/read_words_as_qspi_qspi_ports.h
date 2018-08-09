@@ -5,25 +5,21 @@
 
 #if defined(__XS2A__)
 
-__attribute__((fptrgroup("QSPI_RX_WORDS_IMPL")))
 void qspi_port_qspi_mode_zero_read_words_asm(const spi_handle_t * const internal_handle,
                                              const port_timings_t port_timings,
                                              unsigned * rx_words,
                                              unsigned num_words);
 
-__attribute__((fptrgroup("QSPI_RX_WORDS_IMPL")))
 void qspi_port_qspi_mode_one_read_words_asm(const spi_handle_t * const internal_handle,
                                             const port_timings_t port_timings,
                                             unsigned * rx_words,
                                             unsigned num_words);
 
-__attribute__((fptrgroup("QSPI_RX_WORDS_IMPL")))
 void qspi_port_qspi_mode_two_read_words_asm(const spi_handle_t * const internal_handle,
                                             const port_timings_t port_timings,
                                             unsigned * rx_words,
                                             unsigned num_words);
 
-__attribute__((fptrgroup("QSPI_RX_WORDS_IMPL")))
 void qspi_port_qspi_mode_three_read_words_asm(const spi_handle_t * const internal_handle,
                                               const port_timings_t port_timings,
                                               unsigned * rx_words,

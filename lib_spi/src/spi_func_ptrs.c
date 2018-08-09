@@ -17,49 +17,71 @@ extern "C" {
 
 //Function pointers for the actual SPI/QSPI implementation
 
-__attribute__((fptrgroup("SPI_TX_BYTES_IMPL")))
+//We will perform a check of the function pointer groups only when
+//XASSERT_ENABLE_ASSERTIONS is defined, i.e. during testing.  For normal lib
+//use we do not want to perform this check as it will degrade performance and
+//increase code size.
+#define ENABLE_FPTR_CHECK XASSERT_ENABLE_ASSERTIONS
+
+//Will trap if ENABLE_FPTR_CHECK is set and a function from a different function
+//pointer group is assigned.
+__attribute__((fptrgroup("SPI_TX_BYTES_IMPL", ENABLE_FPTR_CHECK)))
 void (*fptr_spi_tx_bytes_impl)(const spi_handle_t * const internal_handle,
                                const port_timings_t port_timings,
                                char * tx_bytes,
                                const unsigned int num_bytes);
 
-__attribute__((fptrgroup("SPI_RX_BYTES_IMPL")))
+//Will trap if ENABLE_FPTR_CHECK is set and a function from a different function
+//pointer group is assigned.
+__attribute__((fptrgroup("SPI_RX_BYTES_IMPL", ENABLE_FPTR_CHECK)))
 void (*fptr_spi_rx_bytes_impl)(const spi_handle_t * const internal_handle,
                                const port_timings_t port_timings,
                                char * rx_bytes,
                                const unsigned int num_bytes);
 
-__attribute__((fptrgroup("SPI_TX_WORDS_IMPL")))
+//Will trap if ENABLE_FPTR_CHECK is set and a function from a different function
+//pointer group is assigned.
+__attribute__((fptrgroup("SPI_TX_WORDS_IMPL", ENABLE_FPTR_CHECK)))
 void (*fptr_spi_tx_words_impl)(const spi_handle_t * const internal_handle,
                                const port_timings_t port_timings,
                                unsigned * tx_words,
                                const unsigned int num_words);
 
-__attribute__((fptrgroup("SPI_RX_WORDS_IMPL")))
+//Will trap if ENABLE_FPTR_CHECK is set and a function from a different function
+//pointer group is assigned.
+__attribute__((fptrgroup("SPI_RX_WORDS_IMPL", ENABLE_FPTR_CHECK)))
 void (*fptr_spi_rx_words_impl)(const spi_handle_t * const internal_handle,
                                const port_timings_t port_timings,
                                unsigned * rx_words,
                                const unsigned int num_words);
 
-__attribute__((fptrgroup("QSPI_TX_BYTES_IMPL")))
+//Will trap if ENABLE_FPTR_CHECK is set and a function from a different function
+//pointer group is assigned.
+__attribute__((fptrgroup("QSPI_TX_BYTES_IMPL", ENABLE_FPTR_CHECK)))
 void (*fptr_qspi_tx_bytes_impl)(const spi_handle_t * const internal_handle,
                                 const port_timings_t port_timings,
                                 char * tx_bytes,
                                 const unsigned int num_bytes);
 
-__attribute__((fptrgroup("QSPI_RX_BYTES_IMPL")))
+//Will trap if ENABLE_FPTR_CHECK is set and a function from a different function
+//pointer group is assigned.
+__attribute__((fptrgroup("QSPI_RX_BYTES_IMPL", ENABLE_FPTR_CHECK)))
 void (*fptr_qspi_rx_bytes_impl)(const spi_handle_t * const internal_handle,
                                 const port_timings_t port_timings,
                                 char * rx_bytes,
                                 const unsigned int num_bytes);
 
-__attribute__((fptrgroup("QSPI_TX_WORDS_IMPL")))
+                                //Will trap if ENABLE_FPTR_CHECK is set and a function from a different function
+                                //pointer group is assigned.
+__attribute__((fptrgroup("QSPI_TX_WORDS_IMPL", ENABLE_FPTR_CHECK)))
 void (*fptr_qspi_tx_words_impl)(const spi_handle_t * const internal_handle,
                                 const port_timings_t port_timings,
                                 unsigned * tx_words,
                                 const unsigned int num_words);
 
-__attribute__((fptrgroup("QSPI_RX_WORDS_IMPL")))
+//Will trap if ENABLE_FPTR_CHECK is set and a function from a different function
+//pointer group is assigned.
+__attribute__((fptrgroup("QSPI_RX_WORDS_IMPL", ENABLE_FPTR_CHECK)))
 void (*fptr_qspi_rx_words_impl)(const spi_handle_t * const internal_handle,
                                 const port_timings_t port_timings,
                                 unsigned * rx_words,

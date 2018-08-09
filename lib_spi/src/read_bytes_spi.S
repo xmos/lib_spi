@@ -2,6 +2,32 @@
 
 #define STACKWORDS 8
 
+.weak       _fptrgroup.SPI_RX_BYTES_IMPL.group
+.weak       _fptrgroup.SPI_RX_BYTES_IMPL.nstackwords.group
+.weak       _fptrgroup.SPI_RX_BYTES_IMPL.maxcores.group
+.weak       _fptrgroup.SPI_RX_BYTES_IMPL.maxtimers.group
+.weak       _fptrgroup.SPI_RX_BYTES_IMPL.maxchanends.group
+.add_to_set _fptrgroup.SPI_RX_BYTES_IMPL.group, spi_port_spi_mode_zero_read_bytes_asm, spi_port_spi_mode_zero_read_bytes_asm
+.add_to_set _fptrgroup.SPI_RX_BYTES_IMPL.nstackwords.group, spi_port_spi_mode_zero_read_bytes_asm.nstackwords, spi_port_spi_mode_zero_read_bytes_asm
+.add_to_set _fptrgroup.SPI_RX_BYTES_IMPL.maxcores.group, spi_port_spi_mode_zero_read_bytes_asm.maxcores, spi_port_spi_mode_zero_read_bytes_asm
+.add_to_set _fptrgroup.SPI_RX_BYTES_IMPL.maxtimers.group, spi_port_spi_mode_zero_read_bytes_asm.maxtimers, spi_port_spi_mode_zero_read_bytes_asm
+.add_to_set _fptrgroup.SPI_RX_BYTES_IMPL.maxchanends.group, spi_port_spi_mode_zero_read_bytes_asm.maxchanends, spi_port_spi_mode_zero_read_bytes_asm
+.add_to_set _fptrgroup.SPI_RX_BYTES_IMPL.group, spi_port_spi_mode_one_read_bytes_asm, spi_port_spi_mode_one_read_bytes_asm
+.add_to_set _fptrgroup.SPI_RX_BYTES_IMPL.nstackwords.group, spi_port_spi_mode_one_read_bytes_asm.nstackwords, spi_port_spi_mode_one_read_bytes_asm
+.add_to_set _fptrgroup.SPI_RX_BYTES_IMPL.maxcores.group, spi_port_spi_mode_one_read_bytes_asm.maxcores, spi_port_spi_mode_one_read_bytes_asm
+.add_to_set _fptrgroup.SPI_RX_BYTES_IMPL.maxtimers.group, spi_port_spi_mode_one_read_bytes_asm.maxtimers, spi_port_spi_mode_one_read_bytes_asm
+.add_to_set _fptrgroup.SPI_RX_BYTES_IMPL.maxchanends.group, spi_port_spi_mode_one_read_bytes_asm.maxchanends, spi_port_spi_mode_one_read_bytes_asm
+.add_to_set _fptrgroup.SPI_RX_BYTES_IMPL.group, spi_port_spi_mode_two_read_bytes_asm, spi_port_spi_mode_two_read_bytes_asm
+.add_to_set _fptrgroup.SPI_RX_BYTES_IMPL.nstackwords.group, spi_port_spi_mode_two_read_bytes_asm.nstackwords, spi_port_spi_mode_two_read_bytes_asm
+.add_to_set _fptrgroup.SPI_RX_BYTES_IMPL.maxcores.group, spi_port_spi_mode_two_read_bytes_asm.maxcores, spi_port_spi_mode_two_read_bytes_asm
+.add_to_set _fptrgroup.SPI_RX_BYTES_IMPL.maxtimers.group, spi_port_spi_mode_two_read_bytes_asm.maxtimers, spi_port_spi_mode_two_read_bytes_asm
+.add_to_set _fptrgroup.SPI_RX_BYTES_IMPL.maxchanends.group, spi_port_spi_mode_two_read_bytes_asm.maxchanends, spi_port_spi_mode_two_read_bytes_asm
+.add_to_set _fptrgroup.SPI_RX_BYTES_IMPL.group, spi_port_spi_mode_three_read_bytes_asm, spi_port_spi_mode_three_read_bytes_asm
+.add_to_set _fptrgroup.SPI_RX_BYTES_IMPL.nstackwords.group, spi_port_spi_mode_three_read_bytes_asm.nstackwords, spi_port_spi_mode_three_read_bytes_asm
+.add_to_set _fptrgroup.SPI_RX_BYTES_IMPL.maxcores.group, spi_port_spi_mode_three_read_bytes_asm.maxcores, spi_port_spi_mode_three_read_bytes_asm
+.add_to_set _fptrgroup.SPI_RX_BYTES_IMPL.maxtimers.group, spi_port_spi_mode_three_read_bytes_asm.maxtimers, spi_port_spi_mode_three_read_bytes_asm
+.add_to_set _fptrgroup.SPI_RX_BYTES_IMPL.maxchanends.group, spi_port_spi_mode_three_read_bytes_asm.maxchanends, spi_port_spi_mode_three_read_bytes_asm
+
 ////////////////////////////////////////////////////////////////////////////////
 //spi_port_spi_mode_zero_read_bytes_asm
 //
