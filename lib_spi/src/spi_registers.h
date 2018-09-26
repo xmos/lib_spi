@@ -1,0 +1,20 @@
+#define QSPI_PORTS          r0
+#define PORT_TIMINGS        r1
+#define RX_DATA             r2
+#define TX_DATA             r2
+#define NUM_DATA            r3
+#define SCLK                r4
+#define SIO                 r5
+#define CLK_EDGES           r6
+#define CLK_START_END       r7 //Saved onto the stack!
+#define PORT_MODE           r7
+#define PORT_TIME           r7
+#define WORD_IN_ONE         r8
+#define WORD_OUT_ONE        r8
+#define WORD_IN_TWO         r9
+#define WORD_OUT_TWO        r9
+#define INDEX               r10
+#define BYTE_IN             r11
+#define PORT_SETUP_TIME     r11
+#define PORT_INPUT_TIME     r11
+#define LUT_SI_PIN          r11
