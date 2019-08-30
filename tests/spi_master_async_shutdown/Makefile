@@ -6,17 +6,20 @@ TARGET = XCORE-200-EXPLORER
 # The APP_NAME variable determines the name of the final .xe file. It should
 # not include the .xe postfix. If left blank the name will default to
 # the project name
-APP_NAME = AN00160_using_SPI_master
+APP_NAME = spi_master_async_shutdown
 
 # The USED_MODULES variable lists other module used by the application.
-USED_MODULES = lib_spi
+USED_MODULES = lib_spi lib_spi_master_tester
 
 # The flags passed to xcc when building the application
 # You can also set the following to override flags for a particular language:
 # XCC_XC_FLAGS, XCC_C_FLAGS, XCC_ASM_FLAGS, XCC_CPP_FLAGS
 # If the variable XCC_MAP_FLAGS is set it overrides the flags passed to
 # xcc for the final link (mapping) stage.
-XCC_FLAGS = -O2 -g
+COMMON_FLAGS = -O2 -g -Wno-reinterpret-alignment
+
+XCC_FLAGS_0 = $(COMMON_FLAGS) -DCOMBINED=0
+XCC_FLAGS_1 = $(COMMON_FLAGS) -DCOMBINED=1
 
 # The XCORE_ARM_PROJECT variable, if set to 1, configures this
 # project to create both xCORE and ARM binaries.

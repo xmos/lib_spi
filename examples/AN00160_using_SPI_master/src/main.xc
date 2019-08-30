@@ -1,4 +1,4 @@
-// Copyright (c) 2015-2016, XMOS Ltd, All rights reserved
+// Copyright (c) 2015-2019, XMOS Ltd, All rights reserved
 #include <xs1.h>
 #include <spi.h>
 #include <syscall.h>
@@ -99,9 +99,11 @@ void async_app(client spi_master_async_if spi)
     spi.end_transaction(100);
 
     printstrln("Done.");
-    _exit(0);
+
+    spi.shutdown();
 }
 
+#if 1
 int main(void) {
   interface spi_master_if i_spi[1];
   par {
@@ -112,19 +114,23 @@ int main(void) {
   }
   return 0;
 }
+#endif
 
 /* Uncomment the main below (and comment out the one above) to try the
-   async version.
-
+   async version. */
+#if 0
 int main(void) {
   interface spi_master_async_if i_spi_async[1];
   par {
-    on tile[0]: async_app(i_spi_async[0]);
-    on tile[0]: spi_master_async(i_spi_async, 1,
-                                 p_sclk, p_mosi, p_miso, p_ss, 1,
-                                 clk0, clk1);
+    on tile[0]: {
+      par {
+        async_app(i_spi_async[0]);
+        spi_master_async(i_spi_async, 1,
+                         p_sclk, p_mosi, p_miso, p_ss, 1,
+                         clk0, clk1);
+      }
+    }
   }
   return 0;
 }
-
-*/
+#endif

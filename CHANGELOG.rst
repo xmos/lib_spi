@@ -1,6 +1,11 @@
 SPI library change log
 ======================
 
+3.1.0
+-----
+
+  * Add shutdown function to asynchronous master
+
 3.0.4
 -----
 

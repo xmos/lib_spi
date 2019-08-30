@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2016, XMOS Ltd, All rights reserved
+// Copyright (c) 2014-2019, XMOS Ltd, All rights reserved
 #ifndef _spi_h_
 #define _spi_h_
 #include <xs1.h>
@@ -209,6 +209,10 @@ typedef interface spi_master_async_if  {
   [[clears_notification]]
   void retrieve_transfer_buffers_32(uint32_t * movable &inbuf,
                                     uint32_t * movable &outbuf);
+
+  /** Shut down the interface server.
+   */
+  void shutdown(void);
 } spi_master_async_if;
 
 
