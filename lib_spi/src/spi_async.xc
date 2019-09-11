@@ -392,6 +392,9 @@ void spi_master_async(server interface spi_master_async_if i[num_clients],
             case i[int x].shutdown(void):
                 move(buffer_rx);
                 move(buffer_tx);
+                set_port_use_on(sclk);
+                if(!isnull(mosi)) set_port_use_on(mosi);
+                if(!isnull(miso)) set_port_use_on(miso);
                 return;
         }
     }
