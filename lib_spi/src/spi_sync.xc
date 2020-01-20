@@ -1,4 +1,4 @@
-// Copyright (c) 2015-2016, XMOS Ltd, All rights reserved
+// Copyright (c) 2015-2020, XMOS Ltd, All rights reserved
 #include <xs1.h>
 #include <xclib.h>
 #include <stdio.h>
@@ -272,8 +272,10 @@ void spi_master(server interface spi_master_if i[num_clients],
                 get_mode_bits(mode, cpol, cpha);
 
                 //xassert(device_index < num_slaves);
-                set_port_use_on(sclk);
-                configure_out_port(sclk, cb, 0);
+                if (!isnull(cb)){
+                    set_port_use_on(sclk);
+                    configure_out_port(sclk, cb, 0);
+                }
 
                 sync(sclk);
                 //Wait for the chip deassert time if need be

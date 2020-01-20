@@ -1,6 +1,12 @@
 SPI library change log
 ======================
 
+3.1.0
+-----
+
+  * Set up clock port in synchronous master every time (that way clock port can
+    be shared with another task)
+
 3.0.4
 -----
 
