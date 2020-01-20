@@ -6,6 +6,7 @@ SPI library change log
 
   * Set up clock port in synchronous master every time (that way clock port can
     be shared with another task)
+  * Add shutdown function to asynchronous master
 
 3.0.4
 -----

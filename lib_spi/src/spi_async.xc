@@ -1,4 +1,4 @@
-// Copyright (c) 2015-2016, XMOS Ltd, All rights reserved
+// Copyright (c) 2015-2019, XMOS Ltd, All rights reserved
 #include <xs1.h>
 #include <xclib.h>
 #include <stdio.h>
@@ -388,6 +388,9 @@ void spi_master_async(server interface spi_master_async_if i[num_clients],
                 outbuf = move(buffer_tx);
                 break;
             }
+
+            case i[int x].shutdown(void):
+                return;
         }
     }
 
