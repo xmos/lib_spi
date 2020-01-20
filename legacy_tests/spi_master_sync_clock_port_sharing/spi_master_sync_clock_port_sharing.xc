@@ -20,16 +20,12 @@ out port setup_data_port = XS1_PORT_16B;
 void app(client interface spi_master_if spi_i, int mosi_enabled, int miso_enabled){
     int count = 0;
     timer always;
-    timer timebomb;
-    int t, timeout;
-
-    always :> t;
-
-    timeout = t + 100000000;
+    int start;
+    always :> start;
 
     while (1) {
         select {
-            case always when timerafter(t) :> void:
+            case always when timerafter(start) :> void:
                 unsigned inter_frame_gap = 1000;
                 unsigned device_id = 0;
                 spi_mode_t mode = SPI_MODE_0;
@@ -53,23 +49,31 @@ void app(client interface spi_master_if spi_i, int mosi_enabled, int miso_enable
                     _Exit(0);
 
                 break;
-
-            case timebomb when timerafter(timeout) :> void:
-                printf("Timeout!\n");
-                _Exit(1);
-                break;
         }
     }
 }
 
+void timebomb(){
+    timer tmr;
+    int t;
+    tmr :> t;
+    tmr when timerafter(t + 1000000) :> void;
+    printf("Timeout!\n");
+    _Exit(1);
+}
+
 int main(){
-    interface spi_master_if i[1];
-#if COMBINED == 1
-    [[combine]]
-#endif
     par {
-        app(i[0], 1, 1);
-        spi_master(i, 1, p_sclk, p_mosi, p_miso, p_ss, 1, cb);
+        timebomb();
+        {   interface spi_master_if i[1];
+#if COMBINED == 1
+            [[combine]]
+#endif
+            par {
+                app(i[0], 1, 1);
+                spi_master(i, 1, p_sclk, p_mosi, p_miso, p_ss, 1, cb);
+            }
+        }
     }
     return 0;
 }
