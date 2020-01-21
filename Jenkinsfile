@@ -40,7 +40,7 @@ pipeline {
         dir("${REPO}") {
           xcoreAllAppNotesBuild('examples')
           dir("${REPO}") {
-            runXdoc('doc')
+            //runXdoc('doc')
           }
         }
       }
