@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# Copyright (c) 2015-2020, XMOS Ltd, All rights reserved
 import xmostest
 from spi_master_checker import SPIMasterChecker
 import os
