@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2019, XMOS Ltd, All rights reserved
+// Copyright (c) 2014-2020, XMOS Ltd, All rights reserved
 #ifndef _spi_h_
 #define _spi_h_
 #include <xs1.h>
