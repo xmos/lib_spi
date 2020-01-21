@@ -14,17 +14,17 @@ pipeline {
     skipDefaultCheckout()
   }
   stages {
-    stage('Get View') {
+    stage('Get view') {
       steps {
         xcorePrepareSandbox("${VIEW}", "${REPO}")
       }
     }
-    stage('Library Checks') {
+    stage('Library checks') {
       steps {
         xcoreLibraryChecks("${REPO}")
       }
     }
-    stage('Legacy Tests') {
+    stage('Legacy tests') {
       steps {
         dir("${REPO}/legacy_tests") {
           viewEnv() {
@@ -35,7 +35,7 @@ pipeline {
         }
       }
     }
-    stage('Build') {
+    stage('Builds') {
       steps {
         dir("${REPO}") {
           xcoreAllAppNotesBuild('examples')
