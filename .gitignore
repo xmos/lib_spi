@@ -27,3 +27,4 @@ build/
 # (normal parsing is based on shell wildcards)
 */.venv*
 */build/*
+__gen
