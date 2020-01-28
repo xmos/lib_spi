@@ -45,7 +45,7 @@ void app(client interface spi_master_if spi_i, int mosi_enabled, int miso_enable
                 }
 
                 count++;
-                if (count == 2)
+                if (count == 8)
                     _Exit(0);
 
                 break;
@@ -57,7 +57,7 @@ void timebomb(){
     timer tmr;
     int t;
     tmr :> t;
-    tmr when timerafter(t + 1000000) :> void;
+    tmr when timerafter(t + 10000000) :> void;
     printf("Timeout!\n");
     _Exit(1);
 }
