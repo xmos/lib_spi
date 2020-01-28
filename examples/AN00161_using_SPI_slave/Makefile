@@ -9,7 +9,7 @@ TARGET = SLICEKIT-L16
 APP_NAME = AN00161_using_SPI_slave
 
 # The USED_MODULES variable lists other module used by the application.
-USED_MODULES = lib_logging lib_spi
+USED_MODULES = lib_spi
 
 # The flags passed to xcc when building the application
 # You can also set the following to override flags for a particular language:

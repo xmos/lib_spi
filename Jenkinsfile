@@ -38,10 +38,9 @@ pipeline {
     stage('Build') {
       steps {
         dir("${REPO}") {
-          xcoreAllAppsBuild('examples')
           xcoreAllAppNotesBuild('examples')
           dir("${REPO}") {
-            runXdoc('doc')
+            //runXdoc('doc')
           }
         }
       }

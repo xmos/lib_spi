@@ -1,3 +1,4 @@
+# Copyright (c) 2015-2020, XMOS Ltd, All rights reserved
 import xmostest
 
 class SPIMasterChecker(xmostest.SimThread):
