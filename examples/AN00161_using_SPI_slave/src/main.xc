@@ -1,9 +1,9 @@
-// Copyright (c) 2015-2016, XMOS Ltd, All rights reserved
+// Copyright (c) 2015-2020, XMOS Ltd, All rights reserved
 #include <xs1.h>
 #include <spi.h>
 #include <stdint.h>
 #include <timer.h>
-#include <debug_print.h>
+#include <print.h>
 #include <platform.h>
 
 /* These ports are used for the SPI slave task */
@@ -127,10 +127,11 @@ void reg_file(server spi_slave_callback_if i_spi,
  */
 void app(client reg_if reg) {
     reg.set_reg(0, 0xfe);
-    debug_printf("APP: Set register 1 to 0xFE\n");
+    printstr("APP: Set register 1 to 0xFE\n");
     while (1) {
         delay_microseconds(20);
-        debug_printf("APP: Register 1 is 0x%x\n", reg.get_reg(1));
+        printstr("APP: Register 1 is 0x");
+        printhexln(reg.get_reg(1));
     }
 }
 
@@ -148,14 +149,15 @@ void tester(client spi_master_if spi)
     spi.transfer8(0); // REGISTER 0
     val = spi.transfer8(0); // DATA
     spi.end_transaction(100);
-    debug_printf("SPI MASTER: Read register 0: 0x%x\n", val);
+    printstr("SPI MASTER: Read register 0: 0x");
+    printhexln(val);
 
     spi.begin_transaction(0, 100, SPI_MODE_0);
     spi.transfer8(WRITE_REG); // WRITE command
     spi.transfer8(1); // REGISTER 1
     spi.transfer8(0xac); // DATA
     spi.end_transaction(100);
-    debug_printf("SPI MASTER: Set register 1 to 0xAC\n");
+    printstr("SPI MASTER: Set register 1 to 0xAC\n");
 }
 
 int main(void) {

@@ -1,4 +1,4 @@
-// Copyright (c) 2015-2016, XMOS Ltd, All rights reserved
+// Copyright (c) 2015-2020, XMOS Ltd, All rights reserved
 #include <xs1.h>
 #include <xclib.h>
 #include <stdio.h>
@@ -252,7 +252,7 @@ void spi_master(server interface spi_master_if i[num_clients],
         if(!isnull(miso))configure_in_port(miso,  cb);
         if(!isnull(miso))set_port_sample_delay(miso);
         if(!isnull(mosi))configure_out_port(mosi, cb, 0);
-        configure_out_port(sclk, cb, 0);
+        //sclk configured in begin_transaction
         start_clock(cb);
     } else {
         if(!isnull(miso)) set_port_sample_delay(miso);
@@ -272,6 +272,10 @@ void spi_master(server interface spi_master_if i[num_clients],
                 get_mode_bits(mode, cpol, cpha);
 
                 //xassert(device_index < num_slaves);
+                if (!isnull(cb)){
+                    set_port_use_on(sclk);
+                    configure_out_port(sclk, cb, 0);
+                }
 
                 sync(sclk);
                 //Wait for the chip deassert time if need be

@@ -22,3 +22,9 @@ test_results.csv
 .lock-waf_*
 .waf-*/
 build/
+
+# satisfy parsing in XMOS source check based on regular expressions
+# (normal parsing is based on shell wildcards)
+*/.venv*
+*/build/*
+__gen
