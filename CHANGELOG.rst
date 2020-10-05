@@ -1,6 +1,11 @@
 SPI library change log
 ======================
 
+3.1.1
+-----
+
+  * CHANGED: Pin Python package versions
+
 3.1.0
 -----
 
