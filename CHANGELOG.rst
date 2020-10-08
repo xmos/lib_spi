@@ -1,6 +1,12 @@
 SPI library change log
 ======================
 
+3.1.1
+-----
+
+  * CHANGED: Pin Python package versions
+  * REMOVED: not necessary cpanfile
+
 3.1.0
 -----
 
