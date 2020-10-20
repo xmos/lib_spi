@@ -168,16 +168,6 @@ void app(client interface spi_master_async_if i, unsigned num_ss,
     _Exit(0);
 }
 
-static void load(static const unsigned num_threads){
-    switch(num_threads){
-    case 3: par {par(int i=0;i<3;i++) while(1);}break;
-    case 4: par {par(int i=0;i<4;i++) while(1);}break;
-    case 5: par {par(int i=0;i<5;i++) while(1);}break;
-    case 6: par {par(int i=0;i<6;i++) while(1);}break;
-    case 7: par {par(int i=0;i<7;i++) while(1);}break;
-    }
-}
-
 #if MOSI_ENABLED
 #define MOSI p_mosi
 #else
@@ -189,7 +179,9 @@ int main(){
     par {
         spi_master_async(i, 1, p_sclk, MOSI, p_miso, p_ss, 2, cb0, cb1);
         app(i[0], NUM_SS, MOSI_ENABLED, 1);
-        load(BURNT_THREADS);
+#if FULL_LOAD == 1
+        par {par(int i=0;i<6;i++) while(1);}
+#endif
     }
     return 0;
 }

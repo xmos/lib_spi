@@ -17,7 +17,7 @@ clock                 cb      = XS1_CLKBLK_1;
 out port setup_strobe_port = XS1_PORT_1E;
 out port setup_data_port = XS1_PORT_16B;
 
-#define KBPS 1000
+#define KBPS SPEED
 
 void app(client interface spi_master_if i, unsigned num_ss,
         int mosi_enabled, int miso_enabled){
@@ -49,16 +49,6 @@ void app(client interface spi_master_if i, unsigned num_ss,
     _Exit(0);
 }
 
-static void load(static const unsigned num_threads){
-    switch(num_threads){
-    case 3: par {par(int i=0;i<3;i++) while(1);}break;
-    case 4: par {par(int i=0;i<4;i++) while(1);}break;
-    case 5: par {par(int i=0;i<5;i++) while(1);}break;
-    case 6: par {par(int i=0;i<6;i++) while(1);}break;
-    case 7: par {par(int i=0;i<7;i++) while(1);}break;
-    }
-}
-
 #if MOSI_ENABLED
 #define MOSI p_mosi
 #else
@@ -82,7 +72,9 @@ int main(){
     par {
         spi_master(i, 1, p_sclk, MOSI, MISO, p_ss, NUM_SS, CB);
         app(i[0], NUM_SS,  MOSI_ENABLED, MISO_ENABLED);
-        load(BURNT_THREADS);
+#if FULL_LOAD == 1
+        par {par(int i=0;i<6;i++) while(1);}
+#endif
     }
     return 0;
 }

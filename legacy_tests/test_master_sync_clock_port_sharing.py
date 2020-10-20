@@ -4,7 +4,7 @@ import xmostest
 from spi_master_checker import SPIMasterChecker
 import os
 
-def do_clock_port_sharing(combine, testlevel):
+def do_clock_port_sharing(combine):
     resources = xmostest.request_resource("xsim")
 
     binary = "spi_master_sync_clock_port_sharing/bin/{combined}/spi_master_sync_clock_port_sharing_{combined}.xe".format(combined=combine)
@@ -22,7 +22,9 @@ def do_clock_port_sharing(combine, testlevel):
                                      'spi_master_sync_clock_port_sharing_{combined}'.format(combined=combine),
                                      regexp=True)
 
-    tester.set_min_testlevel(testlevel)
+    if combine == 0:
+        tester.set_min_testlevel('nightly')
+
     xmostest.run_on_simulator(resources['xsim'], binary,
                               simthreads = [checker],
                               simargs=[],
@@ -30,5 +32,5 @@ def do_clock_port_sharing(combine, testlevel):
                               tester = tester)
 
 def runtest():
-    do_clock_port_sharing(1, "smoke")
-    do_clock_port_sharing(0, "nightly")
+    for combine in [0, 1]:
+        do_clock_port_sharing(combine)

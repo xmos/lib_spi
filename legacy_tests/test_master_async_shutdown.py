@@ -4,12 +4,10 @@ import xmostest
 from spi_master_checker import SPIMasterChecker
 import os
 
-
-def do_shutdown_async(combine, testlevel):
+def do_shutdown_async(combine):
     resources = xmostest.request_resource("xsim")
 
     binary = "spi_master_async_shutdown/bin/{combined}/spi_master_async_shutdown_{combined}.xe".format(combined=combine)
-
 
     checker = SPIMasterChecker("tile[0]:XS1_PORT_1C",
                                "tile[0]:XS1_PORT_1D",
@@ -24,7 +22,9 @@ def do_shutdown_async(combine, testlevel):
                                      'spi_master_async_shutdown_{combined}'.format(combined=combine),
                                      regexp=True)
 
-    tester.set_min_testlevel(testlevel)
+    if combined == 0:
+        tester.set_min_testlevel('nightly')
+
     xmostest.run_on_simulator(resources['xsim'], binary,
                               simthreads = [checker],
                               simargs=[],
@@ -32,7 +32,5 @@ def do_shutdown_async(combine, testlevel):
                               tester = tester)
 
 def runtest():
-    do_shutdown_async(1, "smoke")
-
     for combined in [0, 1]:
-        do_shutdown_async(combined, "nightly")
+        do_shutdown_async(combined)

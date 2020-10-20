@@ -4,11 +4,10 @@ import xmostest
 from spi_master_checker import SPIMasterChecker
 import os
 
-
-def do_multi_device_sync(burnt_threads, cb_enabled, miso_enabled, mosi_enable):
+def do_multi_device_sync(full_load, cb_enabled, miso_enabled, mosi_enable, speed):
     resources = xmostest.request_resource("xsim")
 
-    binary = "spi_master_sync_multi_device/bin/{burnt}{cb}{miso}{mosi}/spi_master_sync_multi_device_{burnt}{cb}{miso}{mosi}.xe".format(burnt=burnt_threads,cb=cb_enabled,miso=miso_enabled,mosi=mosi_enable)
+    binary = "spi_master_sync_multi_device/bin/{load}{cb}{miso}{mosi}{speed}/spi_master_sync_multi_device_{load}{cb}{miso}{mosi}{speed}.xe".format(load=full_load,cb=cb_enabled,miso=miso_enabled,mosi=mosi_enable,speed=speed)
 
     checker = SPIMasterChecker("tile[0]:XS1_PORT_1C",
                                "tile[0]:XS1_PORT_1D",
@@ -20,10 +19,12 @@ def do_multi_device_sync(burnt_threads, cb_enabled, miso_enabled, mosi_enable):
     tester = xmostest.ComparisonTester(open('master.expect'),
                                      'lib_spi',
                                      'spi_master_sim_tests',
-                                     'spi_master_sync_multi_device_{burnt}{cb}{miso}{mosi}'.format(burnt=burnt_threads,cb=cb_enabled,miso=miso_enabled,mosi=mosi_enable),
+                                     'spi_master_sync_multi_device_{load}{cb}{miso}{mosi}{speed}'.format(load=full_load,cb=cb_enabled,miso=miso_enabled,mosi=mosi_enable,speed=speed),
                                      regexp=True)
 
-    tester.set_min_testlevel('nightly')
+    if full_load == 0:
+        tester.set_min_testlevel('nightly')
+
     xmostest.run_on_simulator(resources['xsim'], binary,
                               simthreads = [checker],
                               #simargs=['--vcd-tracing', '-o ./spi_master_sync_multi_device/trace.vcd -tile tile[0] -pads -functions'],
@@ -32,9 +33,9 @@ def do_multi_device_sync(burnt_threads, cb_enabled, miso_enabled, mosi_enable):
                               tester = tester)
 
 def runtest():
-    for burnt_threads in [3, 7]:
-     for cb_enabled in [0, 1]:
-        for miso_enabled in [0, 1]:
-          for mosi_enabled in [0, 1]:
-            if (miso_enabled==1 or (miso_enabled==1)):
-             do_multi_device_sync(burnt_threads, cb_enabled, miso_enabled, mosi_enabled)
+    for full_load in [0, 1]:
+        for cb_enabled in [0, 1]:
+            for miso_enabled in [0, 1]:
+                for mosi_enabled in [0, 1]:
+                    for speed in [1500, 3000]:
+                        do_multi_device_sync(full_load, cb_enabled, miso_enabled, mosi_enabled, speed)

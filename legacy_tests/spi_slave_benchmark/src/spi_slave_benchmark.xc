@@ -16,10 +16,8 @@ out port setup_data_port = XS1_PORT_16B;
 in port setup_resp_port = XS1_PORT_1F;
 
 
-#if (TRANSFER_SIZE == SPI_TRANSFER_SIZE_8)
-#define BITS_PER_TRANSFER 8
-#elif (TRANSFER_SIZE == SPI_TRANSFER_SIZE_32)
-#define BITS_PER_TRANSFER 32
+#ifdef TRANSFER_SIZE
+#define BITS_PER_TRANSFER TRANSFER_SIZE
 #else
 #error Invalid transfer size given
 #endif
@@ -207,7 +205,7 @@ void app(server interface spi_slave_callback_if spi_i,
                     if(next_cd == cd){
                         rep_count++;
                         if(rep_count == 8){
-                            printf("%d %d %d %d %d %d %d\n", SPI_MODE, TRANSFER_SIZE, BURNT_THREADS, miso_enabled, mosi_enabled, cd, kbps);
+                            printf("%d %d %d %d %d %d %d\n", SPI_MODE, TRANSFER_SIZE, FULL_LOAD, miso_enabled, mosi_enabled, cd, kbps);
                             _Exit(1);
                         }
 
@@ -234,14 +232,6 @@ void app(server interface spi_slave_callback_if spi_i,
     }
 }
 
-static void load(static const unsigned num_threads){
-    switch(num_threads){
-    case 2: par {par(int i=0;i<2;i++) while(1);}break;
-    case 3: par {par(int i=0;i<3;i++) while(1);}break;
-    case 6: par {par(int i=0;i<6;i++) while(1);}break;
-    case 7: par {par(int i=0;i<7;i++) while(1);}break;
-    }
-}
 #define MOSI_ENABLED 1
 
 #if MISO_ENABLED
@@ -263,7 +253,9 @@ int main(){
         spi_slave(i, p_sclk, p_mosi, MISO, p_ss, cb, SPI_MODE, TRANSFER_SIZE);
         app(i, MOSI_ENABLED, MISO_ENABLED);
 #endif
-        load(BURNT_THREADS);
+#if FULL_LOAD == 1
+        par {par(int i=0;i<6;i++) while(1);}
+#endif
     }
     return 0;
 }
