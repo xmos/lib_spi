@@ -2,41 +2,40 @@
 #ifndef COMMON_H_
 #define COMMON_H_
 
-static void set_mode_bits(spi_mode_t mode, unsigned &cpol, unsigned &cpha){
-    switch(mode){
-        case SPI_MODE_0:cpol = 0; cpha= 1; break;
-        case SPI_MODE_1:cpol = 0; cpha= 0; break;
-        case SPI_MODE_2:cpol = 1; cpha= 0; break;
-        case SPI_MODE_3:cpol = 1; cpha= 1; break;
-    }
+#include "xcore/port.h"
+#include "xcore/parallel.h"
+
+#define SET_FAST_MODE() asm volatile("setsr %0" : : "n"(XS1_SR_QUEUE_MASK | XS1_SR_FAST_MASK))
+
+DECLARE_JOB(burn, (void));
+
+void burn(void) {
+    SET_FAST_MODE();
+    for(;;);
 }
 
 static void send_data_to_tester(
-        out port setup_strobe_port,
-        out port setup_data_port,
-        unsigned data){
-    setup_data_port <: data;
-    sync(setup_data_port);
-    setup_strobe_port <: 1;
-    setup_strobe_port <: 0;
+        port_t setup_strobe_port,
+        port_t setup_data_port,
+        unsigned data) {
+    port_out(setup_data_port, data);
+    asm volatile("syncr res[%0]" : : "r" (setup_data_port));
+    port_out(setup_strobe_port, 1);
+    port_out(setup_strobe_port, 0);
 }
 
 static void broadcast_settings(
-        out port setup_strobe_port,
-        out port setup_data_port,
-        spi_mode_t mode,
+        port_t setup_strobe_port,
+        port_t setup_data_port,
+        unsigned cpha,
+        unsigned cpol,
         unsigned speed_in_khz,
         int mosi_enabled,
         int miso_enabled,
         unsigned device_id,
         unsigned inter_frame_gap,
-        unsigned num_bytes
-){
-    unsigned cpha, cpol;
-
-    set_mode_bits(mode, cpol, cpha);
-
-    setup_strobe_port <: 0;
+        unsigned num_bytes) {
+    port_out(setup_strobe_port, 0);
 
     send_data_to_tester(setup_strobe_port, setup_data_port, cpol);
     send_data_to_tester(setup_strobe_port, setup_data_port, cpha);
@@ -60,5 +59,6 @@ static const uint8_t rx_data[NUMBER_OF_TEST_BYTES] = {
         0xfe, 0xf7, 0xfb, 0xef, 0xdf, 0xbf, 0xfd, 0x7f,
         0x01, 0x08, 0x04, 0x10, 0x20, 0x04, 0x02, 0x80,
 };
+
 
 #endif /* COMMON_H_ */

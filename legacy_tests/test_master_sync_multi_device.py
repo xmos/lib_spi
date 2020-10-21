@@ -16,7 +16,7 @@ def do_multi_device_sync(full_load, cb_enabled, miso_enabled, mosi_enable, speed
                                "tile[0]:XS1_PORT_1E",
                                "tile[0]:XS1_PORT_16B")
 
-    tester = xmostest.ComparisonTester(open('master.expect'),
+    tester = xmostest.ComparisonTester(open('master_multi_device.expect'),
                                      'lib_spi',
                                      'spi_master_sim_tests',
                                      'spi_master_sync_multi_device_{load}{cb}{miso}{mosi}{speed}'.format(load=full_load,cb=cb_enabled,miso=miso_enabled,mosi=mosi_enable,speed=speed),
