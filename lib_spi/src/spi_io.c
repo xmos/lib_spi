@@ -38,9 +38,9 @@ void spi_io_init(const spi_io_ctx_t *ctx,
 	/* Setup the MISO port */
 	port_start_buffered(ctx->miso_port, 32);
 	port_set_clock(ctx->miso_port, ctx->clock_block);
-	if (ctx->sclk_sample_edge == spi_io_sample_edge_falling) {
-		port_set_sample_falling_edge(ctx->miso_port);
-	}
+//	if (ctx->sclk_sample_edge == spi_io_sample_edge_falling) {
+//		port_set_sample_falling_edge(ctx->miso_port);
+//	}
 	SPI_IO_RESOURCE_SETC(ctx->cs_port, SPI_IO_SETC_PAD_DELAY(ctx->miso_pad_delay));
 
 	/* Ensure the buffers are clear before the first transaction. */

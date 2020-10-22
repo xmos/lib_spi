@@ -5,17 +5,24 @@
  *  \brief API for QSPI I/O
  */
 
-#define CS_AUTO_ASSERT 1
+#define CS_AUTO_ASSERT 0
 
 #include <stdlib.h> /* for size_t */
 #include <stdint.h>
 #include <xclib.h> /* for byterev() */
+#include <xcore/assert.h>
 #include <xcore/port.h>
 #include <xcore/clock.h>
 
+//typedef enum {
+//	spi_io_sample_edge_rising = 0,
+//	spi_io_sample_edge_falling
+//} spi_io_sample_edge_t;
+
 typedef enum {
-	spi_io_sample_edge_rising = 0,
-	spi_io_sample_edge_falling
+	spi_io_sample_edge_0 = 0, /*< Samples on the first edge following output from device */
+	spi_io_sample_edge_1 = 1, /*< Samples on the second edge following output from device */
+	spi_io_sample_edge_2 = 2, /*< Samples on the third edge following output from device */
 } spi_io_sample_edge_t;
 
 typedef enum {
@@ -159,7 +166,7 @@ inline void spi_io_port_outpw(resource_t __p,
                               uint32_t __w,
 							  uint32_t __bpw)
 {
-	asm volatile("outpw res[%0], %1, %2" : : "r" (__p), "r" (__w), "n" (__bpw));
+	asm volatile("outpw res[%0], %1, %2" : : "r" (__p), "r" (__w), "r" (__bpw));
 }
 
 /**
@@ -205,6 +212,40 @@ inline void spi_io_start_transaction(spi_io_ctx_t *ctx,
 	/* enable fast mode and high priority */
 	SPI_IO_SETSR(XS1_SR_QUEUE_MASK | XS1_SR_FAST_MASK);
 
+	///* CPHA 1 not supported */ xassert(cpha == 0);
+	if (cpha == 0) {
+		SPI_IO_RESOURCE_SETC(ctx->mosi_port, SPI_IO_SETC_PAD_DELAY(0));
+
+		if (ctx->sclk_sample_edge == spi_io_sample_edge_0) {
+			ctx->sclk_sample_delay = 0;
+			port_set_sample_rising_edge(ctx->miso_port);
+		} else if (ctx->sclk_sample_edge == spi_io_sample_edge_1) {
+			ctx->sclk_sample_delay = 0;
+			port_set_sample_falling_edge(ctx->miso_port);
+		} else if (ctx->sclk_sample_edge == spi_io_sample_edge_2) {
+			ctx->sclk_sample_delay = 1;
+			port_set_sample_rising_edge(ctx->miso_port);
+		}
+	} else {
+		SPI_IO_RESOURCE_SETC(ctx->mosi_port, SPI_IO_SETC_PAD_DELAY(5));
+
+		if (ctx->sclk_sample_edge == spi_io_sample_edge_0) {
+			ctx->sclk_sample_delay = 0;
+			port_set_sample_falling_edge(ctx->miso_port);
+		} else if (ctx->sclk_sample_edge == spi_io_sample_edge_1) {
+			ctx->sclk_sample_delay = 0;
+			port_set_sample_rising_edge(ctx->miso_port);
+		} else if (ctx->sclk_sample_edge == spi_io_sample_edge_2) {
+			ctx->sclk_sample_delay = 1;
+			port_set_sample_falling_edge(ctx->miso_port);
+		}
+	}
+	if (cpol == 0) {
+		port_set_no_invert(ctx->sclk_port);
+	} else {
+		port_set_invert(ctx->sclk_port);
+	}
+
 	ctx->cpol = cpol;
 	ctx->cpha = cpha;
 
@@ -228,8 +269,10 @@ inline void spi_io_end_transaction(spi_io_ctx_t *ctx,
 	/* enable fast mode and high priority */
 	SPI_IO_CLRSR(XS1_SR_QUEUE_MASK | XS1_SR_FAST_MASK);
 
-	port_out(ctx->cs_port, port_peek(ctx->cs_port) | (1 << cs_pin));
+#if !CS_AUTO_ASSERT
+	port_out(ctx->cs_port, ctx->cs_deassert_val);
 	spi_io_port_sync(ctx->cs_port);
+#endif
 }
 
 __attribute__((always_inline))
@@ -302,10 +345,16 @@ inline void spi_io_transfer(const spi_io_ctx_t *ctx,
 	uint32_t word_out;
 	uint32_t word_in;
 	uint32_t remainder;
-	uint32_t start_time = 1;
+	uint32_t start_time;
 
 	if (len == 0) {
 		return;
+	}
+
+	if (ctx->cpha == 0) {
+		start_time = 0;
+	} else {
+		start_time = 1;
 	}
 
 	word_count = len / sizeof(uint32_t);
@@ -317,8 +366,8 @@ inline void spi_io_transfer(const spi_io_ctx_t *ctx,
 	port_set_clock(ctx->cs_port, ctx->clock_block);
 
 #if CS_AUTO_ASSERT
-	start_time = 1;
-	port_set_trigger_time(ctx->cs_port, start_time);
+	//start_time = 1;
+	//port_set_trigger_time(ctx->cs_port, start_time);
 	port_out(ctx->cs_port, ctx->cs_assert_val);
 #endif
 
@@ -331,13 +380,20 @@ inline void spi_io_transfer(const spi_io_ctx_t *ctx,
 			do_output = 2;
 		}
 
-		port_set_trigger_time(ctx->mosi_port, start_time);
+		//port_set_trigger_time(ctx->mosi_port, start_time);
 
-		if (len < 4) {
-			spi_io_port_outpw(ctx->mosi_port, word_out, len * 8);
-		} else {
-			port_out(ctx->mosi_port, word_out);
-		}
+		uint32_t tw = len >= 4 ? 32 : len * 8 - 1;
+
+		/* Output the first bit before the clock starts */
+		port_set_clock(ctx->mosi_port, XS1_CLKBLK_REF);
+		spi_io_port_outpw(ctx->mosi_port, word_out, 1);
+		word_out >>= 1;
+		spi_io_port_sync(ctx->mosi_port);
+		port_set_clock(ctx->mosi_port, ctx->clock_block);
+
+		/* Set the remaining bits to go out after the clock starts */
+		spi_io_port_outpw(ctx->mosi_port, word_out, tw);
+
 	} else {
 		do_output = 0;
 	}
@@ -345,7 +401,7 @@ inline void spi_io_transfer(const spi_io_ctx_t *ctx,
 	if (ctx->miso_port != 0 && data_in != NULL) {
 		uint32_t first_input_time;
 		do_input = 1;
-		first_input_time = (len >= 4 ? 32 : len * 8) + ctx->sclk_sample_delay;
+		first_input_time = start_time + (len >= 4 ? 32 : len * 8) + ctx->sclk_sample_delay - 1;
 		port_set_trigger_time(ctx->miso_port, first_input_time);
 	} else {
 		do_input = 0;
@@ -411,7 +467,18 @@ inline void spi_io_transfer(const spi_io_ctx_t *ctx,
 	 * 3) Stop the clock. This will take one full SCLK cycle.
 	 */
 	spi_io_port_sync(ctx->cs_port);
+	//port_set_inout_data(ctx->sclk_port);
 	clock_stop(ctx->clock_block);
+
+	/*
+	 * Set the clock port back to data and outputting 0. (keep invert on if CPOL is 1).
+	 * Turn the clock back on.
+	 * This will let the last port_in() complete for certain mode and delay combinations.
+	 * Then turn the clock off.
+	 * Set the clock port back to outputting the clock.
+	 */
+	//port_set_inout_data(ctx->sclk_port);
+	//clock_start(ctx->clock_block);
 
 	/*
 	 * Set the CS port's clock back to the reference clock
@@ -433,6 +500,9 @@ inline void spi_io_transfer(const spi_io_ctx_t *ctx,
 			save_word(data_in, port_in(ctx->miso_port), (i - 1) * sizeof(uint32_t));
 		}
 	}
+
+	//clock_stop(ctx->clock_block);
+	//port_set_out_clock(ctx->sclk_port);
 }
 
 #if 0
