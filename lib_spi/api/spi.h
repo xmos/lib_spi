@@ -1,318 +1,611 @@
-// Copyright (c) 2014-2020, XMOS Ltd, All rights reserved
-#ifndef _spi_h_
-#define _spi_h_
-#include <xs1.h>
+// Copyright (c) 2020, XMOS Ltd, All rights reserved
+#pragma once
+
+/** \file
+ *  \brief API for QSPI I/O
+ */
+
+#define CS_AUTO_ASSERT 0
+
+#include <stdlib.h> /* for size_t */
 #include <stdint.h>
-#include <stddef.h>
+#include <xclib.h> /* for byterev() */
+#include <xcore/assert.h>
+#include <xcore/port.h>
+#include <xcore/clock.h>
 
-/** This type indicates what mode an SPI component should use */
-typedef enum spi_mode_t {
-  SPI_MODE_0, /**< SPI Mode 0 - Polarity = 0, Clock Edge = 1 */
-  SPI_MODE_1, /**< SPI Mode 1 - Polarity = 0, Clock Edge = 0 */
-  SPI_MODE_2, /**< SPI Mode 2 - Polarity = 1, Clock Edge = 0 */
-  SPI_MODE_3, /**< SPI Mode 3 - Polarity = 1, Clock Edge = 1 */
-} spi_mode_t;
+typedef enum {
+	spi_master_sample_delay_0 = 0, /*< Samples 1/2 clock cycle after output from device */
+	spi_master_sample_delay_1 = 1, /*< Samples 3/4 clock cycle after output from device */
+	spi_master_sample_delay_2 = 2, /*< Samples 1 clock cycle after output from device */
+	spi_master_sample_delay_3 = 3, /*< Samples 1 and 1/4 clock cycle after output from device */
+	spi_master_sample_delay_4 = 4, /*< Samples 1 and 1/2 clock cycle after output from device */
+} spi_master_sample_delay_t;
+
+typedef enum {
+	spi_master_source_clock_ref = 0,
+	spi_master_source_clock_xcore
+} spi_master_source_clock_t;
+
+#define SPI_MODE_0 0,0
+#define SPI_MODE_1 0,1
+#define SPI_MODE_2 1,0
+#define SPI_MODE_3 1,1
 
 
-/** This interface allows clients to interact with SPI master task. */
-typedef interface spi_master_if {
+typedef struct {
+	/**
+	 * The clock block to use for the SPI master interface.
+	 */
+	xclock_t clock_block;
 
-  /** Begin a transaction.
-   *
-   *  This will start a transaction on the bus. During a transaction, no
-   *  other client to the SPI component can send or receive data. If
-   *  another client is currently using the component then this call
-   *  will block until the bus is released.
-   *
-   *  \param device_index  the index of the slave device to interact with.
-   *  \param speed_in_khz  The speed that the SPI bus should run at during
-   *                       the transaction (in kHZ).
-   *  \param mode          The mode of spi transfers during this transaction.
-   */
-  [[guarded]]
-  void begin_transaction(unsigned device_index,
-                         unsigned speed_in_khz, spi_mode_t mode);
+	/**
+	 * The chip select port. May be a multibit port.
+	 */
+	port_t cs_port;
 
-  /** End a transaction.
-   *
-   *  This ends a transaction on the bus and releases the component to other
-   *  clients.
-   *
-   *  \param ss_deassert_time  The minimum time in reference clock ticks between
-   *                           assertions of the selected slave select. This
-   *                           time will be ignored if the next transaction is
-   *                           to a different slave select.
-   */
-  void end_transaction(unsigned ss_deassert_time);
+	/**
+	 * The SCLK port. MUST be a 1-bit port.
+	 */
+	port_t sclk_port;
 
-  /** Transfer a byte over the spi bus.
-   *
-   *  This function will transmit and receive 8 bits of data over the SPI
-   *  bus. The data will be transmitted least-significant bit first.
-   *
-   *  \param data          the data to transmit the MOSI port.
-   *
-   *  \returns       the data read in from the MISO port.
-   */
-  uint8_t transfer8(uint8_t data);
+	/**
+	 * The MOSI port. MUST be a 1-bit port.
+	 */
+	port_t mosi_port;
 
-  /** Transfer a 32-bit word over the spi bus.
-   *
-   *  This function will transmit and receive 32 bits of data over the SPI
-   *  bus. The data will be transmitted least-significant bit first.
-   *
-   *  \param data    the data to transmit the MOSI port.
-   *
-   *  \returns       the data read in from the MISO port.
-   */
-  uint32_t transfer32(uint32_t data);
-} spi_master_if;
+	/**
+	 * The MISO port. MUST be a 1-bit port.
+	 */
+	port_t miso_port;
 
-/** Task that implements the SPI proctocol in master mode that is
-    connected to a multiple slaves on the bus.
+	uint32_t current_device;
+	int first_transfer;
 
-    Each slave must be connected to using the same SPI mode.
+} spi_master_t;
 
-    You can access different slave devices over the interface connection
-    using the device_index parameter of the interface functions.
-    The task will allocate the device indices in the order of the supplied
-    array of slave select ports.
+typedef struct {
+	spi_master_t *spi_master_ctx;
 
-    \param i             an array of interface connection to the
-                         clients of the task.
-    \param num_clients   the number of clients connected to the task.
-    \param clk           a clock block used by the task.
-    \param sclk          the SPI clock port.
-    \param mosi          the SPI MOSI (master out, slave in) port.
-    \param miso          the SPI MISO (master in, slave out) port.
-    \param p_ss          an array of ports connected to the slave select signals
-                         of the slave.
-    \param num_slaves    The number of slave devices on the bus.
-    \param clk           a clock for the component to use.
-*/
-[[distributable]]
-void spi_master(server interface spi_master_if i[num_clients],
-        static const size_t num_clients,
-        out buffered port:32 sclk,
-        out buffered port:32 ?mosi,
-        in buffered port:32 ?miso,
-        out port p_ss[num_slaves],
-        static const size_t num_slaves,
-        clock ?clk);
+	spi_master_source_clock_t source_clock;
 
-/** Asynchronous interface to an SPI component.
+	/**
+	 * The divisor to use for SPI transactions.
+	 *
+	 * The frequency of SCLK will be set to:
+	 * (F_src) / (2 * full_speed_clk_divisor)
+	 * Where F_src is the frequency of the source clock.
+	 */
+	int clock_divisor;
+
+	/**
+	 * When to sample MISO. See spi_master_sample_delay_t.
+	 */
+	spi_master_sample_delay_t miso_sample_delay;
+
+	/**
+	 * Number of core clock cycles to delay sampling the MISO pad during
+	 * a transaction. This allows for more fine grained adjustment
+	 * of sampling time. The value may be between 0 and 5.
+	 */
+	uint32_t miso_pad_delay;
+	uint32_t miso_initial_trigger_delay;
+
+	uint32_t cs_assert_val;
+	uint32_t clock_delay;
+	uint32_t clock_bits;
+
+	uint32_t cs_to_clk_delay_ticks;
+	uint32_t clk_to_cs_delay_ticks;
+	uint32_t cs_to_cs_delay_ticks;
+
+} spi_master_device_t;
+
+void spi_master_init(
+		spi_master_t *ctx,
+		xclock_t clock_block,
+		port_t cs_port,
+		port_t sclk_port,
+		port_t mosi_port,
+		port_t miso_port);
+
+void spi_master_device_init(
+		spi_master_device_t *dev,
+		spi_master_t *spi,
+		uint32_t cs_pin,
+		int cpol,
+		int cpha,
+		spi_master_source_clock_t source_clock,
+		uint32_t clock_divisor,
+		spi_master_sample_delay_t miso_sample_delay,
+		uint32_t miso_pad_delay,
+		uint32_t cs_to_clk_delay_ticks,
+		uint32_t clk_to_cs_delay_ticks,
+		uint32_t cs_to_cs_delay_ticks);
+
+void spi_master_start_transaction(
+		spi_master_device_t *dev);
+
+void spi_master_transfer(
+		spi_master_device_t *dev,
+		uint8_t *data_out,
+		uint8_t *data_in,
+		size_t len);
+
+void spi_master_end_transaction(
+		spi_master_device_t *dev);
+
+void spi_master_deinit(
+		spi_master_t *ctx);
+
+
+
+/* The SETC constant for pad delay is missing from xs2a_user.h */
+#define SPI_IO_SETC_PAD_DELAY(n) (0x7007 | ((n) << 3))
+
+/* These appear to be missing from the public API of lib_xcore */
+#define SPI_IO_RESOURCE_SETCI(res, c) asm volatile( "setc res[%0], %1" :: "r" (res), "n" (c))
+#define SPI_IO_RESOURCE_SETC(res, r) asm volatile( "setc res[%0], %1" :: "r" (res), "r" (r))
+#define SPI_IO_SETSR(c) asm volatile("setsr %0" : : "n"(c));
+#define SPI_IO_CLRSR(c) asm volatile("clrsr %0" : : "n"(c));
+
+
+/* is syncr available in lib_xcore or anywhere else..??? */
+__attribute__((always_inline))
+inline void spi_io_port_sync(resource_t __p)
+{
+	asm volatile("syncr res[%0]" : : "r" (__p));
+}
+
+/* is setpsc available in lib_xcore or anywhere else..??? */
+__attribute__((always_inline))
+inline void spi_io_port_shift_count(resource_t __p,
+                                     uint32_t __shift_count)
+{
+	asm volatile("setpsc res[%0], %1" : : "r" (__p), "r" (__shift_count));
+}
+
+/* is setpsc available in lib_xcore or anywhere else..??? */
+__attribute__((always_inline))
+inline void spi_io_port_outpw(resource_t __p,
+                              uint32_t __w,
+							  uint32_t __bpw)
+{
+	asm volatile("outpw res[%0], %1, %2" : : "r" (__p), "r" (__w), "r" (__bpw));
+}
+
+#if 0
+
+/**
+ * Begins a new QSPI I/O transaction by starting the clock,
+ * asserting CS, and sending out the first word which is
+ * typically a command.
  *
- *  This interface allows programs to offload SPI bus transfers to another
- *  task. An asynchronous notification occurs when the transfer is complete.
+ * \note If more words or bytes need to be sent or received as
+ * part of this transaction, then the appropriate functions will
+ * need to be called immediately following this one. For example,
+ * qspi_io_bytes_out() then qspi_io_sio_direction_input() then
+ * qspi_io_bytes_in(). The "out" or "in" instruction in each must
+ * be executed within eight SCLK cycles of the preceding one,
+ * including the OUT instruction in qspi_io_start_transaction().
+ * Some analysis may be necessary depending on the frequency of SCLK.
+ * These functions are all marked as inline to help keep them closer
+ * together by removing the overhead associated with function calls
+ * and to allow better optimization.
+ *
+ * \note It is likely not possible to follow an input with an output
+ * within a single transaction unless the frequency of SCLK is
+ * sufficiently slow. Fortunately in practice this rarely, if ever,
+ * required.
+ *
+ * \param ctx         Pointer to the SPI I/O context.
+ * \param first_word  The first word to output.
+ * \param len         The total number of clock cycles in the transaction.
+ *                    CS will at some point during the transaction be setup
+ *                    to deassert automatically after this number of cycles.
+ * \param is_spi_read Set to true if the transaction will be a SPI read with
+                      no dummy cycles. This may run at a slower clock frequency
+                      in order to turn around SIO from output to input in time.
  */
-typedef interface spi_master_async_if  {
-  /** Begin a transaction.
-   *
-   *  This will start a transaction on the bus. During a transaction, no
-   *  other client to the SPI component can send or receive data. If
-   *  another client is currently using the component then this call
-   *  will block until the bus is released.
-   *
-   *  \param device_index  the index of the slave device to interact with.
-   *  \param speed_in_khz  The speed that the SPI bus should run at during
-   *                       the transaction (in kHZ)
-   *  \param mode          The mode of spi transfers during this transaction
-   */
-  void begin_transaction(unsigned device_index,
-                         unsigned speed_in_khz, spi_mode_t mode);
+__attribute__((always_inline))
+inline void spi_master_start_transaction(spi_master_t *ctx,
+                                     uint32_t cs_pin,
+									 int cpol,
+									 int cpha)
+                                     //spi_io_mode_t transaction_type)
+{
+	uint32_t cs_port_val;
 
-  /** End a transaction.
-   *
-   *  This ends a transaction on the bus and releases the component to other
-   *  clients.
-   *
-   *  \param ss_deassert_time  The minimum time in reference clock ticks between
-   *                           assertions of the selected slave select. This
-   *                           time will be ignored if the next transaction is
-   *                           to a different slave select.
-   */
-  void end_transaction(unsigned ss_deassert_time);
+	/* enable fast mode and high priority */
+	SPI_IO_SETSR(XS1_SR_QUEUE_MASK | XS1_SR_FAST_MASK);
 
-  /** Initialize Transfer an array of bytes over the spi bus.
-   *
-   *  This function will initialize a transmit of 8 bit data
-   *  over the SPI bus.
-   *
-   *  \param inbuf    A *movable* pointer that is moved to the other task
-   *                  pointing to the buffer area to fill with data. If this
-   *                  parameter is NULL then the incoming data of the transfer
-   *                  will be discarded.
-   *  \param outbuf   A *movable* pointer that is moved to the other task
-   *                  pointing to the buffer area to with data to transmit.
-   *                  If this parameter is NULL then the outgoing data of the
-   *                  transfer will consist of undefined values.
-   *  \param nbytes   The number of bytes to transfer over the bus.
-   */
-  void init_transfer_array_8(uint8_t * movable inbuf,
-                             uint8_t * movable outbuf,
-                             size_t nbytes);
+	///* CPHA 1 not supported */ xassert(cpha == 0);
+	if (cpha == 0) {
+		SPI_IO_RESOURCE_SETC(ctx->mosi_port, SPI_IO_SETC_PAD_DELAY(0));
 
-  /** Initialize Transfer an array of bytes over the spi bus.
-   *
-   *  This function will initialize a transmit of 32 bit data
-   *  over the SPI bus.
-   *
-   *  \param inbuf    A *movable* pointer that is moved to the other task
-   *                  pointing to the buffer area to fill with data. If this
-   *                  parameter is NULL then the incoming data of the transfer
-   *                  will be discarded.
-   *  \param outbuf   A *movable* pointer that is moved to the other task
-   *                  pointing to the buffer area to with data to transmit.
-   *                  If this parameter is NULL then the outgoing data of the
-   *                  transfer will consist of undefined values.
-   *  \param nwords   The number of words to transfer over the bus.
-   */
-  void init_transfer_array_32(uint32_t * movable inbuf,
-                              uint32_t * movable outbuf,
-                              size_t nwords);
+		if (ctx->sclk_sample_edge == spi_io_sample_edge_0) {
+			ctx->miso_sample_delay = 0;
+			port_set_sample_rising_edge(ctx->miso_port);
+		} else if (ctx->sclk_sample_edge == spi_io_sample_edge_1) {
+			ctx->miso_sample_delay = 0;
+			port_set_sample_falling_edge(ctx->miso_port);
+		} else if (ctx->sclk_sample_edge == spi_io_sample_edge_2) {
+			ctx->miso_sample_delay = 1;
+			port_set_sample_rising_edge(ctx->miso_port);
+		}
+	} else {
+		SPI_IO_RESOURCE_SETC(ctx->mosi_port, SPI_IO_SETC_PAD_DELAY(5));
 
+		if (ctx->sclk_sample_edge == spi_io_sample_edge_0) {
+			ctx->miso_sample_delay = 0;
+			port_set_sample_falling_edge(ctx->miso_port);
+		} else if (ctx->sclk_sample_edge == spi_io_sample_edge_1) {
+			ctx->miso_sample_delay = 0;
+			port_set_sample_rising_edge(ctx->miso_port);
+		} else if (ctx->sclk_sample_edge == spi_io_sample_edge_2) {
+			ctx->miso_sample_delay = 1;
+			port_set_sample_falling_edge(ctx->miso_port);
+		}
+	}
+	if (cpol == 0) {
+		port_set_no_invert(ctx->sclk_port);
+	} else {
+		port_set_invert(ctx->sclk_port);
+	}
 
-  /** Transfer completed notification.
-   *
-   *  This notification occurs when a transfer is completed.
-   */
-  [[notification]]
-  slave void transfer_complete(void);
+	ctx->cpol = cpol;
+	ctx->cpha = cpha;
 
-  /** Retrieve transfer buffers.
-   *
-   *  This function should be called after the transfer_complete() notification
-   *  and will return the buffers given to the other task by
-   *  init_transfer_array_8().
-   *
-   *  \param inbuf    A movable pointer that will be set to the buffer
-   *                  pointer that was filled during the transfer.
-   *  \param outbuf   A movable pointer that will be set to the buffer
-   *                  pointer that was transmitted during the transfer.
-   */
-  [[clears_notification]]
-  void retrieve_transfer_buffers_8(uint8_t * movable &inbuf,
-                                   uint8_t * movable &outbuf);
+	cs_port_val = port_peek(ctx->cs_port);
 
+	ctx->cs_assert_val   = cs_port_val & ~(1 << cs_pin);
+	ctx->cs_deassert_val = cs_port_val |  (1 << cs_pin);
 
-  /** Retrieve transfer buffers.
-   *
-   *  This function should be called after the transfer_complete() notification
-   *  and will return the buffers given to the other task by
-   *  init_transfer_array_32().
-   *
-   *  \param inbuf    A movable pointer that will be set to the buffer
-   *                  pointer that was filled during the transfer.
-   *  \param outbuf   A movable pointer that will be set to the buffer
-   *                  pointer that was transmitted during the transfer.
-   */
-  [[clears_notification]]
-  void retrieve_transfer_buffers_32(uint32_t * movable &inbuf,
-                                    uint32_t * movable &outbuf);
+	clock_set_divide(ctx->clock_block, ctx->clk_divisor);
 
-  /** Shut down the interface server.
-   */
-  void shutdown(void);
-} spi_master_async_if;
+#if !CS_AUTO_ASSERT
+	port_out(ctx->cs_port, ctx->cs_assert_val);
+	spi_io_port_sync(ctx->cs_port);
+#endif
+}
 
+__attribute__((always_inline))
+inline void spi_master_end_transaction(spi_master_t *ctx,
+                                   uint32_t cs_pin)
+{
+	/* enable fast mode and high priority */
+	SPI_IO_CLRSR(XS1_SR_QUEUE_MASK | XS1_SR_FAST_MASK);
 
-/** SPI master component for asynchronous API.
- *
- * This component implements SPI and allows a client to connect using the
- * asynchronous SPI master interface.
- *
- *  \param i             an array of interface connection to the
- *                       clients of the task.
- *  \param num_clients   the number of clients connected to the task.
- *  \param sclk          the SPI clock port.
- *  \param mosi          the SPI MOSI (master out, slave in) port.
- *  \param miso          the SPI MISO (master in, slave out) port.
- *  \param p_ss          an array of ports connected to the slave select signals
- *                       of the slave.
- *  \param num_slaves    The number of slave devices on the bus.
- *  \param clk0           a clock for the component to use.
- *  \param clk1           a clock for the component to use.
- */
-[[combinable]]
-void spi_master_async(server interface spi_master_async_if i[num_clients],
-        static const size_t num_clients,
-        out buffered port:32 sclk,
-        out buffered port:32 ?mosi,
-        in buffered port:32 miso,
-        out port p_ss[num_slaves],
-        static const size_t num_slaves,
-        clock clk0,
-        clock clk1);
+#if !CS_AUTO_ASSERT
+	port_out(ctx->cs_port, ctx->cs_deassert_val);
+	spi_io_port_sync(ctx->cs_port);
+#endif
+}
 
-/**** SLAVE ****/
+__attribute__((always_inline))
+inline uint32_t build_partial_word(const uint8_t *data_out, const int len, const int i)
+{
+	uint32_t word_out;
+	word_out  = data_out[i+0] << 24;
+	if (len > 1) {
+		word_out |= data_out[i+1] << 16;
+	}
+	if (len > 2) {
+		word_out |= data_out[i+2] << 8;
+	}
+	if (len > 3) {
+		word_out |= data_out[i+3];
+	}
+	return bitrev(word_out);
+}
 
-/** This interface allows clients to interact with SPI slave tasks by
- *  completing callbacks that show how to handle data.
- */
-typedef interface spi_slave_callback_if {
+__attribute__((always_inline))
+inline uint32_t build_word(const uint8_t *data_out, const int i)
+{
+	uint32_t word_out;
+	word_out  = data_out[i+0] << 24;
+	word_out |= data_out[i+1] << 16;
+	word_out |= data_out[i+2] << 8;
+	word_out |= data_out[i+3];
+	return bitrev(word_out);
+}
 
-  /** This callback will get called when the master de-asserts on the slave
-   *  select line to end a transaction.
-   */
-  void master_ends_transaction(void);
+__attribute__((always_inline))
+inline void save_word(uint8_t *data_in, uint32_t word_in, const int i)
+{
+	word_in = bitrev(word_in);
+	data_in[i+0] = (word_in >> 24) & 0xFF;
+	data_in[i+1] = (word_in >> 16) & 0xFF;
+	data_in[i+2] = (word_in >> 8) & 0xFF;
+	data_in[i+3] = (word_in) & 0xFF;
+}
 
-  /** This callback will get called when the master initiates a bus transfer
-   *  or when more data is required during a transaction.
-   *  The application must supply the data to transmit to the master. If
-   *  the spi slave component is set to ``SPI_TRANSFER_SIZE_32`` mode then
-   *  this callback will not be called and master_requires_data32() will
-   *  be called instead. Data is transmitted for the least significant bit
-   *  first.  If the master completes the transaction before 8 bits are
-   *  transferred the remaining bits are discarded.
-   *
-   *  \returns the 8-bit value to transmit.
-   */
-  uint32_t master_requires_data(void);
+__attribute__((always_inline))
+inline void save_partial_word(uint8_t *data_in, uint32_t word_in, const int len, const int i)
+{
+	word_in = bitrev(word_in);
 
-  /** This callback will get called after a transfer. It will occur after
-   *  every 8 bits transferred if the slave component is set to
-   *  ``SPI_TRANSFER_SIZE_8``. If the component is set to
-   *  ``SPI_TRANSFER_SIZE_32`` then it will occur if the master ends the
-   *  transaction before 32 bits are transferred.
-   *
-   *  \param datum the data received from the master.
-   *  \param valid_bits the number of valid bits of data received from the master.
-   */
-  void master_supplied_data(uint32_t datum, uint32_t valid_bits);
+	word_in <<= 8 * (4 - len);
 
-} spi_slave_callback_if;
+	data_in[i+0] = (word_in >> 24) & 0xFF;
+	if (len > 1) {
+		data_in[i+1] = (word_in >> 16) & 0xFF;
+	}
+	if (len > 2) {
+		data_in[i+2] = (word_in >> 8) & 0xFF;
+	}
+	if (len > 3) {
+		data_in[i+3] = (word_in) & 0xFF;
+	}
+}
 
-/** This type specifies the transfer size from the SPI slave component
-    to the application */
-typedef enum spi_transfer_type_t {
-  SPI_TRANSFER_SIZE_8, ///< Transfers should by 8-bit.
-  SPI_TRANSFER_SIZE_32 ///< Transfers should be 32-bit.
-} spi_transfer_type_t;
+__attribute__((always_inline))
+inline void spi_master_transfer(const spi_master_t *ctx,
+                            const uint8_t *data_out,
+                            uint8_t *data_in,
+							size_t len)
+{
+	int i = 1;
+	int do_input;
+	int do_output;
+	int word_count;
+	uint32_t word_out;
+	uint32_t word_in;
+	uint32_t remainder;
+	uint32_t start_time;
 
-/** SPI slave component.
- *
- *  This function implements an SPI slave bus.
- *
- *  \param spi_i   The interface to connect to the user of the component.
- *             The component acts as the client and will make callbacks to
- *             the application.
- *  \param p_sclk        the SPI clock port.
- *  \param p_mosi        the SPI MOSI (master out, slave in) port.
- *  \param p_miso        the SPI MISO (master in, slave out) port.
- *  \param p_ss          the SPI SS (slave select) port.
- *  \param clk           clock to be used by the component.
- *  \param mode          the SPI mode of the bus.
- *  \param transfer_type the type of transfer the slave will perform: either
- *                       ``SPI_TRANSFER_SIZE_8`` or ``SPI_TRANSFER_SIZE_32``.
- */
- [[combinable]]
-  void spi_slave(client spi_slave_callback_if spi_i,
-                 in port p_sclk,
-                 in buffered port:32 p_mosi,
-                 out buffered port:32 ?p_miso,
-                 in port p_ss,
-                 clock clk,
-                 static const spi_mode_t mode,
-                 static const spi_transfer_type_t transfer_type);
+	if (len == 0) {
+		return;
+	}
 
-#endif // _spi_h_
+	if (ctx->cpha == 0) {
+		start_time = 0;
+	} else {
+		start_time = 1;
+	}
+
+	word_count = len / sizeof(uint32_t);
+	remainder = len & sizeof(uint32_t) - 1; /* get the byte remainder */
+
+	/*
+	 * Set the CS port's clock to the SPI clock block.
+	 */
+	port_set_clock(ctx->cs_port, ctx->clock_block);
+
+#if CS_AUTO_ASSERT
+	//start_time = 1;
+	//port_set_trigger_time(ctx->cs_port, start_time);
+	port_out(ctx->cs_port, ctx->cs_assert_val);
+#endif
+
+	if (ctx->mosi_port != 0) {
+		if (data_out != NULL) {
+			word_out = build_partial_word(data_out, len, 0);
+			do_output = 1;
+		} else {
+			word_out = 0;
+			do_output = 2;
+		}
+
+		//port_set_trigger_time(ctx->mosi_port, start_time);
+
+		uint32_t tw = len >= 4 ? 32 : len * 8 - 1;
+
+		/* Output the first bit before the clock starts */
+		port_set_clock(ctx->mosi_port, XS1_CLKBLK_REF);
+		spi_io_port_outpw(ctx->mosi_port, word_out, 1);
+		word_out >>= 1;
+		spi_io_port_sync(ctx->mosi_port);
+		port_set_clock(ctx->mosi_port, ctx->clock_block);
+
+		/* Set the remaining bits to go out after the clock starts */
+		spi_io_port_outpw(ctx->mosi_port, word_out, tw);
+
+	} else {
+		do_output = 0;
+	}
+
+	if (ctx->miso_port != 0 && data_in != NULL) {
+		uint32_t first_input_time;
+		do_input = 1;
+		first_input_time = start_time + (len >= 4 ? 32 : len * 8) + ctx->miso_sample_delay - 1;
+		port_set_trigger_time(ctx->miso_port, first_input_time);
+	} else {
+		do_input = 0;
+	}
+
+	clock_start(ctx->clock_block);
+
+#if CS_AUTO_ASSERT
+	spi_io_port_sync(ctx->cs_port);
+#endif
+
+	/*
+	 * Step one of the attempt to stop the clock on the last byte
+	 * at precisely the right time. The clock should get stopped
+	 * two SCLK cycles after this output completes, hence the -2.
+	 */
+	port_out_at_time(ctx->cs_port, start_time + 8 * len - 2, ctx->cs_assert_val);
+
+	/*
+	 * Each iteration of this loop must execute within
+	 * no more than 8 SCLK cycles.
+	 */
+	if (word_count >= 1) {
+		for (i = 1; i < word_count; i++) {
+			if (do_output) {
+				if (do_output == 1) {
+					word_out = build_word(data_out, i * sizeof(uint32_t));
+				} else if (do_output == 2) {
+					word_out = 0;
+				}
+				port_out(ctx->mosi_port, word_out);
+			}
+			if (do_input) {
+				save_word(data_in, port_in(ctx->miso_port), (i - 1) * sizeof(uint32_t));
+			}
+		}
+
+		if (remainder > 0) {
+			if (do_output) {
+				if (do_output == 1) {
+					word_out = build_partial_word(data_out, remainder, i * sizeof(uint32_t));
+				} else if (do_output == 2) {
+					word_out = 0;
+				}
+				spi_io_port_outpw(ctx->mosi_port, word_out, remainder * 8);
+			}
+
+			if (do_input) {
+				word_in = port_in(ctx->miso_port);
+				spi_io_port_shift_count(ctx->miso_port, remainder * 8);
+				//save_word(data_in, word_in, (i - 1) * sizeof(uint32_t));
+			}
+		}
+	}
+
+	/*
+	 * Attempt to stop the clock at precisely the right time.
+	 *
+	 * 1) Output another '0' on CS two cycles before the end of
+	 *    the transaction. This is done above.
+	 * 2) Wait for this to complete with sync. This will return
+	 *    1 full SCLK cycle after the '0' is output.
+	 * 3) Stop the clock. This will take one full SCLK cycle.
+	 */
+	spi_io_port_sync(ctx->cs_port);
+	//port_set_inout_data(ctx->sclk_port);
+	clock_stop(ctx->clock_block);
+
+	/*
+	 * Set the clock port back to data and outputting 0. (keep invert on if CPOL is 1).
+	 * Turn the clock back on.
+	 * This will let the last port_in() complete for certain mode and delay combinations.
+	 * Then turn the clock off.
+	 * Set the clock port back to outputting the clock.
+	 */
+	//port_set_inout_data(ctx->sclk_port);
+	//clock_start(ctx->clock_block);
+
+	/*
+	 * Set the CS port's clock back to the reference clock
+	 */
+	port_set_clock(ctx->cs_port, XS1_CLKBLK_REF);
+
+#if CS_AUTO_ASSERT
+	port_out(ctx->cs_port, ctx->cs_deassert_val);
+#endif
+
+	if (word_count >= 1 && remainder > 0 && do_input) {
+		save_word(data_in, word_in, (i - 1) * sizeof(uint32_t));
+	}
+
+	if (do_input) {
+		if (remainder > 0) {
+			save_partial_word(data_in, port_in(ctx->miso_port), remainder, (i - 1) * sizeof(uint32_t));
+		} else {
+			save_word(data_in, port_in(ctx->miso_port), (i - 1) * sizeof(uint32_t));
+		}
+	}
+
+	//clock_stop(ctx->clock_block);
+	//port_set_out_clock(ctx->sclk_port);
+}
+
+#endif
+
+#if 0
+__attribute__((always_inline))
+inline void spi_master_transfer(const spi_master_t *ctx,
+                            const uint8_t *data_out,
+                            uint8_t *data_in)
+{
+	int i;
+	int do_input;
+	int do_output;
+	uint32_t word_out;
+	uint32_t start_time = 1;
+	size_t len = ctx->transaction_length;
+
+	if (len == 0) {
+		return;
+	}
+
+	port_set_trigger_time(ctx->cs_port, start_time);
+	port_out(ctx->cs_port, 0);
+
+	if (ctx->mosi_port != 0) {
+		if (data_out != NULL) {
+			word_out = byterev(bitrev(data_out[0]));
+			do_output = 1;
+		} else {
+			word_out = 0;
+			do_output = 2;
+		}
+
+		port_set_trigger_time(ctx->mosi_port, start_time);
+		spi_io_port_shift_count(ctx->mosi_port, 8);
+		port_out(ctx->mosi_port, word_out);
+	} else {
+		do_output = 0;
+	}
+
+	if (ctx->miso_port != 0 && data_in != NULL) {
+		do_input = 1;
+		port_set_trigger_time(ctx->miso_port, 8 + ctx->miso_sample_delay);
+	} else {
+		do_input = 0;
+	}
+
+	clock_start(ctx->clock_block);
+
+	/*
+	 * Each iteration of this loop must execute within
+	 * no more than 8 SCLK cycles.
+	 */
+	for (i = 1; i < len; i++) {
+		if (do_output) {
+			if (do_output == 1) {
+				word_out = byterev(bitrev(data_out[i]));
+			} else if (do_output == 2) {
+				word_out = 0;
+			}
+			spi_io_port_outpw(ctx->mosi_port, word_out, 8);
+		}
+		if (do_input) {
+			data_in[i-1] = byterev(bitrev(port_in(ctx->miso_port)));
+			spi_io_port_shift_count(ctx->miso_port, 8);
+		}
+	}
+
+	/*
+	 * Attempt to stop the clock at precisely the right time.
+	 *
+	 * 1) Output another '0' on CS two cycles before the end of
+	 *    the transaction.
+	 * 2) Wait for this to complete with sync. This will return
+	 *    1 full SCLK cycle after the '0' is output.
+	 * 3) Stop the clock. This will take one full SCLK cycle.
+	 */
+	port_out_at_time(ctx->cs_port, start_time + 8 * len - 2, 0);
+	spi_io_port_sync(ctx->cs_port);
+	clock_stop(ctx->clock_block);
+
+	/*
+	 * Now deassert CS. Its clock needs to be set back to the
+	 * reference clock since SCLK has been stopped.
+	 */
+	port_set_clock(ctx->cs_port, XS1_CLKBLK_REF);
+	port_out(ctx->cs_port, 1);
+	spi_io_port_sync(ctx->cs_port);
+
+	/*
+	 * Now set the CS port's clock back to the SPI clock block.
+	 */
+	port_set_clock(ctx->cs_port, ctx->clock_block);
+
+	if (do_input) {
+		data_in[i-1] = byterev(bitrev(port_in(ctx->miso_port)));
+	}
+}
+#endif
