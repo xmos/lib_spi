@@ -14,126 +14,131 @@
 #include <xcore/port.h>
 #include <xcore/clock.h>
 
-//typedef enum {
-//	spi_io_sample_edge_rising = 0,
-//	spi_io_sample_edge_falling
-//} spi_io_sample_edge_t;
+typedef enum {
+	spi_master_sample_delay_0 = 0, /*< Samples 1/2 clock cycle after output from device */
+	spi_master_sample_delay_1 = 1, /*< Samples 3/4 clock cycle after output from device */
+	spi_master_sample_delay_2 = 2, /*< Samples 1 clock cycle after output from device */
+	spi_master_sample_delay_3 = 3, /*< Samples 1 and 1/4 clock cycle after output from device */
+	spi_master_sample_delay_4 = 4, /*< Samples 1 and 1/2 clock cycle after output from device */
+} spi_master_sample_delay_t;
 
 typedef enum {
-	spi_io_sample_edge_0 = 0, /*< Samples on the first edge following output from device */
-	spi_io_sample_edge_1 = 1, /*< Samples on the second edge following output from device */
-	spi_io_sample_edge_2 = 2, /*< Samples on the third edge following output from device */
-} spi_io_sample_edge_t;
+	spi_master_source_clock_ref = 0,
+	spi_master_source_clock_xcore
+} spi_master_source_clock_t;
 
-typedef enum {
-	spi_io_source_clock_ref = 0,
-	spi_io_source_clock_xcore
-} spi_io_source_clock_t;
+#define SPI_MODE_0 0,0
+#define SPI_MODE_1 0,1
+#define SPI_MODE_2 1,0
+#define SPI_MODE_3 1,1
 
-typedef enum {
-	spi_io_mode_0 = 0,
-	spi_io_mode_1 = 1,
-	spi_io_mode_2 = 2,
-	spi_io_mode_3 = 3,
-} spi_io_mode_t;
 
-/**
- * The context structure that must be passed to each of the qspi_io functions.
- */
 typedef struct {
 	/**
-	 * The clock block to use for the spi_io interface.
-	 *
-	 * This must be set prior to calling spi_io_init()
-	 * and must not change.
+	 * The clock block to use for the SPI master interface.
 	 */
 	xclock_t clock_block;
 
 	/**
 	 * The chip select port. May be a multibit port.
-	 *
-	 * This must be set prior to calling spi_io_init()
-	 * and must not change.
 	 */
 	port_t cs_port;
 
 	/**
 	 * The SCLK port. MUST be a 1-bit port.
-	 *
-	 * This must be set prior to calling spi_io_init()
-	 * and must not change.
 	 */
 	port_t sclk_port;
 
 	/**
 	 * The MOSI port. MUST be a 1-bit port.
-	 *
-	 * This must be set prior to calling spi_io_init()
-	 * and must not change.
 	 */
 	port_t mosi_port;
 
 	/**
 	 * The MISO port. MUST be a 1-bit port.
-	 *
-	 * This must be set prior to calling spi_io_init()
-	 * and must not change.
 	 */
 	port_t miso_port;
+
+	uint32_t current_device;
+	int first_transfer;
+
+} spi_master_t;
+
+typedef struct {
+	spi_master_t *spi_master_ctx;
+
+	spi_master_source_clock_t source_clock;
 
 	/**
 	 * The divisor to use for SPI transactions.
 	 *
 	 * The frequency of SCLK will be set to:
 	 * (F_src) / (2 * full_speed_clk_divisor)
-	 * Where F_src is the frequency of the source clock specified
-	 * by the source_clock parameter of spi_io_init().
-	 *
-	 * This must be set prior to the beginning of a transaction
-	 * and may change between transactions.
+	 * Where F_src is the frequency of the source clock.
 	 */
-	int clk_divisor;
+	int clock_divisor;
 
 	/**
-	 * Number of SCLK cycles to delay the sampling of MISO on input
-	 * during a transaction.
-	 *
-	 * Usually either 0 or 1 depending on the SCLK frequency.
-	 *
-	 * This must be set prior to the beginning of a transaction
-	 * and may change between transactions.
+	 * When to sample MISO. See spi_master_sample_delay_t.
 	 */
-	uint32_t sclk_sample_delay;
-
-	/**
-	 * The SCLK edge to sample the MISO input on during a
-	 * transaction. May be either spi_io_sample_edge_rising or
-	 * spi_io_sample_edge_falling.
-	 *
-	 * This must be set prior to the beginning of a transaction
-	 * and may change between transactions.
-	 */
-	spi_io_sample_edge_t sclk_sample_edge;
+	spi_master_sample_delay_t miso_sample_delay;
 
 	/**
 	 * Number of core clock cycles to delay sampling the MISO pad during
 	 * a transaction. This allows for more fine grained adjustment
 	 * of sampling time. The value may be between 0 and 5.
-	 *
-	 * This must be set prior to the beginning of a transaction
-	 * and may change between transactions.
 	 */
 	uint32_t miso_pad_delay;
+	uint32_t miso_initial_trigger_delay;
 
 	uint32_t cs_assert_val;
-	uint32_t cs_deassert_val;
-	int cpol;
-	int cpha;
+	uint32_t clock_delay;
+	uint32_t clock_bits;
 
-	/* The following are used internally and should not be set by the application */
-	//size_t   transaction_length;
-	//uint32_t transaction_start;
-} spi_io_ctx_t;
+	uint32_t cs_to_clk_delay_ticks;
+	uint32_t clk_to_cs_delay_ticks;
+	uint32_t cs_to_cs_delay_ticks;
+
+} spi_master_device_t;
+
+void spi_master_init(
+		spi_master_t *ctx,
+		xclock_t clock_block,
+		port_t cs_port,
+		port_t sclk_port,
+		port_t mosi_port,
+		port_t miso_port);
+
+void spi_master_device_init(
+		spi_master_device_t *dev,
+		spi_master_t *spi,
+		uint32_t cs_pin,
+		int cpol,
+		int cpha,
+		spi_master_source_clock_t source_clock,
+		uint32_t clock_divisor,
+		spi_master_sample_delay_t miso_sample_delay,
+		uint32_t miso_pad_delay,
+		uint32_t cs_to_clk_delay_ticks,
+		uint32_t clk_to_cs_delay_ticks,
+		uint32_t cs_to_cs_delay_ticks);
+
+void spi_master_start_transaction(
+		spi_master_device_t *dev);
+
+void spi_master_transfer(
+		spi_master_device_t *dev,
+		uint8_t *data_out,
+		uint8_t *data_in,
+		size_t len);
+
+void spi_master_end_transaction(
+		spi_master_device_t *dev);
+
+void spi_master_deinit(
+		spi_master_t *ctx);
+
+
 
 /* The SETC constant for pad delay is missing from xs2a_user.h */
 #define SPI_IO_SETC_PAD_DELAY(n) (0x7007 | ((n) << 3))
@@ -169,6 +174,8 @@ inline void spi_io_port_outpw(resource_t __p,
 	asm volatile("outpw res[%0], %1, %2" : : "r" (__p), "r" (__w), "r" (__bpw));
 }
 
+#if 0
+
 /**
  * Begins a new QSPI I/O transaction by starting the clock,
  * asserting CS, and sending out the first word which is
@@ -201,7 +208,7 @@ inline void spi_io_port_outpw(resource_t __p,
                       in order to turn around SIO from output to input in time.
  */
 __attribute__((always_inline))
-inline void spi_io_start_transaction(spi_io_ctx_t *ctx,
+inline void spi_master_start_transaction(spi_master_t *ctx,
                                      uint32_t cs_pin,
 									 int cpol,
 									 int cpha)
@@ -217,26 +224,26 @@ inline void spi_io_start_transaction(spi_io_ctx_t *ctx,
 		SPI_IO_RESOURCE_SETC(ctx->mosi_port, SPI_IO_SETC_PAD_DELAY(0));
 
 		if (ctx->sclk_sample_edge == spi_io_sample_edge_0) {
-			ctx->sclk_sample_delay = 0;
+			ctx->miso_sample_delay = 0;
 			port_set_sample_rising_edge(ctx->miso_port);
 		} else if (ctx->sclk_sample_edge == spi_io_sample_edge_1) {
-			ctx->sclk_sample_delay = 0;
+			ctx->miso_sample_delay = 0;
 			port_set_sample_falling_edge(ctx->miso_port);
 		} else if (ctx->sclk_sample_edge == spi_io_sample_edge_2) {
-			ctx->sclk_sample_delay = 1;
+			ctx->miso_sample_delay = 1;
 			port_set_sample_rising_edge(ctx->miso_port);
 		}
 	} else {
 		SPI_IO_RESOURCE_SETC(ctx->mosi_port, SPI_IO_SETC_PAD_DELAY(5));
 
 		if (ctx->sclk_sample_edge == spi_io_sample_edge_0) {
-			ctx->sclk_sample_delay = 0;
+			ctx->miso_sample_delay = 0;
 			port_set_sample_falling_edge(ctx->miso_port);
 		} else if (ctx->sclk_sample_edge == spi_io_sample_edge_1) {
-			ctx->sclk_sample_delay = 0;
+			ctx->miso_sample_delay = 0;
 			port_set_sample_rising_edge(ctx->miso_port);
 		} else if (ctx->sclk_sample_edge == spi_io_sample_edge_2) {
-			ctx->sclk_sample_delay = 1;
+			ctx->miso_sample_delay = 1;
 			port_set_sample_falling_edge(ctx->miso_port);
 		}
 	}
@@ -263,7 +270,7 @@ inline void spi_io_start_transaction(spi_io_ctx_t *ctx,
 }
 
 __attribute__((always_inline))
-inline void spi_io_end_transaction(spi_io_ctx_t *ctx,
+inline void spi_master_end_transaction(spi_master_t *ctx,
                                    uint32_t cs_pin)
 {
 	/* enable fast mode and high priority */
@@ -333,7 +340,7 @@ inline void save_partial_word(uint8_t *data_in, uint32_t word_in, const int len,
 }
 
 __attribute__((always_inline))
-inline void spi_io_transfer(const spi_io_ctx_t *ctx,
+inline void spi_master_transfer(const spi_master_t *ctx,
                             const uint8_t *data_out,
                             uint8_t *data_in,
 							size_t len)
@@ -401,7 +408,7 @@ inline void spi_io_transfer(const spi_io_ctx_t *ctx,
 	if (ctx->miso_port != 0 && data_in != NULL) {
 		uint32_t first_input_time;
 		do_input = 1;
-		first_input_time = start_time + (len >= 4 ? 32 : len * 8) + ctx->sclk_sample_delay - 1;
+		first_input_time = start_time + (len >= 4 ? 32 : len * 8) + ctx->miso_sample_delay - 1;
 		port_set_trigger_time(ctx->miso_port, first_input_time);
 	} else {
 		do_input = 0;
@@ -505,9 +512,11 @@ inline void spi_io_transfer(const spi_io_ctx_t *ctx,
 	//port_set_out_clock(ctx->sclk_port);
 }
 
+#endif
+
 #if 0
 __attribute__((always_inline))
-inline void spi_io_transfer(const spi_io_ctx_t *ctx,
+inline void spi_master_transfer(const spi_master_t *ctx,
                             const uint8_t *data_out,
                             uint8_t *data_in)
 {
@@ -543,7 +552,7 @@ inline void spi_io_transfer(const spi_io_ctx_t *ctx,
 
 	if (ctx->miso_port != 0 && data_in != NULL) {
 		do_input = 1;
-		port_set_trigger_time(ctx->miso_port, 8 + ctx->sclk_sample_delay);
+		port_set_trigger_time(ctx->miso_port, 8 + ctx->miso_sample_delay);
 	} else {
 		do_input = 0;
 	}
@@ -600,8 +609,3 @@ inline void spi_io_transfer(const spi_io_ctx_t *ctx,
 	}
 }
 #endif
-
-void spi_io_deinit(const spi_io_ctx_t *ctx);
-
-void spi_io_init(const spi_io_ctx_t *ctx,
-                 spi_io_source_clock_t source_clock);
