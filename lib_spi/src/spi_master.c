@@ -51,21 +51,11 @@ void spi_master_start_transaction(
 		spi_io_port_sync(spi->cs_port);
 	}
 
-	spi->first_transfer = 1;
-
-	/* Assert CS now */
-	port_out(spi->cs_port, dev->cs_assert_val);
-	spi_io_port_sync(spi->cs_port);
-
 	/*
-	 * Assert CS again, scheduled for earliest time the
-	 * data is allowed to start moving. The first transfer
-	 * will sync on CS before starting to ensure the minimum
-	 * CS to data time is met.
+	 * The first transfer will sync on CS before starting to
+	 * ensure the minimum CS to data time is met.
 	 */
-	if (dev->cs_to_clk_delay_ticks > 1) {
-		port_out_at_time(spi->cs_port, port_get_trigger_time(spi->cs_port) + dev->cs_to_clk_delay_ticks, dev->cs_assert_val);
-	}
+	 spi_master_delay_before_next_transfer(dev, dev->cs_to_clk_delay_ticks);
 }
 
 __attribute__((always_inline))
@@ -120,10 +110,10 @@ void spi_master_transfer(
 	word_count = len / sizeof(uint16_t);
 	remainder = len & sizeof(uint16_t) - 1; /* get the byte remainder */
 
-	if (spi->first_transfer) {
-		/* Ensure the minimum CS to data time is met */
+	if (spi->delay_before_transfer) {
+		/* Ensure the delay time is met */
 		spi_io_port_sync(spi->cs_port);
-		spi->first_transfer = 0;
+		spi->delay_before_transfer = 0;
 	} else {
 		port_clear_trigger_time(spi->cs_port);
 	}
@@ -228,8 +218,12 @@ void spi_master_end_transaction(
 void spi_master_deinit(spi_master_t *spi)
 {
 	port_disable(spi->cs_port);
-	port_disable(spi->mosi_port);
-	port_disable(spi->miso_port);
+	if (spi->mosi_port != 0) {
+		port_disable(spi->mosi_port);
+	}
+	if (spi->miso_port != 0) {
+		port_disable(spi->miso_port);
+	}
 	port_disable(spi->sclk_port);
 	clock_disable(spi->clock_block);
 }
