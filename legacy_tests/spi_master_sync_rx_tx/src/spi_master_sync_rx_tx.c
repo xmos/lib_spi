@@ -6,7 +6,7 @@
 #include <xcore/clock.h>
 #include <xcore/port.h>
 #include <xcore/parallel.h>
-#include "spi_io.h"
+#include "spi.h"
 #include "spi_sync_tester.h"
 
 port_t p_miso = XS1_PORT_1A;
@@ -17,28 +17,6 @@ xclock_t cb = XS1_CLKBLK_1;
 
 port_t setup_strobe_port = XS1_PORT_1E;
 port_t setup_data_port = XS1_PORT_16B;
-
-void app(spi_io_ctx_t *spi_ctx, int mosi_enabled, int miso_enabled) {
-    unsigned speed = SPEED;
-
-    for (unsigned cpol=0; cpol<2; cpol++) {
-        for (unsigned cpha=0; cpha<2; cpha++) {
-            test_transfer8(spi_ctx, setup_strobe_port, setup_data_port, 0, 100,
-                    cpol, cpha, speed, mosi_enabled, miso_enabled);
-            printf("Transfer8 MODE_%u complete\n", (cpol<<1) | cpha);
-        }
-    }
-
-    for (unsigned cpol=0; cpol<2; cpol++) {
-        for (unsigned cpha=0; cpha<2; cpha++) {
-            test_transfer32(spi_ctx, setup_strobe_port, setup_data_port, 0, 100,
-                    cpol, cpha, speed, mosi_enabled, miso_enabled);
-            printf("Transfer32 MODE_%u complete\n", (cpol<<1) | cpha);
-        }
-    }
-
-    _Exit(1);
-}
 
 #if MOSI_ENABLED
 #define MOSI p_mosi
@@ -52,39 +30,48 @@ void app(spi_io_ctx_t *spi_ctx, int mosi_enabled, int miso_enabled) {
 #define MISO 0
 #endif
 
-#if CB_ENABLED
-#define CB cb
+#if MODE == 0
+#define CPOL 0
+#define CPHA 0
+#elif MODE == 1
+#define CPOL 0
+#define CPHA 1
+#elif MODE == 2
+#define CPOL 1
+#define CPHA 0
 #else
-#define CB 0
+#define CPOL 1
+#define CPHA 1
 #endif
 
+void app(spi_master_t *spi_ctx, int mosi_enabled, int miso_enabled) {
+    spi_master_device_t spi_dev;
+
+    spi_master_device_init(&spi_dev, spi_ctx,
+        0,
+        CPOL, CPHA,
+        spi_master_source_clock_ref,
+        DIV,
+        spi_master_sample_delay_0,
+        0, 0 ,0 ,0 );
+
+
+    test_transfer(&spi_dev, setup_strobe_port, setup_data_port, 0, 0,
+            CPOL, CPHA, 100000/(DIV+2), mosi_enabled, miso_enabled);
+
+    _Exit(1);
+}
+
 int main() {
-    spi_io_ctx_t spi_ctx = {
-            .clock_block = CB,
-            .cs_port = p_ss[0],
-            .sclk_port = p_sclk,
-            .mosi_port = MOSI,
-            .miso_port = MISO,
-            .clk_divisor = 1, /* 100 / (2 * 2) = 25 MHz */
-            .sclk_sample_delay = 0,
-            .sclk_sample_edge = spi_io_sample_edge_falling,
-            .miso_pad_delay = 0,
-    };
+    spi_master_t spi_ctx;
+
+    spi_master_init(&spi_ctx, cb, p_ss[0], p_sclk, p_mosi, p_miso);
 
     port_enable(setup_strobe_port);
     port_enable(setup_data_port);
 
-    /* These might not be needed with new api */
-    // port_start_buffered(p_miso, 32);
-    // port_enable(p_ss[0]);
-    // port_start_buffered(p_sclk, 32);
-    // port_start_buffered(p_mosi, 32);
-    // clock_enable(cb);
-
-    spi_io_init(&spi_ctx, spi_io_source_clock_ref);
-
     PAR_JOBS(
-        PJOB(app,(&ctx, MOSI_ENABLED, MISO_ENABLED)),
+        PJOB(app,(&spi_ctx, MOSI_ENABLED, MISO_ENABLED)),
 #if FULL_LOAD == 1
         PJOB(burn,()),
         PJOB(burn,()),
@@ -92,8 +79,8 @@ int main() {
         PJOB(burn,()),
         PJOB(burn,()),
         PJOB(burn,()),
-        PJOB(burn,())
 #endif
+        PJOB(burn,())
     );
 
     return 0;

@@ -4,10 +4,10 @@ import xmostest
 from spi_master_checker import SPIMasterChecker
 import os
 
-def do_rx_tx_sync(full_load, cb_enabled, miso_enabled, mosi_enable, speed):
+def do_rx_tx_sync(full_load, miso_enabled, mosi_enable, div, mode):
     resources = xmostest.request_resource("xsim")
 
-    binary = "spi_master_sync_rx_tx/bin/{load}{cb}{miso}{mosi}{speed}/spi_master_sync_rx_tx_{load}{cb}{miso}{mosi}{speed}.xe".format(load=full_load,cb=cb_enabled,miso=miso_enabled,mosi=mosi_enable,speed=speed)
+    binary = "spi_master_sync_rx_tx/bin/{load}_{miso}_{mosi}_{div}_{mode}/spi_master_sync_rx_tx_{load}_{miso}_{mosi}_{div}_{mode}.xe".format(load=full_load,miso=miso_enabled,mosi=mosi_enable,div=div,mode=mode)
 
 
     checker = SPIMasterChecker("tile[0]:XS1_PORT_1C",
@@ -20,7 +20,7 @@ def do_rx_tx_sync(full_load, cb_enabled, miso_enabled, mosi_enable, speed):
     tester = xmostest.ComparisonTester(open('master_sync.expect'),
                                      'lib_spi',
                                      'spi_master_sim_tests',
-                                     'spi_master_sync_rx_tx_{load}{cb}{miso}{mosi}{speed}'.format(load=full_load,cb=cb_enabled,miso=miso_enabled,mosi=mosi_enable,speed=speed),
+                                     'spi_master_sync_rx_tx_{load}_{miso}_{mosi}_{div}_{mode}'.format(load=full_load,miso=miso_enabled,mosi=mosi_enable,div=div,mode=mode),
                                      regexp=True)
 
     if full_load == 0:
@@ -29,13 +29,15 @@ def do_rx_tx_sync(full_load, cb_enabled, miso_enabled, mosi_enable, speed):
     xmostest.run_on_simulator(resources['xsim'], binary,
                               simthreads = [checker],
                               simargs=[],
+                              # simargs=['--vcd-tracing', '-o ./spi_master_sync_rx_tx/trace{load}_{miso}_{mosi}_{div}_{mode}.vcd -tile tile[0] -pads -functions -clock-blocks -ports-detailed -instructions'.format(load=full_load,miso=miso_enabled,mosi=mosi_enable,div=div,mode=mode)],
                               suppress_multidrive_messages = False,
                               tester = tester)
 
 def runtest():
     for full_load in [0, 1]:
-        for cb_enabled in [0, 1]:
-            for miso_enabled in [0, 1]:
-                for mosi_enabled in [0, 1]:
-                    for speed in [1500, 3000]:
-                        do_rx_tx_sync(full_load, cb_enabled, miso_enabled, mosi_enabled, speed)
+        for miso_enabled in [0, 1]:
+            for mosi_enabled in [0, 1]:
+                for div in [0, 1, 10]:
+                    for mode in [0, 1, 2, 3]:
+                        if not ((miso_enabled == 0) and (mosi_enabled == 0)):
+                            do_rx_tx_sync(full_load, miso_enabled, mosi_enabled, div, mode)

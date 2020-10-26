@@ -2,7 +2,7 @@
 
 #include <stdint.h>
 
-#include "spi_io.h"
+#include "spi.h"
 
 void spi_master_start_transaction(
 		spi_master_device_t *dev)

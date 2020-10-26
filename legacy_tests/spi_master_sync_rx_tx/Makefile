@@ -19,21 +19,21 @@ USED_MODULES = lib_spi lib_spi_master_tester
 COMMON_FLAGS = -O2 -g
 
 FULL_LOAD = 0 1
-CLOCK_BLOCK = 0 1
 MISO_ENABLED = 0 1
 MOSI_ENABLED = 0 1
-SPEEDS = 1500 3000
+DIVS = 0 1 10
+MODE = 0 1 2 3
 
 define create_flags
-XCC_FLAGS_$(1)$(2)$(3)$(4)$(5) = $(COMMON_FLAGS) -DFULL_LOAD=$(1) -DCB_ENABLED=$(2) -DMISO_ENABLED=$(3) -DMOSI_ENABLED=$(4) -DSPEED=$(5)
+XCC_FLAGS_$(1)_$(2)_$(3)_$(4)_$(5) = $(COMMON_FLAGS) -DFULL_LOAD=$(1) -DMISO_ENABLED=$(2) -DMOSI_ENABLED=$(3) -DDIV=$(4) -DMODE=$(5)
 endef
 
 $(foreach load,$(FULL_LOAD),\
-	$(foreach cb,$(CLOCK_BLOCK),\
-		$(foreach miso,$(MISO_ENABLED),\
-			$(foreach mosi,$(MOSI_ENABLED),\
-				$(foreach speed,$(SPEEDS),\
-					$(eval $(call create_flags,$(load),$(cb),$(miso),$(mosi),$(speed))))))))
+	$(foreach miso,$(MISO_ENABLED),\
+		$(foreach mosi,$(MOSI_ENABLED),\
+			$(foreach div,$(DIVS),\
+				$(foreach mode,$(MODE),\
+					$(eval $(call create_flags,$(load),$(miso),$(mosi),$(div),$(mode))))))))
 
 #=============================================================================
 # The following part of the Makefile includes the common build infrastructure
