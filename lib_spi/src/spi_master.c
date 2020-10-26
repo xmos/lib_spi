@@ -22,12 +22,14 @@ void spi_master_start_transaction(
 		}
 		clock_set_divide(spi->clock_block, dev->clock_divisor);
 
-		if ((dev->miso_sample_delay & 1) == 0) {
-			port_set_sample_falling_edge(spi->miso_port);
-		} else {
-			port_set_sample_rising_edge(spi->miso_port);
+		if (spi->miso_port != 0) {
+			if ((dev->miso_sample_delay & 1) == 0) {
+				port_set_sample_falling_edge(spi->miso_port);
+			} else {
+				port_set_sample_rising_edge(spi->miso_port);
+			}
+			SPI_IO_RESOURCE_SETC(spi->miso_port, SPI_IO_SETC_PAD_DELAY(dev->miso_pad_delay));
 		}
-		SPI_IO_RESOURCE_SETC(spi->miso_port, SPI_IO_SETC_PAD_DELAY(dev->miso_pad_delay));
 
 		/* Output the clock idle value */
 		clock_start(spi->clock_block);
@@ -66,6 +68,36 @@ void spi_master_start_transaction(
 	}
 }
 
+__attribute__((always_inline))
+inline uint32_t load_data_out(const uint8_t *data_out, const int len)
+{
+	uint32_t tmp;
+	uint32_t word_out;
+
+	tmp = data_out[0] << 8;
+	if (len > 1) {
+		tmp |= data_out[1];
+	}
+	word_out = tmp;
+	asm volatile("zip %0, %1, 0" :"+r"(tmp), "+r"(word_out));
+	return bitrev(word_out);
+}
+
+__attribute__((always_inline))
+inline void save_data_in(uint8_t *data_in, uint32_t word_in, size_t bytes)
+{
+	uint32_t tmp;
+
+	word_in = bitrev(word_in);
+	asm volatile("unzip %0, %1, 0" :"+r"(tmp), "+r"(word_in));
+	if (bytes == 1) {
+		data_in[0] = word_in;
+	} else {
+		data_in[1] = word_in;
+		data_in[0] = (word_in >> 8) & 0xFF;
+	}
+}
+
 void spi_master_transfer(
 		spi_master_device_t *dev,
 		uint8_t *data_out,
@@ -74,10 +106,19 @@ void spi_master_transfer(
 {
 	const uint32_t start_time = 1;
 	spi_master_t *spi = dev->spi_master_ctx;
-	uint32_t tmp;
-	uint32_t word_out;
-	uint32_t word_in;
-	int i;
+	uint32_t word_count;
+	uint32_t remainder;
+	uint32_t tw;
+	uint32_t word;
+	const int do_output = data_out != NULL && spi->mosi_port != 0;
+	const int do_input = data_in != NULL && spi->miso_port != 0;
+
+	if (len == 0) {
+		return;
+	}
+
+	word_count = len / sizeof(uint16_t);
+	remainder = len & sizeof(uint16_t) - 1; /* get the byte remainder */
 
 	if (spi->first_transfer) {
 		/* Ensure the minimum CS to data time is met */
@@ -87,44 +128,61 @@ void spi_master_transfer(
 		port_clear_trigger_time(spi->cs_port);
 	}
 
-	port_set_trigger_time(spi->mosi_port, start_time);
 	port_set_trigger_time(spi->sclk_port, start_time + dev->clock_delay);
 
-	tmp = data_out[0];
-	word_out = tmp; /* todo: word_out should be the first two bytes (if len >= 2) */
-	asm volatile("zip %0, %1, 0" :"+r"(tmp), "+r"(word_out));
-	word_out = bitrev(word_out) >> 16; /* todo don't shift obviously if outputting 2 bytes */
+	if (do_output) {
+		port_set_trigger_time(spi->mosi_port, start_time);
+	}
 
-	spi_io_port_outpw(spi->mosi_port, word_out, 16); /* todo: 32 if len >= 2, else 16 */
-	spi_io_port_outpw(spi->sclk_port, dev->clock_bits, 16); /* todo: 32 if len >= 2, else 16 */
+	tw = len == 1 ? 16 : 32;
 
-	port_set_trigger_time(spi->miso_port, start_time + 14 + dev->miso_initial_trigger_delay); /* don't ask. todo: fix for 2 bytes */
+	spi_io_port_outpw(spi->sclk_port, dev->clock_bits, tw);
+
+	if (do_output) {
+		spi_io_port_outpw(spi->mosi_port, load_data_out(data_out, len), tw);
+		data_out += 2;
+	}
+	if (do_input) {
+		port_set_trigger_time(spi->miso_port, start_time + (tw - 2) + dev->miso_initial_trigger_delay); /* don't ask. port timing is weird */
+	}
 
 	clock_start(spi->clock_block);
 
-	/* todo: only output whole words after the first */
-	for (i = 1; i < len; i++) {
-		tmp = data_out[i];
-		word_out = tmp;
-		asm volatile("zip %0, %1, 0" :"+r"(tmp), "+r"(word_out));
-		word_out = bitrev(word_out) >> 16;
-		spi_io_port_outpw(spi->mosi_port, word_out, 16); /* todo: 32 */
-		spi_io_port_outpw(spi->sclk_port, dev->clock_bits, 16);
-		//port_out(ctx->mosi_port, word_out);
-		//port_out(ctx->sclk_port, ctx->clock_bits);
+	if (word_count > 0) {
+		while(word_count-- != 1) {
+			port_out(spi->sclk_port, dev->clock_bits);
 
-		if (spi->miso_port == 0) {
-			continue;
+			if (do_output) {
+				word = load_data_out(data_out, 2);
+				port_out(spi->mosi_port, word);
+			}
+			if (do_input) {
+				word = port_in(spi->miso_port);
+				save_data_in(data_in, word, 2);
+			}
+			data_out += 2; data_in += 2;
 		}
-		word_in = bitrev(port_in(spi->miso_port));
-		spi_io_port_shift_count(spi->miso_port, 16); //todo: remove for 32
-		asm volatile("unzip %0, %1, 0" :"+r"(tmp), "+r"(word_in));
-		data_in[i-1] = word_in;
+
+		if (remainder > 0) {
+			spi_io_port_outpw(spi->sclk_port, dev->clock_bits, 16);
+
+			if (do_output) {
+				word = load_data_out(data_out, 1);
+				spi_io_port_outpw(spi->mosi_port, word, 16);
+			}
+			if (do_input) {
+				word = port_in(spi->miso_port);
+				spi_io_port_shift_count(spi->miso_port, 16);
+				save_data_in(data_in, word, 2);
+				data_in += 2;
+			}
+		}
 	}
 
-	word_in = bitrev(port_in(spi->miso_port));
-	asm volatile("unzip %0, %1, 0" :"+r"(tmp), "+r"(word_in));
-	data_in[i-1] = word_in;
+	if (do_input) {
+		word = port_in(spi->miso_port);
+		save_data_in(data_in, word, remainder);
+	}
 
 	spi_io_port_sync(spi->sclk_port);
 	clock_stop(spi->clock_block);
@@ -235,15 +293,17 @@ void spi_master_init(
 
 	/* Setup the MOSI port */
 	spi->mosi_port = mosi_port;
-	port_start_buffered(spi->mosi_port, 32);
-	port_set_clock(spi->mosi_port, spi->clock_block);
+	if (mosi_port != 0) {
+		port_start_buffered(spi->mosi_port, 32);
+		port_set_clock(spi->mosi_port, spi->clock_block);
+		port_clear_buffer(spi->mosi_port);
+	}
 
 	/* Setup the MISO port */
 	spi->miso_port = miso_port;
-	port_start_buffered(spi->miso_port, 32);
-	port_set_clock(spi->miso_port, spi->clock_block);
-
-	/* Ensure the buffers are clear before the first transaction. */
-	port_clear_buffer(spi->mosi_port);
-	port_clear_buffer(spi->miso_port);
+	if (miso_port != 0) {
+		port_start_buffered(spi->miso_port, 32);
+		port_set_clock(spi->miso_port, spi->clock_block);
+		port_clear_buffer(spi->miso_port);
+	}
 }
