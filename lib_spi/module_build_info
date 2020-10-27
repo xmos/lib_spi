@@ -1,3 +1,12 @@
 VERSION = 3.1.1
 
-XCC_FLAGS_spi_async.xc = $(XCC_FLAGS) -Wno-reinterpret-alignment
+DEPENDENT_MODULES =
+
+MODULE_XCC_FLAGS = $(XCC_FLAGS) \
+                   -O3
+
+EXPORT_INCLUDE_DIRS = api
+
+INCLUDE_DIRS = $(EXPORT_INCLUDE_DIRS)
+
+SOURCE_DIRS = src
