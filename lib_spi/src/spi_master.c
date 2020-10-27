@@ -185,7 +185,7 @@ void spi_master_transfer(
 	 * And assert CS again, scheduled for earliest time CS
 	 * is allowed to deassert.
 	 */
-	if (dev->clk_to_cs_delay_ticks > 1) {
+	if (dev->clk_to_cs_delay_ticks >= SPI_MASTER_MINIMUM_DELAY) {
 		port_out_at_time(spi->cs_port, port_get_trigger_time(spi->cs_port) + dev->clk_to_cs_delay_ticks, dev->cs_assert_val);
 	}
 }
@@ -210,7 +210,7 @@ void spi_master_end_transaction(
 	 * will sync on CS before starting to ensure the minimum
 	 * CS to CS time is met.
 	 */
-	if (dev->cs_to_cs_delay_ticks > 1) {
+	if (dev->cs_to_cs_delay_ticks >= SPI_MASTER_MINIMUM_DELAY) {
 		port_out_at_time(spi->cs_port, port_get_trigger_time(spi->cs_port) + dev->cs_to_cs_delay_ticks, cs_deassert_val);
 	}
 }

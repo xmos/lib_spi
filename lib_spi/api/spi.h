@@ -5,7 +5,7 @@
  *  \brief API for QSPI I/O
  */
 
-#define CS_AUTO_ASSERT 0
+#define SPI_MASTER_MINIMUM_DELAY 10
 
 #include <stdlib.h> /* for size_t */
 #include <stdint.h>
@@ -220,7 +220,7 @@ inline void spi_master_delay_before_next_transfer(
 	 * Assert CS again, scheduled for earliest time the
 	 * next transfer is allowed to start.
 	 */
-	if (delay_ticks > 1) {
+	if (delay_ticks >= SPI_MASTER_MINIMUM_DELAY) {
 		port_out_at_time(spi->cs_port, port_get_trigger_time(spi->cs_port) + delay_ticks, dev->cs_assert_val);
 	}
 }
