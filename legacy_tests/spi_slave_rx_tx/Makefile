@@ -19,21 +19,17 @@ USED_MODULES = lib_spi
 COMMON_FLAGS = -O2 -g
 
 FULL_LOAD = 0 1
-COMBINED = 0 1
 MISO_ENABLED = 0 1
 SPI_MODE = 0 1 2 3
-TRANSFER_SIZE = 8 32
 
 define create_flags
-XCC_FLAGS_$(1)$(2)$(3)$(4)$(5) = $(COMMON_FLAGS) -DFULL_LOAD=$(1) -DCOMBINED=$(2) -DMISO_ENABLED=$(3) -DSPI_MODE=$(4) -DTRANSFER_SIZE=$(5)
+XCC_FLAGS_$(1)_$(2)_$(3) = $(COMMON_FLAGS) -DFULL_LOAD=$(1) -DMISO_ENABLED=$(2) -DSPI_MODE=$(3)
 endef
 
 $(foreach load,$(FULL_LOAD),\
-	$(foreach comb,$(COMBINED),\
-		$(foreach miso,$(MISO_ENABLED),\
-			$(foreach mode,$(SPI_MODE),\
-				$(foreach transfersize,$(TRANSFER_SIZE),\
-					$(eval $(call create_flags,$(load),$(comb),$(miso),$(mode),$(transfersize))))))))
+	$(foreach miso,$(MISO_ENABLED),\
+		$(foreach mode,$(SPI_MODE),\
+			$(eval $(call create_flags,$(load),$(miso),$(mode))))))
 
 #=============================================================================
 # The following part of the Makefile includes the common build infrastructure

@@ -23,7 +23,7 @@ void app(spi_io_ctx_t *spi_ctx, int mosi_enabled, int miso_enabled){
 
     while (1) {
         unsigned inter_frame_gap = 1000;
-        unsigned cpol = 0;;
+        unsigned cpol = 0;
         unsigned cpha = 0;
         unsigned device_id = 0;
         unsigned speed_in_kbps = 500;
@@ -32,8 +32,9 @@ void app(spi_io_ctx_t *spi_ctx, int mosi_enabled, int miso_enabled){
         int ret = test_transfer8(spi_ctx, setup_strobe_port, setup_data_port, device_id,
                                  inter_frame_gap, cpol, cpha, speed_in_kbps,
                                  mosi_enabled, miso_enabled);
-        if (ret != 0)
+        if (ret != 0) {
             printf("Error %d in round %d\n", ret, count);
+        }
 
         // now do something to the clock port
         {   unsigned sclk;

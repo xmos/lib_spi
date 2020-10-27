@@ -18,8 +18,7 @@ USED_MODULES = lib_spi lib_spi_master_tester
 # xcc for the final link (mapping) stage.
 COMMON_FLAGS = -O2 -g
 
-XCC_FLAGS_0 = $(COMMON_FLAGS) -DCOMBINED=0
-XCC_FLAGS_1 = $(COMMON_FLAGS) -DCOMBINED=1
+XCC_FLAGS = $(COMMON_FLAGS)
 
 #=============================================================================
 # The following part of the Makefile includes the common build infrastructure

@@ -139,6 +139,26 @@ void spi_master_deinit(
 		spi_master_t *ctx);
 
 
+#define SPI_CALLBACK_ATTR __attribute__((fptrgroup("spi_callback")))
+
+typedef void (*slave_transaction_started_t)(void *app_data, uint8_t **out_buf, size_t *outbuf_len, uint8_t **in_buf, size_t *inbuf_len);
+typedef void (*slave_transaction_ended_t)(void *app_data, uint8_t **out_buf, size_t bytes_written, uint8_t **in_buf, size_t bytes_read, size_t remaining_bits);
+
+typedef struct {
+    SPI_CALLBACK_ATTR slave_transaction_started_t slave_transaction_started;
+    SPI_CALLBACK_ATTR slave_transaction_ended_t slave_transaction_ended;
+    void *app_data;
+} spi_slave_callback_group_t;
+
+void spi_slave(
+        const spi_slave_callback_group_t *spi_cbg,
+        port_t p_sclk,
+        port_t p_mosi,
+        port_t p_miso,
+        port_t p_cs,
+        xclock_t clk,
+        int cpol,
+        int cpha);
 
 /* The SETC constant for pad delay is missing from xs2a_user.h */
 #define SPI_IO_SETC_PAD_DELAY(n) (0x7007 | ((n) << 3))
@@ -172,6 +192,31 @@ inline void spi_io_port_outpw(resource_t __p,
 							  uint32_t __bpw)
 {
 	asm volatile("outpw res[%0], %1, %2" : : "r" (__p), "r" (__w), "r" (__bpw));
+}
+
+__attribute__((always_inline))
+inline void spi_io_configure_out_port_strobed_slave(port_t __p, port_t __readyin,
+                                      xclock_t __clk, uint32_t __initial_val)
+{
+    port_write_control_word(__p, XS1_SETC_PORT_DATAPORT);
+    clock_set_ready_src(__clk, __readyin);
+    port_out(__p, __initial_val);
+    port_set_clock(__p, __clk);
+    port_set_ready_strobed(__p);
+    port_set_slave(__p);
+}
+
+__attribute__((always_inline))
+inline void spi_io_configure_in_port_strobed_slave(port_t __p, port_t __readyin,
+                                      xclock_t __clk)
+{
+  port_write_control_word(__p, XS1_SETC_PORT_DATAPORT);
+  (void) port_in(__p);
+  clock_set_ready_src(__clk, __readyin);
+  port_set_clock(__p, __clk);
+  port_set_ready_strobed(__p);
+  port_set_slave(__p);
+  port_clear_buffer(__p);
 }
 
 #if 0
