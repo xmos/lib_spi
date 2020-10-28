@@ -1,1 +1,12 @@
 SPI Slave checker started
+Send initial settings
+Got Settings:cpol [0-1]{1} cpha [0-1]{1} miso [0-1]{1} num_bits 128 kbps \d+ init delay \d+
+Got Settings:cpol [0-1]{1} cpha [0-1]{1} miso [0-1]{1} num_bits 1 kbps \d+ init delay \d+
+Got Settings:cpol [0-1]{1} cpha [0-1]{1} miso [0-1]{1} num_bits 2 kbps \d+ init delay \d+
+Got Settings:cpol [0-1]{1} cpha [0-1]{1} miso [0-1]{1} num_bits 3 kbps \d+ init delay \d+
+Got Settings:cpol [0-1]{1} cpha [0-1]{1} miso [0-1]{1} num_bits 4 kbps \d+ init delay \d+
+Got Settings:cpol [0-1]{1} cpha [0-1]{1} miso [0-1]{1} num_bits 5 kbps \d+ init delay \d+
+Got Settings:cpol [0-1]{1} cpha [0-1]{1} miso [0-1]{1} num_bits 6 kbps \d+ init delay \d+
+Got Settings:cpol [0-1]{1} cpha [0-1]{1} miso [0-1]{1} num_bits 7 kbps \d+ init delay \d+
+Got Settings:cpol [0-1]{1} cpha [0-1]{1} miso [0-1]{1} num_bits 8 kbps \d+ init delay \d+
+Test completed

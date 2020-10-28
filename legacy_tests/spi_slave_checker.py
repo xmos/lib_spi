@@ -32,6 +32,8 @@ class SPISlaveChecker(xmostest.SimThread):
             #first do the setup rx
             strobe_val = xsi.sample_port_pins(self._setup_strobe_port)
             if strobe_val == 1:
+                xsi.drive_port_pins(self._sck_port, expected_cpol)
+                xsi.drive_port_pins(self._ss_port, 1)
                 self.wait_for_port_pins_change([self._setup_strobe_port])
 
             expected_cpol = self.get_setup_data(xsi, self._setup_strobe_port, self._setup_data_port)
@@ -40,11 +42,11 @@ class SPISlaveChecker(xmostest.SimThread):
             expected_num_bits = self.get_setup_data(xsi, self._setup_strobe_port, self._setup_data_port)
             kbps = self.get_setup_data(xsi, self._setup_strobe_port, self._setup_data_port)
             initial_clock_delay = self.get_setup_data(xsi, self._setup_strobe_port, self._setup_data_port)
-            print "Got Settings:\n\tcpol %d\n\tcpha %d\n\tmiso %d\n\tnum_bits %d\n\tkbps %d\n\tinit delay %d " % (expected_cpol, expected_cpha, expected_miso_enabled, expected_num_bits, kbps, initial_clock_delay)
+            print "Got Settings:cpol %d cpha %d miso %d num_bits %d kbps %d init delay %d " % (expected_cpol, expected_cpha, expected_miso_enabled, expected_num_bits, kbps, initial_clock_delay)
 
             # drive initial values while slave starts up for the first time
             xsi.drive_port_pins(self._sck_port, expected_cpol)
-            xsi.drive_port_pins(self._ss_port,1)
+            xsi.drive_port_pins(self._ss_port, 1)
             self.wait_until(xsi.get_time() + 10000)
 
             xsi.drive_port_pins(self._sck_port, expected_cpol)
@@ -101,5 +103,7 @@ class SPISlaveChecker(xmostest.SimThread):
             xsi.drive_port_pins(self._ss_port, 1)
 
             self.wait_for_port_pins_change([self._setup_strobe_port])
+            xsi.drive_port_pins(self._sck_port, expected_cpol)
+            xsi.drive_port_pins(self._ss_port, 1)
             xsi.drive_port_pins(self._setup_resp_port, error)
             self.wait_for_port_pins_change([self._setup_strobe_port])

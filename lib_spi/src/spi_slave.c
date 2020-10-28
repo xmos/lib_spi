@@ -10,6 +10,7 @@
 #include "spi.h"
 
 #define ASSERTED 1
+
 void spi_slave(
         const spi_slave_callback_group_t *spi_cbg,
         port_t p_sclk,
@@ -26,6 +27,7 @@ void spi_slave(
     size_t in_buf_len = 0;
     size_t bytes_read = 0;
     size_t bytes_written = 0;
+    int running = 0;
 
 	/* Enable fast mode and high priority */
 	SPI_IO_SETSR(XS1_SR_QUEUE_MASK | XS1_SR_FAST_MASK);
@@ -74,7 +76,10 @@ void spi_slave(
 
     while(1) {
     	triggerable_enable_trigger(p_cs);
-    	triggerable_enable_trigger(p_mosi);
+
+        if (running == 1) {
+        	triggerable_enable_trigger(p_mosi);
+        }
 
         TRIGGERABLE_WAIT_EVENT(cs_changed, mosi_changed);
 
@@ -88,16 +93,20 @@ void spi_slave(
                 spi_cbg->slave_transaction_started(spi_cbg->app_data, &out_buf, &out_buf_len, &in_buf, &in_buf_len);
                 bytes_read = 0;
                 bytes_written = 0;
+                running = 1;
             } else {
-                size_t remaining_bits = port_endin(p_mosi);
-                uint32_t data = port_in(p_mosi);
+                uint32_t data = 0;
+                size_t read_bits = port_force_input(p_mosi, &data);
+                uint32_t mask;
 
-                if (remaining_bits) {
-                    data = bitrev(data);
-                    data >>= (32 - 8);
+                if (read_bits > 0) {
+                    asm volatile("mkmsk %0, %1": "=r"(mask) : "r"(read_bits));
+                    in_buf[bytes_read] = ((bitrev(data)>>24) & mask);
                 }
+                spi_cbg->slave_transaction_ended(spi_cbg->app_data, &out_buf, bytes_written, &in_buf, bytes_read, read_bits);
+
                 port_clear_buffer(p_mosi);
-                spi_cbg->slave_transaction_ended(spi_cbg->app_data, &out_buf, bytes_written, &in_buf, bytes_read, remaining_bits);
+                running = 0;
                 continue;
             }
 
@@ -128,13 +137,6 @@ void spi_slave(
         mosi_changed: {
             triggerable_disable_all();
 
-            uint32_t in_byte = port_in(p_mosi);
-
-            if ((in_buf != NULL) && (bytes_read < in_buf_len)) {
-                in_buf[bytes_read] = bitrev(in_byte)>>24;
-                bytes_read++;
-            }
-
             if (p_miso != 0) {
                 port_clear_buffer(p_miso);
                 uint32_t out_byte = 0x00;
@@ -143,6 +145,13 @@ void spi_slave(
                     bytes_written++;
                 }
                 spi_io_port_outpw(p_miso, out_byte, 8);
+            }
+
+            uint32_t in_byte = port_in(p_mosi);
+
+            if ((in_buf != NULL) && (bytes_read < in_buf_len)) {
+                in_buf[bytes_read] = bitrev(in_byte)>>24;
+                bytes_read++;
             }
 
             continue;
