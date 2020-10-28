@@ -23,29 +23,31 @@
 #define SPI_IO_SETSR(c) asm volatile("setsr %0" : : "n"(c));
 #define SPI_IO_CLRSR(c) asm volatile("clrsr %0" : : "n"(c));
 
-
 /* is syncr available in lib_xcore or anywhere else..??? */
 __attribute__((always_inline))
-inline void spi_io_port_sync(resource_t __p)
+inline void spi_io_port_sync(
+        resource_t __p)
 {
-	asm volatile("syncr res[%0]" : : "r" (__p));
+    asm volatile("syncr res[%0]" : : "r" (__p));
 }
 
 /* is setpsc available in lib_xcore or anywhere else..??? */
 __attribute__((always_inline))
-inline void spi_io_port_shift_count(resource_t __p,
-                                     uint32_t __shift_count)
+inline void spi_io_port_shift_count(
+        resource_t __p,
+        uint32_t __shift_count)
 {
-	asm volatile("setpsc res[%0], %1" : : "r" (__p), "r" (__shift_count));
+    asm volatile("setpsc res[%0], %1" : : "r" (__p), "r" (__shift_count));
 }
 
 /* is setpsc available in lib_xcore or anywhere else..??? */
 __attribute__((always_inline))
-inline void spi_io_port_outpw(resource_t __p,
-                              uint32_t __w,
-							  uint32_t __bpw)
+inline void spi_io_port_outpw(
+        resource_t __p,
+        uint32_t __w,
+        uint32_t __bpw)
 {
-	asm volatile("outpw res[%0], %1, %2" : : "r" (__p), "r" (__w), "r" (__bpw));
+    asm volatile("outpw res[%0], %1, %2" : : "r" (__p), "r" (__w), "r" (__bpw));
 }
 
 /**
@@ -53,11 +55,11 @@ inline void spi_io_port_outpw(resource_t __p,
  * for the SPI master sample delay.
  */
 typedef enum {
-	spi_master_sample_delay_0 = 0, /*< Samples 1/2 clock cycle after output from device */
-	spi_master_sample_delay_1 = 1, /*< Samples 3/4 clock cycle after output from device */
-	spi_master_sample_delay_2 = 2, /*< Samples 1 clock cycle after output from device */
-	spi_master_sample_delay_3 = 3, /*< Samples 1 and 1/4 clock cycle after output from device */
-	spi_master_sample_delay_4 = 4, /*< Samples 1 and 1/2 clock cycle after output from device */
+    spi_master_sample_delay_0 = 0, /*< Samples 1/2 clock cycle after output from device */
+    spi_master_sample_delay_1 = 1, /*< Samples 3/4 clock cycle after output from device */
+    spi_master_sample_delay_2 = 2, /*< Samples 1 clock cycle after output from device */
+    spi_master_sample_delay_3 = 3, /*< Samples 1 and 1/4 clock cycle after output from device */
+    spi_master_sample_delay_4 = 4, /*< Samples 1 and 1/2 clock cycle after output from device */
 } spi_master_sample_delay_t;
 
 /**
@@ -65,8 +67,7 @@ typedef enum {
  * for the SPI master clock source.
  */
 typedef enum {
-	spi_master_source_clock_ref = 0,
-	spi_master_source_clock_xcore
+    spi_master_source_clock_ref = 0, spi_master_source_clock_xcore
 } spi_master_source_clock_t;
 
 #define SPI_MODE_0 0,0
@@ -74,19 +75,18 @@ typedef enum {
 #define SPI_MODE_2 1,0
 #define SPI_MODE_3 1,1
 
-
 /**
  * Struct type representing a SPI master interface. The contents
  * of the struct should not be accessed directly by the application.
  */
 typedef struct {
-	xclock_t clock_block;
-	port_t cs_port;
-	port_t sclk_port;
-	port_t mosi_port;
-	port_t miso_port;
-	uint32_t current_device;
-	int delay_before_transfer;
+    xclock_t clock_block;
+    port_t cs_port;
+    port_t sclk_port;
+    port_t mosi_port;
+    port_t miso_port;
+    uint32_t current_device;
+    int delay_before_transfer;
 } spi_master_t;
 
 /**
@@ -95,18 +95,18 @@ typedef struct {
  * by the application.
  */
 typedef struct {
-	spi_master_t *spi_master_ctx;
-	spi_master_source_clock_t source_clock;
-	int clock_divisor;
-	spi_master_sample_delay_t miso_sample_delay;
-	uint32_t miso_pad_delay;
-	uint32_t miso_initial_trigger_delay;
-	uint32_t cs_assert_val;
-	uint32_t clock_delay;
-	uint32_t clock_bits;
-	uint32_t cs_to_clk_delay_ticks;
-	uint32_t clk_to_cs_delay_ticks;
-	uint32_t cs_to_cs_delay_ticks;
+    spi_master_t *spi_master_ctx;
+    spi_master_source_clock_t source_clock;
+    int clock_divisor;
+    spi_master_sample_delay_t miso_sample_delay;
+    uint32_t miso_pad_delay;
+    uint32_t miso_initial_trigger_delay;
+    uint32_t cs_assert_val;
+    uint32_t clock_delay;
+    uint32_t clock_bits;
+    uint32_t cs_to_clk_delay_ticks;
+    uint32_t clk_to_cs_delay_ticks;
+    uint32_t cs_to_cs_delay_ticks;
 } spi_master_device_t;
 
 /**
@@ -120,12 +120,12 @@ typedef struct {
  * \param miso_port   The SPI interface's MISO port. Must be a 1-bit port.
  */
 void spi_master_init(
-		spi_master_t *spi,
-		xclock_t clock_block,
-		port_t cs_port,
-		port_t sclk_port,
-		port_t mosi_port,
-		port_t miso_port);
+        spi_master_t *spi,
+        xclock_t clock_block,
+        port_t cs_port,
+        port_t sclk_port,
+        port_t mosi_port,
+        port_t miso_port);
 
 /**
  * Initialize a SPI device. Multiple SPI devices may be initialized per SPI interface.
@@ -155,18 +155,18 @@ void spi_master_init(
  *                              the beginning of the next.
  */
 void spi_master_device_init(
-		spi_master_device_t *dev,
-		spi_master_t *spi,
-		uint32_t cs_pin,
-		int cpol,
-		int cpha,
-		spi_master_source_clock_t source_clock,
-		uint32_t clock_divisor,
-		spi_master_sample_delay_t miso_sample_delay,
-		uint32_t miso_pad_delay,
-		uint32_t cs_to_clk_delay_ticks,
-		uint32_t clk_to_cs_delay_ticks,
-		uint32_t cs_to_cs_delay_ticks);
+        spi_master_device_t *dev,
+        spi_master_t *spi,
+        uint32_t cs_pin,
+        int cpol,
+        int cpha,
+        spi_master_source_clock_t source_clock,
+        uint32_t clock_divisor,
+        spi_master_sample_delay_t miso_sample_delay,
+        uint32_t miso_pad_delay,
+        uint32_t cs_to_clk_delay_ticks,
+        uint32_t clk_to_cs_delay_ticks,
+        uint32_t cs_to_cs_delay_ticks);
 
 /**
  * Starts a SPI transaction with the specified SPI device. This leaves chip select asserted.
@@ -174,7 +174,7 @@ void spi_master_device_init(
  * \param dev The SPI device with which to start a transaction.
  */
 void spi_master_start_transaction(
-		spi_master_device_t *dev);
+        spi_master_device_t *dev);
 
 /**
  * Transfers data to/from the specified SPI device. This may be called
@@ -189,10 +189,10 @@ void spi_master_start_transaction(
  *                 buffers must be at least this large if not NULL.
  */
 void spi_master_transfer(
-		spi_master_device_t *dev,
-		uint8_t *data_out,
-		uint8_t *data_in,
-		size_t len);
+        spi_master_device_t *dev,
+        uint8_t *data_out,
+        uint8_t *data_in,
+        size_t len);
 
 /**
  * Enforces a minimum delay between the time this is called and
@@ -203,26 +203,26 @@ void spi_master_transfer(
  * \param delay_ticks The number of reference clock ticks to delay.
  */
 inline void spi_master_delay_before_next_transfer(
-		spi_master_device_t *dev,
-		uint32_t delay_ticks)
+        spi_master_device_t *dev,
+        uint32_t delay_ticks)
 {
-	spi_master_t *spi = dev->spi_master_ctx;
+    spi_master_t *spi = dev->spi_master_ctx;
 
-	spi->delay_before_transfer = 1;
+    spi->delay_before_transfer = 1;
 
-	port_clear_trigger_time(spi->cs_port);
+    port_clear_trigger_time(spi->cs_port);
 
-	/* Assert CS now */
-	port_out(spi->cs_port, dev->cs_assert_val);
-	spi_io_port_sync(spi->cs_port);
+    /* Assert CS now */
+    port_out(spi->cs_port, dev->cs_assert_val);
+    spi_io_port_sync(spi->cs_port);
 
-	/*
-	 * Assert CS again, scheduled for earliest time the
-	 * next transfer is allowed to start.
-	 */
-	if (delay_ticks >= SPI_MASTER_MINIMUM_DELAY) {
-		port_out_at_time(spi->cs_port, port_get_trigger_time(spi->cs_port) + delay_ticks, dev->cs_assert_val);
-	}
+    /*
+     * Assert CS again, scheduled for earliest time the
+     * next transfer is allowed to start.
+     */
+    if (delay_ticks >= SPI_MASTER_MINIMUM_DELAY) {
+        port_out_at_time(spi->cs_port, port_get_trigger_time(spi->cs_port) + delay_ticks, dev->cs_assert_val);
+    }
 }
 
 /**
@@ -231,7 +231,7 @@ inline void spi_master_delay_before_next_transfer(
  * \param dev The SPI device with which to end a transaction.
  */
 void spi_master_end_transaction(
-		spi_master_device_t *dev);
+        spi_master_device_t *dev);
 
 /**
  * De-initializes the specified SPI master interface. This disables the
@@ -240,4 +240,4 @@ void spi_master_end_transaction(
  * \param spi The spi_master_t context to de-initialize.
  */
 void spi_master_deinit(
-		spi_master_t *spi);
+        spi_master_t *spi);
