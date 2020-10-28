@@ -50,36 +50,6 @@ inline void spi_io_port_outpw(
     asm volatile("outpw res[%0], %1, %2" : : "r" (__p), "r" (__w), "r" (__bpw));
 }
 
-__attribute__((always_inline))
-inline void spi_io_configure_out_port_strobed_slave(
-        port_t __p,
-        port_t __readyin,
-        xclock_t __clk,
-        uint32_t __initial_val)
-{
-    port_write_control_word(__p, XS1_SETC_PORT_DATAPORT);
-    clock_set_ready_src(__clk, __readyin);
-    port_out(__p, __initial_val);
-    port_set_clock(__p, __clk);
-    port_set_ready_strobed(__p);
-    port_set_slave(__p);
-}
-
-__attribute__((always_inline))
-inline void spi_io_configure_in_port_strobed_slave(
-        port_t __p,
-        port_t __readyin,
-        xclock_t __clk)
-{
-  port_write_control_word(__p, XS1_SETC_PORT_DATAPORT);
-  (void) port_in(__p);
-  clock_set_ready_src(__clk, __readyin);
-  port_set_clock(__p, __clk);
-  port_set_ready_strobed(__p);
-  port_set_slave(__p);
-  port_clear_buffer(__p);
-}
-
 /**
  * Enum type representing the different options
  * for the SPI master sample delay.
@@ -263,29 +233,11 @@ inline void spi_master_delay_before_next_transfer(
 void spi_master_end_transaction(
         spi_master_device_t *dev);
 
-
-#define SPI_CALLBACK_ATTR __attribute__((fptrgroup("spi_callback")))
-
-typedef void (*slave_transaction_started_t)(void *app_data, uint8_t **out_buf, size_t *outbuf_len, uint8_t **in_buf, size_t *inbuf_len);
-typedef void (*slave_transaction_ended_t)(void *app_data, uint8_t **out_buf, size_t bytes_written, uint8_t **in_buf, size_t bytes_read, size_t read_bits);
-
-typedef struct {
-    SPI_CALLBACK_ATTR slave_transaction_started_t slave_transaction_started;
-    SPI_CALLBACK_ATTR slave_transaction_ended_t slave_transaction_ended;
-    void *app_data;
-} spi_slave_callback_group_t;
-
-void spi_slave(
-        const spi_slave_callback_group_t *spi_cbg,
-        port_t p_sclk,
-        port_t p_mosi,
-        port_t p_miso,
-        port_t p_cs,
-        xclock_t clk,
-        int cpol,
-        int cpha);
-
-
-
-
-
+/**
+ * De-initializes the specified SPI master interface. This disables the
+ * ports and clock block.
+ *
+ * \param spi The spi_master_t context to de-initialize.
+ */
+void spi_master_deinit(
+        spi_master_t *spi);

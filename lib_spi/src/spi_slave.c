@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <xcore/clock.h>
 #include <xcore/port.h>
+#include <xcore/port_protocol.h>
 #include <xcore/triggerable.h>
 
 #include "spi.h"
@@ -43,15 +44,15 @@ void spi_slave(
     clock_set_divide(cb_clk, 0);    /* Ensure divide is 0 */
 
     /* Setup the MOSI port */
-    port_start_buffered(p_mosi, 8);
-    spi_io_configure_in_port_strobed_slave(p_mosi, p_cs, cb_clk);
-    port_clear_buffer(p_mosi);
+    port_enable(p_mosi);
+    port_protocol_in_strobed_slave(p_mosi, p_cs, cb_clk);
+    port_set_transfer_width(p_mosi, 8);
 
     /* Setup the MISO port */
     if (p_miso != 0) {
-        port_start_buffered(p_miso, 8);
-        spi_io_configure_out_port_strobed_slave(p_miso, p_cs, cb_clk, 0);
-        port_clear_buffer(p_miso);
+        port_enable(p_miso);
+        port_protocol_out_strobed_slave(p_miso, p_cs, cb_clk, 0);
+        port_set_transfer_width(p_miso, 8);
     }
 
     if (cpol != cpha) {
