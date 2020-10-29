@@ -22,16 +22,14 @@ typedef struct internal_ctx {
     int cpol;
     int cpha;
     const spi_slave_callback_group_t *spi_cbg;
+    volatile uint32_t cs_val;
+    uint8_t * volatile out_buf;
+    volatile size_t out_buf_len;
+    uint8_t * volatile in_buf;
+    volatile size_t in_buf_len;
+    volatile size_t bytes_read;
+    volatile size_t bytes_written;
 } internal_ctx_t;
-
-volatile uint32_t cs_val;
-uint8_t * volatile out_buf = NULL;
-volatile size_t out_buf_len = 0;
-uint8_t * volatile in_buf = NULL;
-volatile size_t in_buf_len = 0;
-volatile size_t bytes_read = 0;
-volatile size_t bytes_written = 0;
-volatile int running = 0;
 
 
 DEFINE_INTERRUPT_CALLBACK(spi_isr_grp, cs_isr, arg)
@@ -39,14 +37,13 @@ DEFINE_INTERRUPT_CALLBACK(spi_isr_grp, cs_isr, arg)
     internal_ctx_t* ctx = (internal_ctx_t*)arg;
 
     /* Update next CS event */
-    cs_val = port_in(ctx->p_cs);
-    port_set_trigger_value(ctx->p_cs, cs_val);
+    ctx->cs_val = port_in(ctx->p_cs);
+    port_set_trigger_value(ctx->p_cs, ctx->cs_val);
 
-    if (cs_val == ASSERTED) {
-        ctx->spi_cbg->slave_transaction_started(ctx->spi_cbg->app_data, &out_buf, &out_buf_len, &in_buf, &in_buf_len);
-        bytes_read = 0;
-        bytes_written = 0;
-        running = 1;
+    if (ctx->cs_val == ASSERTED) {
+        ctx->spi_cbg->slave_transaction_started(ctx->spi_cbg->app_data, &ctx->out_buf, &ctx->out_buf_len, &ctx->in_buf, &ctx->in_buf_len);
+        ctx->bytes_read = 0;
+        ctx->bytes_written = 0;
         triggerable_enable_trigger(ctx->p_mosi);
 
         if (ctx->p_mosi != 0) {
@@ -63,14 +60,13 @@ DEFINE_INTERRUPT_CALLBACK(spi_isr_grp, cs_isr, arg)
 
         if (read_bits > 0) {
             asm volatile("mkmsk %0, %1": "=r"(mask) : "r"(read_bits));
-            in_buf[bytes_read] = ((bitrev(data)>>24) & mask);
+            ctx->in_buf[ctx->bytes_read] = ((bitrev(data)>>24) & mask);
         }
-        ctx->spi_cbg->slave_transaction_ended(ctx->spi_cbg->app_data, &out_buf, bytes_written, &in_buf, bytes_read, read_bits);
+        ctx->spi_cbg->slave_transaction_ended(ctx->spi_cbg->app_data, &ctx->out_buf, ctx->bytes_written, &ctx->in_buf, ctx->bytes_read, read_bits);
 
         if (ctx->p_miso != 0) {
             port_clear_buffer(ctx->p_miso);
         }
-        running = 0;
         triggerable_disable_trigger(ctx->p_mosi);
         return;
     }
@@ -80,9 +76,9 @@ DEFINE_INTERRUPT_CALLBACK(spi_isr_grp, cs_isr, arg)
         port_clear_buffer(ctx->p_miso);
 
         uint32_t out_byte = 0x00;
-        if ((out_buf != NULL) && (bytes_written < out_buf_len)) {
-            out_byte = bitrev(out_buf[bytes_written])>>24;
-            bytes_written++;
+        if ((ctx->out_buf != NULL) && (ctx->bytes_written < ctx->out_buf_len)) {
+            out_byte = bitrev(ctx->out_buf[ctx->bytes_written])>>24;
+            ctx->bytes_written++;
         }
 
         /* Must get first bit on the wire before clock edge */
@@ -100,9 +96,9 @@ DEFINE_INTERRUPT_CALLBACK(spi_isr_grp, cs_isr, arg)
 
         port_clear_buffer(ctx->p_mosi);
 
-        if ((out_buf != NULL) && (bytes_written < out_buf_len)) {
-            out_byte = bitrev(out_buf[bytes_written])>>24;
-            bytes_written++;
+        if ((ctx->out_buf != NULL) && (ctx->bytes_written < ctx->out_buf_len)) {
+            out_byte = bitrev(ctx->out_buf[ctx->bytes_written])>>24;
+            ctx->bytes_written++;
         }
         //spi_io_port_outpw(p_miso, out_byte, 8);
         port_out(ctx->p_miso, out_byte);
@@ -125,7 +121,14 @@ void spi_slave(
         .cb_clk = cb_clk,
         .cpol = cpol,
         .cpha = cpha,
-        .spi_cbg = spi_cbg
+        .spi_cbg = spi_cbg,
+        .cs_val = !ASSERTED,
+        .out_buf = NULL,
+        .out_buf_len = 0,
+        .in_buf = NULL,
+        .in_buf_len = 0,
+        .bytes_read = 0,
+        .bytes_written = 0,
     };
 
 	/* Enable fast mode and high priority */
@@ -164,30 +167,30 @@ void spi_slave(
     spi_io_port_sync(p_sclk);
 
     /* Wait until CS is not asserted to begin */
-    cs_val = port_in_when_pinsneq(p_cs, PORT_UNBUFFERED, ASSERTED);
+    int_ctx.cs_val = port_in_when_pinsneq(p_cs, PORT_UNBUFFERED, ASSERTED);
 
     triggerable_setup_interrupt_callback(p_cs, &int_ctx, INTERRUPT_CALLBACK(cs_isr));
 
     interrupt_mask_all();
 
     triggerable_enable_trigger(p_cs);
-    port_set_trigger_in_not_equal(p_cs, cs_val);
+    port_set_trigger_in_not_equal(p_cs, int_ctx.cs_val);
 
     interrupt_unmask_all();
 
     while (1) {
         uint32_t in_byte = port_in(p_mosi);
 
-        if ((in_buf != NULL) && (bytes_read < in_buf_len)) {
-            in_buf[bytes_read] = bitrev(in_byte)>>24;
-            bytes_read++;
+        if ((int_ctx.in_buf != NULL) && (int_ctx.bytes_read < int_ctx.in_buf_len)) {
+            int_ctx.in_buf[int_ctx.bytes_read] = bitrev(in_byte)>>24;
+            int_ctx.bytes_read++;
         }
 
         if (p_miso != 0) {
             uint32_t out_byte = 0x00000000;
-            if ((out_buf != NULL) && (bytes_written < out_buf_len)) {
-                out_byte = bitrev(out_buf[bytes_written])>>24;
-                bytes_written++;
+            if ((int_ctx.out_buf != NULL) && (int_ctx.bytes_written < int_ctx.out_buf_len)) {
+                out_byte = bitrev(int_ctx.out_buf[int_ctx.bytes_written])>>24;
+                int_ctx.bytes_written++;
             }
 
             port_out(p_miso, out_byte);
