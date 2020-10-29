@@ -61,25 +61,17 @@ DEFINE_INTERRUPT_CALLBACK(spi_isr_grp, cs_isr, arg)
         size_t read_bits = port_force_input(ctx->p_mosi, &data);
         uint32_t mask;
 
-        //printf("cs deasserted, read_bits is %d\n", read_bits);
-
         if (read_bits > 0) {
             asm volatile("mkmsk %0, %1": "=r"(mask) : "r"(read_bits));
             in_buf[bytes_read] = ((bitrev(data)>>24) & mask);
         }
-        // else {
-        //     asm volatile("nop");
-        // }
-        //printf("calling end\n");
         ctx->spi_cbg->slave_transaction_ended(ctx->spi_cbg->app_data, &out_buf, bytes_written, &in_buf, bytes_read, read_bits);
-        //printf("end returned\n");
 
         if (ctx->p_miso != 0) {
             port_clear_buffer(ctx->p_miso);
         }
         running = 0;
         triggerable_disable_trigger(ctx->p_mosi);
-        //printf("done\n");
         return;
     }
 
@@ -184,24 +176,21 @@ void spi_slave(
     interrupt_unmask_all();
 
     while (1) {
-        mosi_changed: {
-            uint32_t in_byte = port_in(p_mosi);
+        uint32_t in_byte = port_in(p_mosi);
 
-            if ((in_buf != NULL) && (bytes_read < in_buf_len)) {
-                in_buf[bytes_read] = bitrev(in_byte)>>24;
-                bytes_read++;
+        if ((in_buf != NULL) && (bytes_read < in_buf_len)) {
+            in_buf[bytes_read] = bitrev(in_byte)>>24;
+            bytes_read++;
+        }
+
+        if (p_miso != 0) {
+            uint32_t out_byte = 0x00000000;
+            if ((out_buf != NULL) && (bytes_written < out_buf_len)) {
+                out_byte = bitrev(out_buf[bytes_written])>>24;
+                bytes_written++;
             }
 
-            if (p_miso != 0) {
-                uint32_t out_byte = 0x00;
-                if ((out_buf != NULL) && (bytes_written < out_buf_len)) {
-                    out_byte = bitrev(out_buf[bytes_written])>>24;
-                    bytes_written++;
-                }
-
-                port_out(p_miso, out_byte);
-            }
-            continue;
+            port_out(p_miso, out_byte);
         }
     }
 }
