@@ -241,3 +241,24 @@ void spi_master_end_transaction(
  */
 void spi_master_deinit(
         spi_master_t *spi);
+
+#define SPI_CALLBACK_ATTR __attribute__((fptrgroup("spi_callback")))
+
+typedef void (*slave_transaction_started_t)(void *app_data, uint8_t **out_buf, size_t *outbuf_len, uint8_t **in_buf, size_t *inbuf_len);
+typedef void (*slave_transaction_ended_t)(void *app_data, uint8_t **out_buf, size_t bytes_written, uint8_t **in_buf, size_t bytes_read, size_t read_bits);
+
+typedef struct {
+    SPI_CALLBACK_ATTR slave_transaction_started_t slave_transaction_started;
+    SPI_CALLBACK_ATTR slave_transaction_ended_t slave_transaction_ended;
+    void *app_data;
+} spi_slave_callback_group_t;
+
+void spi_slave(
+        const spi_slave_callback_group_t *spi_cbg,
+        port_t p_sclk,
+        port_t p_mosi,
+        port_t p_miso,
+        port_t p_cs,
+        xclock_t clk,
+        int cpol,
+        int cpha);

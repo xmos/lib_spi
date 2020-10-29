@@ -8,6 +8,8 @@
 #include <xcore/port.h>
 #include <xcore/hwtimer.h>
 #include <xcore/triggerable.h>
+#include <xcore/interrupt_wrappers.h>
+#include <xcore/interrupt.h>
 #include "spi.h"
 
 port_t p_miso = XS1_PORT_1A;
@@ -21,7 +23,7 @@ port_t setup_data_port = XS1_PORT_16B;
 port_t setup_resp_port = XS1_PORT_1F;
 
 #define NUMBER_OF_TEST_BYTES 16
-#define KBPS 2000
+#define KBPS 25000
 
 static const uint8_t tx_data[NUMBER_OF_TEST_BYTES] = {
         0xaa, 0x02, 0x04, 0x08, 0x10, 0x20, 0x04, 0x80,
@@ -83,6 +85,7 @@ static void send_data_to_tester(
     asm volatile("syncr res[%0]" : : "r" (setup_data_port));
     port_out(setup_strobe_port, 1);
     port_out(setup_strobe_port, 0);
+    asm volatile("syncr res[%0]" : : "r" (setup_data_port));
 }
 
 static void broadcast_settings(
@@ -117,6 +120,7 @@ static uint32_t request_response(
 
 static uint8_t input_buffer[NUMBER_OF_TEST_BYTES];
 
+SPI_CALLBACK_ATTR
 void start(void *app_data, uint8_t **out_buf, size_t *outbuf_len, uint8_t **in_buf, size_t *inbuf_len) {
     if (MISO_ENABLED) {
         *out_buf = (uint8_t*)tx_data;
@@ -126,6 +130,7 @@ void start(void *app_data, uint8_t **out_buf, size_t *outbuf_len, uint8_t **in_b
     *inbuf_len = NUMBER_OF_TEST_BYTES;
 }
 
+SPI_CALLBACK_ATTR
 void end(void *app_data, uint8_t **out_buf, size_t bytes_written, uint8_t **in_buf, size_t bytes_read, size_t read_bits) {
     app_data_t *data = (app_data_t*)app_data;
     /* Multiword transfer complete, now test all sub word transfers */
@@ -174,11 +179,15 @@ void end(void *app_data, uint8_t **out_buf, size_t bytes_written, uint8_t **in_b
 
     memset(input_buffer, 0x00, NUMBER_OF_TEST_BYTES);
 
+    //printf("sending settings: %d, %d, %d, %d, %d, %d, %d\n",
+    //    CPOL, CPHA, MOSI_ENABLED, MISO_ENABLED, data->num_bits, KBPS, 2000);
+
     broadcast_settings(setup_strobe_port, setup_data_port,
             CPOL, CPHA, MOSI_ENABLED, MISO_ENABLED, data->num_bits, KBPS, 2000);
 }
 
-void app(void) {
+DEFINE_INTERRUPT_PERMITTED(spi_isr_grp, void, app, void)
+{
     app_data_t app_data = {
         .num_bits = NUMBER_OF_TEST_BYTES*8
     };
@@ -192,7 +201,7 @@ void app(void) {
     port_enable(setup_data_port);
 
     printf("Send initial settings\n");
-    //First check a multi byte transfer
+    /* First check a multi byte transfer */
     broadcast_settings(setup_strobe_port, setup_data_port,
             CPOL, CPHA, MOSI_ENABLED, MISO_ENABLED, app_data.num_bits, KBPS, 2000);
 
@@ -201,7 +210,7 @@ void app(void) {
 
 int main(void) {
     PAR_JOBS(
-        PJOB(app, ()),
+        PJOB(INTERRUPT_PERMITTED(app), ()),
 #if FULL_LOAD == 1
         PJOB(burn, ()),
         PJOB(burn, ()),
