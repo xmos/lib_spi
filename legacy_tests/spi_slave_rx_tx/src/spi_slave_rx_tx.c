@@ -23,7 +23,10 @@ port_t setup_data_port = XS1_PORT_16B;
 port_t setup_resp_port = XS1_PORT_1F;
 
 #define NUMBER_OF_TEST_BYTES 16
-#define KBPS 25000
+#define KBPS 45000
+// #define KBPS 45454
+// IN_PLACE_TRANSACTION  add to test
+
 
 static const uint8_t tx_data[NUMBER_OF_TEST_BYTES] = {
         0xaa, 0x02, 0x04, 0x08, 0x10, 0x20, 0x04, 0x80,
@@ -123,7 +126,12 @@ static uint8_t input_buffer[NUMBER_OF_TEST_BYTES];
 SPI_CALLBACK_ATTR
 void start(void *app_data, uint8_t **out_buf, size_t *outbuf_len, uint8_t **in_buf, size_t *inbuf_len) {
     if (MISO_ENABLED) {
+#if IN_PLACE_TRANSACTION
+        memcpy(input_buffer, tx_data, NUMBER_OF_TEST_BYTES);
+        *out_buf = (uint8_t*)input_buffer;
+#else
         *out_buf = (uint8_t*)tx_data;
+#endif
         *outbuf_len = NUMBER_OF_TEST_BYTES;
     }
     *in_buf =  (uint8_t*)input_buffer;
@@ -133,6 +141,12 @@ void start(void *app_data, uint8_t **out_buf, size_t *outbuf_len, uint8_t **in_b
 SPI_CALLBACK_ATTR
 void end(void *app_data, uint8_t **out_buf, size_t bytes_written, uint8_t **in_buf, size_t bytes_read, size_t read_bits) {
     app_data_t *data = (app_data_t*)app_data;
+    /* Check that we received the expected number of bytes */
+    if (((bytes_read * 8) + read_bits) != data->num_bits) {
+        printf("Error: Expected %d bits from master but got %d\n", data->num_bits, ((bytes_read * 8) + read_bits));
+        _Exit(1);
+    }
+
     /* Multiword transfer complete, now test all sub word transfers */
     if (data->num_bits == NUMBER_OF_TEST_BYTES*8) {
         data->num_bits = 0;
@@ -152,20 +166,20 @@ void end(void *app_data, uint8_t **out_buf, size_t bytes_written, uint8_t **in_b
 
     /* If we received a partial byte, check the bits */
     if (read_bits > 0) {
-        uint8_t last_byte = (*in_buf)[bytes_read];
-
+        uint8_t partial_byte = (*in_buf)[bytes_read];
         uint8_t cmp_val = rx_data[bytes_read];
+
         cmp_val = cmp_val >> (8-read_bits);
 
-        if (cmp_val != last_byte) {
+        if (cmp_val != partial_byte) {
             printf("Error: Expected 0x%02x from master but got 0x%02x for bit transfer of %d\n",
-                    cmp_val, last_byte, data->num_bits-1);
+                    cmp_val, partial_byte, data->num_bits-1);
             _Exit(1);
         }
     }
 
     /* Complete if we have tested every subset of partial transfers */
-    if (data->num_bits > 8) {
+    if (data->num_bits > 32) {
         printf("Test completed\n");
         _Exit(1);
     }

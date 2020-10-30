@@ -9,28 +9,195 @@
 #include <xcore/triggerable.h>
 #include <xcore/interrupt_wrappers.h>
 #include <xcore/interrupt.h>
-
+#include <xcore/hwtimer.h>
 #include "spi.h"
 
 #define ASSERTED 1
 
 typedef struct internal_ctx {
+    const spi_slave_callback_group_t *spi_cbg;
+    uint8_t* in_buf;
+    uint8_t* in_buf_cur;
+    uint8_t* in_buf_end;
+    uint8_t* out_buf;
+    uint8_t* out_buf_cur;
+    uint8_t* out_buf_end;
+    uint32_t cs_val;
+    uint32_t running;
     port_t p_miso;
     port_t p_mosi;
     port_t p_cs;
     xclock_t cb_clk;
     int cpol;
     int cpha;
-    const spi_slave_callback_group_t *spi_cbg;
-    volatile uint32_t cs_val;
-    uint8_t * volatile out_buf;
-    volatile size_t out_buf_len;
-    uint8_t * volatile in_buf;
-    volatile size_t in_buf_len;
-    volatile size_t bytes_read;
-    volatile size_t bytes_written;
 } internal_ctx_t;
 
+
+__attribute__((always_inline))
+static inline void receive_part_word(internal_ctx_t *ctx, uint32_t in_word, size_t *valid_bits) {
+    uint32_t mask;
+    uint32_t diff = ctx->in_buf_end - ctx->in_buf_cur;
+    hwtimer_t testtmr = hwtimer_alloc();
+    uint32_t start = 0;
+
+    if (*valid_bits > 0) {
+        diff = (diff > 4) ? 4 : diff;
+        asm volatile("mkmsk %0, %1": "=r"(mask) : "r"(*valid_bits));
+        in_word = bitrev(in_word) & mask;
+
+        uint32_t byte0_shift = (*valid_bits <= 8 ) ? 0 : (*valid_bits - 8);
+        uint32_t byte1_shift = (*valid_bits - 16);
+        uint32_t byte2_shift = (*valid_bits - 24);
+
+start = hwtimer_get_time(testtmr);
+#if 1
+        /* Switch based on available buffer space */
+        uint32_t bits = *valid_bits;
+        switch (diff) {
+            case 4: // 30 ticks
+                if (bits <= 24) {
+                    *(ctx->in_buf_cur + 3) = (uint8_t)(0x00);
+                } else {
+                    asm volatile("mkmsk %0, %1": "=r"(mask) : "r"(byte2_shift));
+                    *(ctx->in_buf_cur + 3) = (uint8_t)((in_word) & mask);
+                }
+            case 3: // 35 ticks
+                if (bits <= 16) {
+                    *(ctx->in_buf_cur + 2) = (uint8_t)(0x00);
+                } else if (bits <= 24) {
+                    asm volatile("mkmsk %0, %1": "=r"(mask) : "r"(byte1_shift));
+                    *(ctx->in_buf_cur + 2) = (uint8_t)((in_word) & mask);
+                } else {
+                    *(ctx->in_buf_cur + 2) = (uint8_t)((in_word>>byte2_shift) & 0xff);
+                }
+            case 2: // 31 ticks
+                if( bits <= 8 ) {
+                    *(ctx->in_buf_cur + 1) = (uint8_t)(0x00);
+                } else if (bits <= 16) {
+                    asm volatile("mkmsk %0, %1": "=r"(mask) : "r"(byte0_shift));
+                    *(ctx->in_buf_cur + 1) = (uint8_t)((in_word) & mask);
+                } else {
+                    *(ctx->in_buf_cur + 1) = (uint8_t)((in_word>>byte1_shift) & 0xff);
+                }
+            case 1: // 24 ticks
+                *(ctx->in_buf_cur + 0) = (uint8_t)((in_word >> byte0_shift) & 0xff);
+            case 0: /* Do nothing if no space is available */
+            default:
+                break;
+        }
+#else
+        /* Switch based on valid bits */
+        uint32_t partial_shift_8 = *valid_bits - 8;
+        uint32_t partial_shift_16 = *valid_bits - 16;
+        uint32_t partial_shift_24 = *valid_bits - 24;
+        if( *valid_bits <= 8 ) {    // 23 ticks
+            if (diff >= 1) {
+                *(ctx->in_buf_cur + 0) = (uint8_t)(in_word & 0xff);
+            }
+            if (diff >= 2) {
+                *(ctx->in_buf_cur + 1) = (uint8_t)(0x00);
+            }
+            if (diff >= 3) {
+                *(ctx->in_buf_cur + 2) = (uint8_t)(0x00);
+            }
+            if (diff >= 4) {
+                *(ctx->in_buf_cur + 3) = (uint8_t)(0x00);
+            }
+        } else if (*valid_bits <= 16) {     // 28 ticks
+            if (diff >= 1) {
+                *(ctx->in_buf_cur + 0) = (uint8_t)((in_word>>partial_shift_8) & 0xff);
+            }
+            if (diff >= 2) {
+                asm volatile("mkmsk %0, %1": "=r"(mask) : "r"(partial_shift_8));
+                *(ctx->in_buf_cur + 1) = (uint8_t)((in_word) & mask);
+            }
+            if (diff >= 3) {
+                *(ctx->in_buf_cur + 2) = (uint8_t)(0x00);
+            }
+            if (diff >= 4) {
+                *(ctx->in_buf_cur + 3) = (uint8_t)(0x00);
+            }
+        } else if (*valid_bits <= 24) {     // 32 ticks
+            if (diff >= 1) {
+                *(ctx->in_buf_cur + 0) = (uint8_t)((in_word>>partial_shift_8) & 0xff);
+            }
+            if (diff >= 2) {
+                *(ctx->in_buf_cur + 1) = (uint8_t)((in_word>>partial_shift_16) & 0xff);
+            }
+            if (diff >= 3) {
+                asm volatile("mkmsk %0, %1": "=r"(mask) : "r"(partial_shift_16));
+                *(ctx->in_buf_cur + 2) = (uint8_t)((in_word) & mask);
+            }
+            if (diff >= 4) {
+                *(ctx->in_buf_cur + 3) = (uint8_t)(0x00);
+            }
+        } else {    // 32 ticks
+            if (diff >= 1) {
+                *(ctx->in_buf_cur + 0) = (uint8_t)((in_word>>partial_shift_8) & 0xff);
+            }
+            if (diff >= 2) {
+                *(ctx->in_buf_cur + 1) = (uint8_t)((in_word>>partial_shift_16) & 0xff);
+            }
+            if (diff >= 3) {
+                *(ctx->in_buf_cur + 2) = (uint8_t)((in_word>>partial_shift_24) & 0xff);
+            }
+            if (diff >= 4) {
+                asm volatile("mkmsk %0, %1": "=r"(mask) : "r"(partial_shift_24));
+                *(ctx->in_buf_cur + 3) = (uint8_t)((in_word) & mask);
+            }
+        }
+#endif
+
+printf("Duration: %d\n", hwtimer_get_time(testtmr) - start);
+hwtimer_free(testtmr);
+        ctx->in_buf_cur += (*valid_bits >> 3);
+        *valid_bits %= 8;
+    }
+}
+
+__attribute__((always_inline))
+static inline void receive_word(internal_ctx_t *ctx, uint32_t in_word) {
+    uint32_t diff = ctx->in_buf_end - ctx->in_buf_cur;
+    in_word = bitrev(in_word);
+
+    switch (diff) {
+        default:
+        case 4:
+            *(ctx->in_buf_cur + 3) = (uint8_t)((in_word>>0) & 0xff);
+        case 3:
+            *(ctx->in_buf_cur + 2) = (uint8_t)((in_word>>8) & 0xff);
+        case 2:
+            *(ctx->in_buf_cur + 1) = (uint8_t)((in_word>>16) & 0xff);
+        case 1:
+            *(ctx->in_buf_cur + 0) = (uint8_t)((in_word>>24) & 0xff);
+        case 0:
+            break;
+    }
+    ctx->in_buf_cur += (diff > 4) ? 4 : diff;
+}
+
+__attribute__((always_inline))
+static inline uint32_t get_next_word(internal_ctx_t *ctx) {
+    uint32_t out_word = 0;
+    uint32_t diff = ctx->out_buf_end - ctx->out_buf_cur;
+
+    switch (diff) {
+        default:
+        case 4:
+            out_word |= bitrev( *(ctx->out_buf_cur + 3) <<0);
+        case 3:
+            out_word |= bitrev( *(ctx->out_buf_cur + 2) <<8);
+        case 2:
+            out_word |= bitrev( *(ctx->out_buf_cur + 1) <<16);
+        case 1:
+            out_word |= bitrev( *(ctx->out_buf_cur + 0) <<24);
+        case 0:
+            break;
+    }
+    ctx->out_buf_cur += (diff > 4) ? 4 : diff;
+
+    return out_word;
+}
 
 DEFINE_INTERRUPT_CALLBACK(spi_isr_grp, cs_isr, arg)
 {
@@ -41,11 +208,6 @@ DEFINE_INTERRUPT_CALLBACK(spi_isr_grp, cs_isr, arg)
     port_set_trigger_value(ctx->p_cs, ctx->cs_val);
 
     if (ctx->cs_val == ASSERTED) {
-        ctx->spi_cbg->slave_transaction_started(ctx->spi_cbg->app_data, &ctx->out_buf, &ctx->out_buf_len, &ctx->in_buf, &ctx->in_buf_len);
-        ctx->bytes_read = 0;
-        ctx->bytes_written = 0;
-        triggerable_enable_trigger(ctx->p_mosi);
-
         if (ctx->p_mosi != 0) {
             port_clear_buffer(ctx->p_mosi);
         }
@@ -53,17 +215,34 @@ DEFINE_INTERRUPT_CALLBACK(spi_isr_grp, cs_isr, arg)
             port_clear_buffer(ctx->p_miso);
         }
 
+        size_t out_buf_len = 0;
+        size_t in_buf_len = 0;
+        ctx->spi_cbg->slave_transaction_started(ctx->spi_cbg->app_data, &ctx->out_buf, &out_buf_len, &ctx->in_buf, &in_buf_len);
+
+        ctx->in_buf_cur = ctx->in_buf;
+        ctx->out_buf_cur = ctx->out_buf;
+
+        ctx->in_buf_end = (ctx->in_buf == NULL) ? NULL : (ctx->in_buf  + in_buf_len);
+        ctx->out_buf_end = (ctx->out_buf == NULL) ? NULL : (ctx->out_buf + out_buf_len);
+
+        ctx->running = 1;
+
+        triggerable_enable_trigger(ctx->p_mosi);
+
     } else {
         uint32_t data = 0;
         size_t read_bits = port_force_input(ctx->p_mosi, &data);
-        uint32_t mask;
 
-        if (read_bits > 0) {
-            asm volatile("mkmsk %0, %1": "=r"(mask) : "r"(read_bits));
-            ctx->in_buf[ctx->bytes_read] = ((bitrev(data)>>24) & mask);
+        receive_part_word(ctx, data, &read_bits);
+
+        uint32_t bytes_read = ctx->in_buf_cur - ctx->in_buf;
+        uint32_t bytes_written = ctx->out_buf_cur - ctx->out_buf;
+
+        ctx->spi_cbg->slave_transaction_ended(ctx->spi_cbg->app_data, &ctx->out_buf, bytes_written, &ctx->in_buf, bytes_read, read_bits);
+
+        if (ctx->p_mosi != 0) {
+            port_clear_buffer(ctx->p_mosi);
         }
-        ctx->spi_cbg->slave_transaction_ended(ctx->spi_cbg->app_data, &ctx->out_buf, ctx->bytes_written, &ctx->in_buf, ctx->bytes_read, read_bits);
-
         if (ctx->p_miso != 0) {
             port_clear_buffer(ctx->p_miso);
         }
@@ -72,36 +251,23 @@ DEFINE_INTERRUPT_CALLBACK(spi_isr_grp, cs_isr, arg)
     }
 
     if (ctx->p_miso != 0) {
-
-        port_clear_buffer(ctx->p_miso);
-
-        uint32_t out_byte = 0x00;
-        if ((ctx->out_buf != NULL) && (ctx->bytes_written < ctx->out_buf_len)) {
-            out_byte = bitrev(ctx->out_buf[ctx->bytes_written])>>24;
-            ctx->bytes_written++;
-        }
+        uint32_t out_word = get_next_word(ctx);
 
         /* Must get first bit on the wire before clock edge */
         if (ctx->cpha == 0) {
             asm volatile("setclk res[%0], %1"::"r"(ctx->p_miso), "r"(XS1_CLKBLK_REF));
-            spi_io_port_outpw(ctx->p_miso, out_byte, 1);
+            spi_io_port_outpw(ctx->p_miso, out_word, 1);
             spi_io_port_sync(ctx->p_miso);
             asm volatile("setclk res[%0], %1"::"r"(ctx->p_miso), "r"(ctx->cb_clk));
-            out_byte >>= 1;
-            spi_io_port_outpw(ctx->p_miso, out_byte, 7);
+            out_word >>= 1;
+            spi_io_port_outpw(ctx->p_miso, out_word, 31);
         } else {
-            //spi_io_port_outpw(p_miso, out_byte, 8);
-            port_out(ctx->p_miso, out_byte);
+            port_out(ctx->p_miso, out_word);
         }
 
-        port_clear_buffer(ctx->p_mosi);
+        out_word = get_next_word(ctx);
 
-        if ((ctx->out_buf != NULL) && (ctx->bytes_written < ctx->out_buf_len)) {
-            out_byte = bitrev(ctx->out_buf[ctx->bytes_written])>>24;
-            ctx->bytes_written++;
-        }
-        //spi_io_port_outpw(p_miso, out_byte, 8);
-        port_out(ctx->p_miso, out_byte);
+        port_out(ctx->p_miso, out_word);
     }
 }
 
@@ -124,12 +290,16 @@ void spi_slave(
         .spi_cbg = spi_cbg,
         .cs_val = !ASSERTED,
         .out_buf = NULL,
-        .out_buf_len = 0,
         .in_buf = NULL,
-        .in_buf_len = 0,
-        .bytes_read = 0,
-        .bytes_written = 0,
+        .running = 0,
+        .in_buf_end = NULL,
+        .in_buf_cur = NULL,
+        .out_buf_end = NULL,
+        .out_buf_cur = NULL,
     };
+    uint32_t in_word;
+    uint32_t out_word;
+    uint32_t diff;
 
 	/* Enable fast mode and high priority */
 	SPI_IO_SETSR(XS1_SR_QUEUE_MASK | XS1_SR_FAST_MASK);
@@ -147,13 +317,13 @@ void spi_slave(
     /* Setup the MOSI port */
     port_enable(p_mosi);
     port_protocol_in_strobed_slave(p_mosi, p_cs, cb_clk);
-    port_set_transfer_width(p_mosi, 8);
+    port_set_transfer_width(p_mosi, 32);
 
     /* Setup the MISO port */
     if (p_miso != 0) {
         port_enable(p_miso);
         port_protocol_out_strobed_slave(p_miso, p_cs, cb_clk, 0);
-        port_set_transfer_width(p_miso, 8);
+        port_set_transfer_width(p_miso, 32);
     }
 
     if (cpol != cpha) {
@@ -179,21 +349,16 @@ void spi_slave(
     interrupt_unmask_all();
 
     while (1) {
-        uint32_t in_byte = port_in(p_mosi);
-
-        if ((int_ctx.in_buf != NULL) && (int_ctx.bytes_read < int_ctx.in_buf_len)) {
-            int_ctx.in_buf[int_ctx.bytes_read] = bitrev(in_byte)>>24;
-            int_ctx.bytes_read++;
-        }
-
-        if (p_miso != 0) {
-            uint32_t out_byte = 0x00000000;
-            if ((int_ctx.out_buf != NULL) && (int_ctx.bytes_written < int_ctx.out_buf_len)) {
-                out_byte = bitrev(int_ctx.out_buf[int_ctx.bytes_written])>>24;
-                int_ctx.bytes_written++;
+        in_word = port_in(p_mosi);
+        interrupt_mask_all();
+        {
+            asm volatile( "" ::: "memory" );
+            if (int_ctx.running) {
+                receive_word(&int_ctx, in_word);
+                out_word = get_next_word(&int_ctx);
             }
-
-            port_out(p_miso, out_byte);
         }
+        interrupt_unmask_all();
+        port_out(p_miso, out_word);
     }
 }
