@@ -242,17 +242,66 @@ void spi_master_end_transaction(
 void spi_master_deinit(
         spi_master_t *spi);
 
+/**
+ * SPI callback attribute for stack calculation
+ */
 #define SPI_CALLBACK_ATTR __attribute__((fptrgroup("spi_callback")))
 
+/** Master has started a transaction
+ *
+ *  This callback function will be called when the SPI master has asserted
+ *  this slave's chip select.
+ *
+ *  The input and output buffer may be the same; however, partial byte/incomplete
+ *  reads will result in out_buf bits being masked off due to a partial bit output.
+ *
+ * \param out_buf    The buffer to send to the master
+ * \param outbuf_len The length in bytes of out_buf
+ * \param in_buf     The buffer receive into from the master
+ * \param inbuf_len  The length in bytes of in_buf
+ */
 typedef void (*slave_transaction_started_t)(void *app_data, uint8_t **out_buf, size_t *outbuf_len, uint8_t **in_buf, size_t *inbuf_len);
+
+/** Master has ended a transaction
+ *
+ *  This callback function will be called when the SPI master has deasserted
+ *  this slave's chip select.
+ *
+ *  The value of bytes_read contains the number of full bytes that are in
+ *  in_buf.  When read_bits is greater than 0, the byte after the last full byte
+ *  contains the partial bits read.
+ *
+ * \param out_buf       The buffer that had been provided to be sent to the master
+ * \param bytes_written The length in bytes of out_buf that had been written
+ * \param in_buf        The buffer that had been provided to be received into from the master
+ * \param bytes_read    The length in bytes of in_buf that has been read in to
+ * \param read_bits     The length in bits of in_buf
+ */
 typedef void (*slave_transaction_ended_t)(void *app_data, uint8_t **out_buf, size_t bytes_written, uint8_t **in_buf, size_t bytes_read, size_t read_bits);
 
+/**
+ * Callback group representing callback events that can occur during the
+ * operation of the SPI slave task. Must be initialized by the application
+ * prior to passing it to one of the SPI slaves.
+ */
 typedef struct {
     SPI_CALLBACK_ATTR slave_transaction_started_t slave_transaction_started;
     SPI_CALLBACK_ATTR slave_transaction_ended_t slave_transaction_ended;
     void *app_data;
 } spi_slave_callback_group_t;
 
+/**
+ * Initializes a SPI slave.
+ *
+ * \param spi_cbg     The spi_slave_callback_group_t context to use.
+ * \param p_sclk      The SPI slave's SCLK port. Must be a 1-bit port.
+ * \param p_mosi      The SPI slave's MOSI port. Must be a 1-bit port.
+ * \param p_miso      The SPI slave's MISO port. Must be a 1-bit port.
+ * \param p_cs        The SPI slave's CS port. Must be a 1-bit port.
+ * \param clock_block The clock block to use for the SPI slave.
+ * \param cpol        The clock polarity to use.
+ * \param cpha        The clock phase to use.
+ */
 void spi_slave(
         const spi_slave_callback_group_t *spi_cbg,
         port_t p_sclk,

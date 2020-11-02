@@ -25,8 +25,6 @@ port_t setup_resp_port = XS1_PORT_1F;
 #define NUMBER_OF_TEST_BYTES 16
 #define KBPS 45000
 // #define KBPS 45454
-// IN_PLACE_TRANSACTION  add to test
-
 
 static const uint8_t tx_data[NUMBER_OF_TEST_BYTES] = {
         0xaa, 0x02, 0x04, 0x08, 0x10, 0x20, 0x04, 0x80,
@@ -58,8 +56,11 @@ static const uint8_t rx_data[NUMBER_OF_TEST_BYTES] = {
 #define CPHA 1
 #endif
 
-#define MOSI_ENABLED 1
+#if MOSI_ENABLED
 #define MOSI p_mosi
+#else
+#define MOSI 0
+#endif
 
 #if MISO_ENABLED
 #define MISO p_miso
@@ -133,6 +134,9 @@ void start(void *app_data, uint8_t **out_buf, size_t *outbuf_len, uint8_t **in_b
         *out_buf = (uint8_t*)tx_data;
 #endif
         *outbuf_len = NUMBER_OF_TEST_BYTES;
+    } else {
+        *out_buf = NULL;
+        *outbuf_len = 0;
     }
     *in_buf =  (uint8_t*)input_buffer;
     *inbuf_len = NUMBER_OF_TEST_BYTES;
@@ -141,11 +145,19 @@ void start(void *app_data, uint8_t **out_buf, size_t *outbuf_len, uint8_t **in_b
 SPI_CALLBACK_ATTR
 void end(void *app_data, uint8_t **out_buf, size_t bytes_written, uint8_t **in_buf, size_t bytes_read, size_t read_bits) {
     app_data_t *data = (app_data_t*)app_data;
+
     /* Check that we received the expected number of bytes */
+#if MOSI_ENABLED
     if (((bytes_read * 8) + read_bits) != data->num_bits) {
         printf("Error: Expected %d bits from master but got %d\n", data->num_bits, ((bytes_read * 8) + read_bits));
         _Exit(1);
     }
+#else
+    if (((bytes_read * 8) + read_bits) != 0) {
+        printf("Error: Expected %d bits from master but got %d\n", 0, ((bytes_read * 8) + read_bits));
+        _Exit(1);
+    }
+#endif
 
     /* Multiword transfer complete, now test all sub word transfers */
     if (data->num_bits == NUMBER_OF_TEST_BYTES*8) {

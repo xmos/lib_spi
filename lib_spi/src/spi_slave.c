@@ -9,7 +9,7 @@
 #include <xcore/triggerable.h>
 #include <xcore/interrupt_wrappers.h>
 #include <xcore/interrupt.h>
-#include <xcore/hwtimer.h>
+
 #include "spi.h"
 
 #define ASSERTED 1
@@ -37,8 +37,6 @@ __attribute__((always_inline))
 static inline void receive_part_word(internal_ctx_t *ctx, uint32_t in_word, size_t *valid_bits) {
     uint32_t mask;
     uint32_t diff = ctx->in_buf_end - ctx->in_buf_cur;
-    hwtimer_t testtmr = hwtimer_alloc();
-    uint32_t start = 0;
 
     if (*valid_bits > 0) {
         asm volatile("mkmsk %0, %1": "=r"(mask) : "r"(*valid_bits));
@@ -181,55 +179,62 @@ DEFINE_INTERRUPT_CALLBACK(spi_isr_grp, cs_isr, arg)
         size_t in_buf_len = 0;
         ctx->spi_cbg->slave_transaction_started(ctx->spi_cbg->app_data, &ctx->out_buf, &out_buf_len, &ctx->in_buf, &in_buf_len);
 
-        ctx->in_buf_cur = ctx->in_buf;
-        ctx->out_buf_cur = ctx->out_buf;
+        if (ctx->p_miso != 0) {
+            ctx->out_buf_cur = ctx->out_buf;
+            ctx->out_buf_end = (ctx->out_buf == NULL) ? NULL : (ctx->out_buf + out_buf_len);
+        } else {
+            ctx->out_buf_cur = NULL;
+            ctx->out_buf_end = NULL;
+        }
 
-        ctx->in_buf_end = (ctx->in_buf == NULL) ? NULL : (ctx->in_buf  + in_buf_len);
-        ctx->out_buf_end = (ctx->out_buf == NULL) ? NULL : (ctx->out_buf + out_buf_len);
+        if (ctx->p_mosi != 0) {
+            ctx->in_buf_cur = ctx->in_buf;
+            ctx->in_buf_end = (ctx->in_buf == NULL) ? NULL : (ctx->in_buf  + in_buf_len);
+        } else {
+            ctx->in_buf_cur = NULL;
+            ctx->in_buf_end = NULL;
+        }
 
         ctx->running = 1;
 
-        triggerable_enable_trigger(ctx->p_mosi);
-
-    } else {
-        uint32_t data = 0;
-        size_t read_bits = port_force_input(ctx->p_mosi, &data);
-
-        receive_part_word(ctx, data, &read_bits);
-
-        uint32_t bytes_read = ctx->in_buf_cur - ctx->in_buf;
-        uint32_t bytes_written = ctx->out_buf_cur - ctx->out_buf;
-
-        ctx->spi_cbg->slave_transaction_ended(ctx->spi_cbg->app_data, &ctx->out_buf, bytes_written, &ctx->in_buf, bytes_read, read_bits);
-
-        if (ctx->p_mosi != 0) {
-            port_clear_buffer(ctx->p_mosi);
-        }
         if (ctx->p_miso != 0) {
-            port_clear_buffer(ctx->p_miso);
-        }
-        triggerable_disable_trigger(ctx->p_mosi);
-        return;
-    }
+            uint32_t out_word = get_next_word(ctx);
 
-    if (ctx->p_miso != 0) {
-        uint32_t out_word = get_next_word(ctx);
+            /* Must get first bit on the wire before clock edge */
+            if (ctx->cpha == 0) {
+                asm volatile("setclk res[%0], %1"::"r"(ctx->p_miso), "r"(XS1_CLKBLK_REF));
+                spi_io_port_outpw(ctx->p_miso, out_word, 1);
+                spi_io_port_sync(ctx->p_miso);
+                asm volatile("setclk res[%0], %1"::"r"(ctx->p_miso), "r"(ctx->cb_clk));
+                out_word >>= 1;
+                spi_io_port_outpw(ctx->p_miso, out_word, 31);
+            } else {
+                port_out(ctx->p_miso, out_word);
+            }
 
-        /* Must get first bit on the wire before clock edge */
-        if (ctx->cpha == 0) {
-            asm volatile("setclk res[%0], %1"::"r"(ctx->p_miso), "r"(XS1_CLKBLK_REF));
-            spi_io_port_outpw(ctx->p_miso, out_word, 1);
-            spi_io_port_sync(ctx->p_miso);
-            asm volatile("setclk res[%0], %1"::"r"(ctx->p_miso), "r"(ctx->cb_clk));
-            out_word >>= 1;
-            spi_io_port_outpw(ctx->p_miso, out_word, 31);
-        } else {
+            out_word = get_next_word(ctx);
+
             port_out(ctx->p_miso, out_word);
         }
+    } else {
+        uint32_t data = 0;
+        size_t read_bits = 0;
+        uint32_t bytes_read = 0;
+        uint32_t bytes_written = 0;
 
-        out_word = get_next_word(ctx);
+        if (ctx->p_mosi != 0) {
+            read_bits = port_force_input(ctx->p_mosi, &data);
+            receive_part_word(ctx, data, &read_bits);
+            bytes_read = ctx->in_buf_cur - ctx->in_buf;
+            port_clear_buffer(ctx->p_mosi);
+        }
 
-        port_out(ctx->p_miso, out_word);
+        if (ctx->p_miso != 0) {
+            bytes_written = ctx->out_buf_cur - ctx->out_buf;
+            port_clear_buffer(ctx->p_miso);
+        }
+
+        ctx->spi_cbg->slave_transaction_ended(ctx->spi_cbg->app_data, &ctx->out_buf, bytes_written, &ctx->in_buf, bytes_read, read_bits);
     }
 }
 
@@ -277,9 +282,11 @@ void spi_slave(
     clock_set_divide(cb_clk, 0);    /* Ensure divide is 0 */
 
     /* Setup the MOSI port */
-    port_enable(p_mosi);
-    port_protocol_in_strobed_slave(p_mosi, p_cs, cb_clk);
-    port_set_transfer_width(p_mosi, 32);
+    if (p_mosi != 0) {
+        port_enable(p_mosi);
+        port_protocol_in_strobed_slave(p_mosi, p_cs, cb_clk);
+        port_set_transfer_width(p_mosi, 32);
+    }
 
     /* Setup the MISO port */
     if (p_miso != 0) {
@@ -311,7 +318,9 @@ void spi_slave(
     interrupt_unmask_all();
 
     while (1) {
-        in_word = port_in(p_mosi);
+        if (p_mosi != 0) {
+            in_word = port_in(p_mosi);
+        }
         interrupt_mask_all();
         {
             asm volatile( "" ::: "memory" );
@@ -321,6 +330,10 @@ void spi_slave(
             }
         }
         interrupt_unmask_all();
-        port_out(p_miso, out_word);
+        if (int_ctx.running) {
+            if (p_miso != 0) {
+                port_out(p_miso, out_word);
+            }
+        }
     }
 }
