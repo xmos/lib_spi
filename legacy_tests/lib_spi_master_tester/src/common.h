@@ -22,6 +22,7 @@ static void send_data_to_tester(
     asm volatile("syncr res[%0]" : : "r" (setup_data_port));
     port_out(setup_strobe_port, 1);
     port_out(setup_strobe_port, 0);
+    asm volatile("syncr res[%0]" : : "r" (setup_data_port));
 }
 
 static void broadcast_settings(

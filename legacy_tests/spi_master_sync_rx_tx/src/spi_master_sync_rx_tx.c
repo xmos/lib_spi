@@ -55,9 +55,11 @@ void app(spi_master_t *spi_ctx, int mosi_enabled, int miso_enabled) {
         spi_master_sample_delay_0,
         0, 0 ,0 ,0 );
 
-
     test_transfer(&spi_dev, setup_strobe_port, setup_data_port, 0, 0,
             CPOL, CPHA, 100000/(DIV+2), mosi_enabled, miso_enabled);
+    test_transfer(&spi_dev, setup_strobe_port, setup_data_port, 0, 0,
+            CPOL, CPHA, 100000/(DIV+2), mosi_enabled, miso_enabled);
+    printf("Transfers complete\n");
 
     _Exit(1);
 }
