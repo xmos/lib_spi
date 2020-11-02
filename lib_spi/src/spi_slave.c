@@ -41,56 +41,14 @@ static inline void receive_part_word(internal_ctx_t *ctx, uint32_t in_word, size
     uint32_t start = 0;
 
     if (*valid_bits > 0) {
-        diff = (diff > 4) ? 4 : diff;
         asm volatile("mkmsk %0, %1": "=r"(mask) : "r"(*valid_bits));
         in_word = bitrev(in_word) & mask;
 
-        uint32_t byte0_shift = (*valid_bits <= 8 ) ? 0 : (*valid_bits - 8);
-        uint32_t byte1_shift = (*valid_bits - 16);
-        uint32_t byte2_shift = (*valid_bits - 24);
-
-start = hwtimer_get_time(testtmr);
-#if 1
-        /* Switch based on available buffer space */
-        uint32_t bits = *valid_bits;
-        switch (diff) {
-            case 4: // 30 ticks
-                if (bits <= 24) {
-                    *(ctx->in_buf_cur + 3) = (uint8_t)(0x00);
-                } else {
-                    asm volatile("mkmsk %0, %1": "=r"(mask) : "r"(byte2_shift));
-                    *(ctx->in_buf_cur + 3) = (uint8_t)((in_word) & mask);
-                }
-            case 3: // 35 ticks
-                if (bits <= 16) {
-                    *(ctx->in_buf_cur + 2) = (uint8_t)(0x00);
-                } else if (bits <= 24) {
-                    asm volatile("mkmsk %0, %1": "=r"(mask) : "r"(byte1_shift));
-                    *(ctx->in_buf_cur + 2) = (uint8_t)((in_word) & mask);
-                } else {
-                    *(ctx->in_buf_cur + 2) = (uint8_t)((in_word>>byte2_shift) & 0xff);
-                }
-            case 2: // 31 ticks
-                if( bits <= 8 ) {
-                    *(ctx->in_buf_cur + 1) = (uint8_t)(0x00);
-                } else if (bits <= 16) {
-                    asm volatile("mkmsk %0, %1": "=r"(mask) : "r"(byte0_shift));
-                    *(ctx->in_buf_cur + 1) = (uint8_t)((in_word) & mask);
-                } else {
-                    *(ctx->in_buf_cur + 1) = (uint8_t)((in_word>>byte1_shift) & 0xff);
-                }
-            case 1: // 24 ticks
-                *(ctx->in_buf_cur + 0) = (uint8_t)((in_word >> byte0_shift) & 0xff);
-            case 0: /* Do nothing if no space is available */
-            default:
-                break;
-        }
-#else
         /* Switch based on valid bits */
         uint32_t partial_shift_8 = *valid_bits - 8;
         uint32_t partial_shift_16 = *valid_bits - 16;
         uint32_t partial_shift_24 = *valid_bits - 24;
-        if( *valid_bits <= 8 ) {    // 23 ticks
+        if( *valid_bits <= 8 ) {
             if (diff >= 1) {
                 *(ctx->in_buf_cur + 0) = (uint8_t)(in_word & 0xff);
             }
@@ -103,7 +61,7 @@ start = hwtimer_get_time(testtmr);
             if (diff >= 4) {
                 *(ctx->in_buf_cur + 3) = (uint8_t)(0x00);
             }
-        } else if (*valid_bits <= 16) {     // 28 ticks
+        } else if (*valid_bits <= 16) {
             if (diff >= 1) {
                 *(ctx->in_buf_cur + 0) = (uint8_t)((in_word>>partial_shift_8) & 0xff);
             }
@@ -117,7 +75,7 @@ start = hwtimer_get_time(testtmr);
             if (diff >= 4) {
                 *(ctx->in_buf_cur + 3) = (uint8_t)(0x00);
             }
-        } else if (*valid_bits <= 24) {     // 32 ticks
+        } else if (*valid_bits <= 24) {
             if (diff >= 1) {
                 *(ctx->in_buf_cur + 0) = (uint8_t)((in_word>>partial_shift_8) & 0xff);
             }
@@ -131,7 +89,7 @@ start = hwtimer_get_time(testtmr);
             if (diff >= 4) {
                 *(ctx->in_buf_cur + 3) = (uint8_t)(0x00);
             }
-        } else {    // 32 ticks
+        } else {
             if (diff >= 1) {
                 *(ctx->in_buf_cur + 0) = (uint8_t)((in_word>>partial_shift_8) & 0xff);
             }
@@ -146,12 +104,16 @@ start = hwtimer_get_time(testtmr);
                 *(ctx->in_buf_cur + 3) = (uint8_t)((in_word) & mask);
             }
         }
-#endif
 
-printf("Duration: %d\n", hwtimer_get_time(testtmr) - start);
-hwtimer_free(testtmr);
-        ctx->in_buf_cur += (*valid_bits >> 3);
-        *valid_bits %= 8;
+        /* Increment in_buf_cur and update valid_bits depending on buffer space available  */
+        uint32_t valid_bytes = (*valid_bits >> 3);
+        if (valid_bytes < diff) {
+            ctx->in_buf_cur += valid_bytes;
+            *valid_bits %= 8;
+        } else {
+            ctx->in_buf_cur += diff;
+            *valid_bits = 0;
+        }
     }
 }
 
