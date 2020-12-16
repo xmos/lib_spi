@@ -1,8 +1,6 @@
 How to use the SPI library as SPI master
 ========================================
 
-.. version:: 1.0.1
-
 Summary
 -------
 
