@@ -1,10 +1,14 @@
-// Copyright (c) 2020, XMOS Ltd, All rights reserved
+// Copyright (c) 2021, XMOS Ltd, All rights reserved
 #pragma once
 
 /** \file
  *  \brief API for QSPI I/O
  */
 
+/**
+ * The minimum number of clock ticks that should
+ * be specified for any SPI master delay value.
+ */
 #define SPI_MASTER_MINIMUM_DELAY 10
 
 #include <stdlib.h> /* for size_t */
@@ -23,23 +27,6 @@
 #define SPI_IO_SETSR(c) asm volatile("setsr %0" : : "n"(c));
 #define SPI_IO_CLRSR(c) asm volatile("clrsr %0" : : "n"(c));
 
-/* is syncr available in lib_xcore or anywhere else..??? */
-__attribute__((always_inline))
-inline void spi_io_port_sync(
-        resource_t __p)
-{
-    asm volatile("syncr res[%0]" : : "r" (__p));
-}
-
-/* is setpsc available in lib_xcore or anywhere else..??? */
-__attribute__((always_inline))
-inline void spi_io_port_shift_count(
-        resource_t __p,
-        uint32_t __shift_count)
-{
-    asm volatile("setpsc res[%0], %1" : : "r" (__p), "r" (__shift_count));
-}
-
 /* is setpsc available in lib_xcore or anywhere else..??? */
 __attribute__((always_inline))
 inline void spi_io_port_outpw(
@@ -55,29 +42,49 @@ inline void spi_io_port_outpw(
  * for the SPI master sample delay.
  */
 typedef enum {
-    spi_master_sample_delay_0 = 0, /*< Samples 1/2 clock cycle after output from device */
-    spi_master_sample_delay_1 = 1, /*< Samples 3/4 clock cycle after output from device */
-    spi_master_sample_delay_2 = 2, /*< Samples 1 clock cycle after output from device */
-    spi_master_sample_delay_3 = 3, /*< Samples 1 and 1/4 clock cycle after output from device */
-    spi_master_sample_delay_4 = 4, /*< Samples 1 and 1/2 clock cycle after output from device */
+    spi_master_sample_delay_0 = 0, /**< Samples 1/2 clock cycle after output from device */
+    spi_master_sample_delay_1 = 1, /**< Samples 3/4 clock cycle after output from device */
+    spi_master_sample_delay_2 = 2, /**< Samples 1 clock cycle after output from device */
+    spi_master_sample_delay_3 = 3, /**< Samples 1 and 1/4 clock cycle after output from device */
+    spi_master_sample_delay_4 = 4, /**< Samples 1 and 1/2 clock cycle after output from device */
 } spi_master_sample_delay_t;
 
 /**
- * Enum type representing the different options
- * for the SPI master clock source.
+ * Enum type used to set which of the two clock sources SCLK is derived from.
  */
 typedef enum {
-    spi_master_source_clock_ref = 0, spi_master_source_clock_xcore
+    spi_master_source_clock_ref = 0, /**< SCLK is derived from the 100 MHz reference clock */
+    spi_master_source_clock_xcore    /**< SCLK is derived from the core clock */
 } spi_master_source_clock_t;
 
+/**
+ * Convenience macro that may be used to specify SPI Mode 0 to
+ * spi_master_device_init() or spi_slave() in place of cpol and cpha.
+ */
 #define SPI_MODE_0 0,0
+
+/**
+ * Convenience macro that may be used to specify SPI Mode 1 to
+ * spi_master_device_init() or spi_slave() in place of cpol and cpha.
+ */
 #define SPI_MODE_1 0,1
+
+/**
+ * Convenience macro that may be used to specify SPI Mode 2 to
+ * spi_master_device_init() or spi_slave() in place of cpol and cpha.
+ */
 #define SPI_MODE_2 1,0
+
+/**
+ * Convenience macro that may be used to specify SPI Mode 3 to
+ * spi_master_device_init() or spi_slave() in place of cpol and cpha.
+ */
 #define SPI_MODE_3 1,1
 
 /**
- * Struct type representing a SPI master interface. The contents
- * of the struct should not be accessed directly by the application.
+ * Struct to hold a SPI master context.
+ *
+ * The members in this struct should not be accessed directly.
  */
 typedef struct {
     xclock_t clock_block;
@@ -91,8 +98,9 @@ typedef struct {
 
 /**
  * Struct type representing a SPI device connected to a SPI master
- * interface. The contents of the struct need not be accessed directly
- * by the application.
+ * interface.
+ *
+ * The members in this struct should not be accessed directly.
  */
 typedef struct {
     spi_master_t *spi_master_ctx;
@@ -149,9 +157,9 @@ void spi_master_init(
  * \param cs_to_clk_delay_ticks The minimum number of reference clock ticks between assertion of chip select
  *                              and the first clock edge.
  * \param clk_to_cs_delay_ticks The minimum number of reference clock ticks between the last clock edge and
- *                              deassertion of chip select.
+ *                              de-assertion of chip select.
  * \param cs_to_cs_delay_ticks  The minimum number of reference clock ticks between transactions, which is between
- *                              deassertion of chip select and the end of one transaction, and its re-assertion at
+ *                              de-assertion of chip select and the end of one transaction, and its re-assertion at
  *                              the beginning of the next.
  */
 void spi_master_device_init(
@@ -214,7 +222,7 @@ inline void spi_master_delay_before_next_transfer(
 
     /* Assert CS now */
     port_out(spi->cs_port, dev->cs_assert_val);
-    spi_io_port_sync(spi->cs_port);
+    port_sync(spi->cs_port);
 
     /*
      * Assert CS again, scheduled for earliest time the
@@ -243,34 +251,35 @@ void spi_master_deinit(
         spi_master_t *spi);
 
 /**
- * SPI callback attribute for stack calculation
- */
-#define SPI_CALLBACK_ATTR __attribute__((fptrgroup("spi_callback")))
-
-/** Master has started a transaction
+ * Master has started a transaction
  *
- *  This callback function will be called when the SPI master has asserted
- *  this slave's chip select.
+ * This callback function will be called when the SPI master has asserted
+ * this slave's chip select.
  *
- *  The input and output buffer may be the same; however, partial byte/incomplete
- *  reads will result in out_buf bits being masked off due to a partial bit output.
+ * The input and output buffer may be the same; however, partial byte/incomplete
+ * reads will result in out_buf bits being masked off due to a partial bit output.
  *
+ * \param app_data   A pointer to application specific data provided
+ *                   by the application. Used to share data between
  * \param out_buf    The buffer to send to the master
  * \param outbuf_len The length in bytes of out_buf
- * \param in_buf     The buffer receive into from the master
+ * \param in_buf     The buffer to receive into from the master
  * \param inbuf_len  The length in bytes of in_buf
  */
 typedef void (*slave_transaction_started_t)(void *app_data, uint8_t **out_buf, size_t *outbuf_len, uint8_t **in_buf, size_t *inbuf_len);
 
-/** Master has ended a transaction
+/**
+ * Master has ended a transaction
  *
- *  This callback function will be called when the SPI master has deasserted
- *  this slave's chip select.
+ * This callback function will be called when the SPI master has de-asserted
+ * this slave's chip select.
  *
- *  The value of bytes_read contains the number of full bytes that are in
- *  in_buf.  When read_bits is greater than 0, the byte after the last full byte
- *  contains the partial bits read.
+ * The value of bytes_read contains the number of full bytes that are in
+ * in_buf.  When read_bits is greater than 0, the byte after the last full byte
+ * contains the partial bits read.
  *
+ * \param app_data      A pointer to application specific data provided
+ *                      by the application. Used to share data between
  * \param out_buf       The buffer that had been provided to be sent to the master
  * \param bytes_written The length in bytes of out_buf that had been written
  * \param in_buf        The buffer that had been provided to be received into from the master
@@ -280,13 +289,24 @@ typedef void (*slave_transaction_started_t)(void *app_data, uint8_t **out_buf, s
 typedef void (*slave_transaction_ended_t)(void *app_data, uint8_t **out_buf, size_t bytes_written, uint8_t **in_buf, size_t bytes_read, size_t read_bits);
 
 /**
+ * This attribute must be specified on all I2C callback functions
+ * provided by the application.
+ */
+#define SPI_CALLBACK_ATTR __attribute__((fptrgroup("spi_callback")))
+
+/**
  * Callback group representing callback events that can occur during the
  * operation of the SPI slave task. Must be initialized by the application
  * prior to passing it to one of the SPI slaves.
  */
 typedef struct {
+    /** Pointer to the application's slave_transaction_started_t function to be called by the I2C device */
     SPI_CALLBACK_ATTR slave_transaction_started_t slave_transaction_started;
+
+    /** Pointer to the application's slave_transaction_ended_t function to be called by the I2C device */
     SPI_CALLBACK_ATTR slave_transaction_ended_t slave_transaction_ended;
+
+    /** Pointer to application specific data which is passed to each callback. */
     void *app_data;
 } spi_slave_callback_group_t;
 

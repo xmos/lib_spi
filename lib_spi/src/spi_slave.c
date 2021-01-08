@@ -1,4 +1,4 @@
-// Copyright (c) 2015-2020, XMOS Ltd, All rights reserved
+// Copyright (c) 2021, XMOS Ltd, All rights reserved
 #include <xs1.h>
 #include <xclib.h>
 #include <stdio.h>
@@ -202,10 +202,10 @@ DEFINE_INTERRUPT_CALLBACK(spi_isr_grp, cs_isr, arg)
 
             /* Must get first bit on the wire before clock edge */
             if (ctx->cpha == 0) {
-                asm volatile("setclk res[%0], %1"::"r"(ctx->p_miso), "r"(XS1_CLKBLK_REF));
+                port_set_clock(ctx->p_miso, XS1_CLKBLK_REF);
                 spi_io_port_outpw(ctx->p_miso, out_word, 1);
-                spi_io_port_sync(ctx->p_miso);
-                asm volatile("setclk res[%0], %1"::"r"(ctx->p_miso), "r"(ctx->cb_clk));
+                port_sync(ctx->p_miso);
+                port_set_clock(ctx->p_miso, ctx->cb_clk);
                 out_word >>= 1;
                 spi_io_port_outpw(ctx->p_miso, out_word, 31);
             } else {
@@ -266,7 +266,6 @@ void spi_slave(
     };
     uint32_t in_word;
     uint32_t out_word;
-    uint32_t diff;
 
 	/* Enable fast mode and high priority */
 	SPI_IO_SETSR(XS1_SR_QUEUE_MASK | XS1_SR_FAST_MASK);
@@ -303,7 +302,7 @@ void spi_slave(
 
     clock_start(cb_clk);
 
-    spi_io_port_sync(p_sclk);
+    port_sync(p_sclk);
 
     /* Wait until CS is not asserted to begin */
     int_ctx.cs_val = port_in_when_pinsneq(p_cs, PORT_UNBUFFERED, ASSERTED);

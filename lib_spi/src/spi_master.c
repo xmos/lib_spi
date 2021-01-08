@@ -1,4 +1,4 @@
-// Copyright (c) 2020, XMOS Ltd, All rights reserved
+// Copyright (c) 2021, XMOS Ltd, All rights reserved
 
 #include <stdint.h>
 
@@ -34,7 +34,7 @@ void spi_master_start_transaction(
         /* Output the clock idle value */
         clock_start(spi->clock_block);
         spi_io_port_outpw(spi->sclk_port, dev->clock_bits >> 1, 1);
-        spi_io_port_sync(spi->sclk_port);
+        port_sync(spi->sclk_port);
         clock_stop(spi->clock_block);
 
         /*
@@ -48,7 +48,7 @@ void spi_master_start_transaction(
          * This ensures that the CS_high to CS_low
          * minimum time is met.
          */
-        spi_io_port_sync(spi->cs_port);
+        port_sync(spi->cs_port);
     }
 
     /*
@@ -117,7 +117,7 @@ void spi_master_transfer(
 
     if (spi->delay_before_transfer) {
         /* Ensure the delay time is met */
-        spi_io_port_sync(spi->cs_port);
+        port_sync(spi->cs_port);
         spi->delay_before_transfer = 0;
     } else {
         port_clear_trigger_time(spi->cs_port);
@@ -168,7 +168,7 @@ void spi_master_transfer(
             }
             if (do_input) {
                 word = port_in(spi->miso_port);
-                spi_io_port_shift_count(spi->miso_port, 16);
+                port_set_shift_count(spi->miso_port, 16);
                 save_data_in(data_in, word, 2);
                 data_in += 2;
             }
@@ -180,12 +180,12 @@ void spi_master_transfer(
         save_data_in(data_in, word, remainder);
     }
 
-    spi_io_port_sync(spi->sclk_port);
+    port_sync(spi->sclk_port);
     clock_stop(spi->clock_block);
 
     /* Assert CS again now */
     port_out(spi->cs_port, dev->cs_assert_val);
-    spi_io_port_sync(spi->cs_port);
+    port_sync(spi->cs_port);
 
     /*
      * And assert CS again, scheduled for earliest time CS
@@ -205,10 +205,10 @@ void spi_master_end_transaction(
     /* enable fast mode and high priority */
     SPI_IO_CLRSR(XS1_SR_QUEUE_MASK | XS1_SR_FAST_MASK);
 
-    spi_io_port_sync(spi->cs_port);
+    port_sync(spi->cs_port);
 
     port_out(spi->cs_port, cs_deassert_val);
-    spi_io_port_sync(spi->cs_port);
+    port_sync(spi->cs_port);
 
     /*
      * Deassert CS again, scheduled for earliest time CS
@@ -284,7 +284,7 @@ void spi_master_init(
     port_enable(spi->cs_port);
     port_set_clock(spi->cs_port, XS1_CLKBLK_REF);
     port_out(spi->cs_port, 0xFFFFFFFF);
-    spi_io_port_sync(spi->cs_port);
+    port_sync(spi->cs_port);
     spi->current_device = 0xFFFFFFFF;
 
     /* Setup the SCLK port */
