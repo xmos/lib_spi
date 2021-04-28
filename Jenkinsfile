@@ -52,7 +52,7 @@ pipeline {
           steps {
             dir("${REPO}") {
               forAllMatch("examples", "AN*/") { path ->
-                runXmake(path, 'clean') //Necessary because we previously built in same path for XS1/2 so we need to remove build files
+                runXmake(path, '', 'clean') //Necessary because we previously built in same path for XS1/2 so we need to remove build files
                 runXmake(path, '', 'XCOREAI=1')
                 dir(path) {
                   stash name: path.split("/")[-1], includes: 'bin/*, '
