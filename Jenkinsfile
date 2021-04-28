@@ -41,8 +41,8 @@ pipeline {
             dir("${REPO}/legacy_tests") {
               viewEnv() {
                 // Use Pipfile in legacy_tests, not lib_spi/Pipfile
-                installPipfile(true)
-                runPython("./runtests.py --junit-output=${REPO}_tests.xml")
+                // installPipfile(true)
+                // runPython("./runtests.py --junit-output=${REPO}_tests.xml")
               }
             }
           }
@@ -128,10 +128,10 @@ pipeline {
 
               sh 'tree'
 
-              // // Run all the tests
-              // // app_adaptive - expect
-              // sh 'xrun --io --id 0 bin/xcoreai/app_adaptive.xe &> app_adaptive_test.txt'
-              // sh 'cat app_adaptive_test.txt && diff --ignore-blank-lines --ignore-trailing-space app_adaptive_test.txt tests/adaptive_test.expect'
+              // Run all the tests
+              // app_adaptive - expect
+              sh 'xrun --io --id 0 bin/xcoreai/app_adaptive.xe &> app_adaptive_test.txt'
+              sh 'cat app_adaptive_test.txt && diff --ignore-blank-lines --ignore-trailing-space app_adaptive_test.txt tests/adaptive_test.expect'
 
             }
           }
