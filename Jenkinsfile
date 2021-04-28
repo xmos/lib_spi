@@ -155,7 +155,7 @@ pipeline {
               sh 'tree'
 
               // Run the tests and look for what we expect
-              sh 'xrun --io --id 0 AN00160_using_SPI_master.xe &> AN00160_using_SPI_master.txt'
+              sh 'xrun --io --id 0 bin/AN00160_using_SPI_master.xe &> AN00160_using_SPI_master.txt'
               // Look for config register 0 value from wifi module
               sh 'grep 2005400 AN00160_using_SPI_master.txt'
 
