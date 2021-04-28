@@ -41,11 +41,11 @@ pipeline {
           forAllMatch("${REPO}/examples", "AN*/") { path ->
             runXdoc("${path}/doc")
           }
-          runXdoc("${REPO}/${REPO}/doc")
-
-          // Archive all the generated .pdf docs
-          archiveArtifacts artifacts: "${REPO}/**/pdf/*.pdf", fingerprint: true, allowEmptyArchive: true
+          runXdoc("${REPO}/doc")
         }
+        // Archive all the generated .pdf docs
+        archiveArtifacts artifacts: "${REPO}/**/pdf/*.pdf", fingerprint: true, allowEmptyArchive: true
+
       }
     }
   }
