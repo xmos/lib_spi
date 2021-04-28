@@ -60,7 +60,7 @@ pipeline {
         stage('Build XCOREAI') {
           steps {
             dir("${REPO}") {
-              forAllMatch("AN00", "app_*/") { path ->
+              forAllMatch("${REPO}/examples", "AN*/") { path ->
                 runXmake(path, 'clean') //Necessary because we previously built in same path for XS1/2 so we need to remove build files
                 runXmake(path, '', 'XCOREAI=1')
                 dir(path) {
@@ -72,13 +72,23 @@ pipeline {
               dir('tests/') {
                 script {
                   tests = [
-                    "test_fft_forward_real",
-                    "test_fft_inverse_blank_forward"
+                    "spi_master_async_multi_client",
+                    "spi_master_async_multi_device",
+                    "spi_master_async_rx_tx",
+                    "spi_master_async_shutdown",
+                    "spi_master_sync_benchmark",
+                    "spi_master_sync_clock_port_sharing",
+                    "spi_master_sync_multi_client",
+                    "spi_master_sync_multi_device",
+                    "spi_master_sync_rx_tx",
+                    "spi_slave_benchmark",
+                    "spi_slave_rx_tx"
                   ]
                   tests.each() {
                     dir(it) {
+                      runXmake(".", "clean")
                       runXmake(".", "", "XCOREAI=1")
-                      stash name: it, includes: 'bin/*xcoreai/*.xe, '
+                      stash name: it, includes: 'bin/*/*.xe, '
                     }
                   }
                 }
