@@ -142,7 +142,7 @@ pipeline {
             toolsEnv(TOOLS_PATH) {  // load xmos tools
               sh 'tree'
 
-              forAllMatch("AN00", "app_*/") { path ->
+              forAllMatch("examples", "AN*/") { path ->
                 unstash path.split("/")[-1]
               }
 
