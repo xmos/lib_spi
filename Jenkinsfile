@@ -49,14 +49,16 @@ pipeline {
         }
         stage('Builds') {
           steps {
-            dir("${REPO}") {
-              xcoreAllAppNotesBuild('examples')
-              dir("${REPO}") {
-                //runXdoc('doc')
-              }
+            forAllMatch("${REPO}/examples", "AN*/") { path ->
+              runXdoc("${path}/doc")
             }
+            runXdoc("${REPO}/${REPO}/doc")
+
+            // Archive all the generated .pdf docs
+            archiveArtifacts artifacts: "${REPO}/**/pdf/*.pdf", fingerprint: true, allowEmptyArchive: true
           }
         }
+
         stage('Build XCOREAI') {
           steps {
             dir("${REPO}") {
@@ -122,6 +124,8 @@ pipeline {
         stage('xrun'){
           steps{
             toolsEnv(TOOLS_PATH) {  // load xmos tools
+              sh 'tree'
+
               forAllMatch("AN00", "app_*/") { path ->
                 unstash path.split("/")[-1]
               }
