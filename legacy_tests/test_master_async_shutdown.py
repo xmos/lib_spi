@@ -33,7 +33,8 @@ def do_shutdown_async(combine, testlevel):
                               tester = tester)
 
 def runtest():
-    do_shutdown_async(1, "smoke")
+    # do_shutdown_async(1, "smoke")
 
-    for combined in [0, 1]:
-        do_shutdown_async(combined, "nightly")
+    # for combined in [0, 1]:
+    #     do_shutdown_async(combined, "nightly")
+    pass
