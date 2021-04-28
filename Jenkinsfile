@@ -76,6 +76,7 @@ pipeline {
                   ]
                   tests.each() {
                     dir(it) {
+                      // Temporaily remove this stage for faster debug of later stages
                       // runXmake(".", "", "XCOREAI=1")
                       // stash name: it, includes: 'bin/**/*.xe, '
                     }
@@ -154,9 +155,9 @@ pipeline {
               sh 'tree'
 
               // Run the tests and look for what we expect
-              sh 'xrun --io --id 0 bin/app_name.xe &> app_name.txt'
+              sh 'xrun --io --id 0 AN00160_using_SPI_master.xe &> AN00160_using_SPI_master.txt'
               // Look for config register 0 value from wifi module
-              sh 'grep 2005400 app_name.txt'
+              sh 'grep 2005400 AN00160_using_SPI_master.txt'
 
             }
           }
