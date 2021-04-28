@@ -97,7 +97,17 @@ pipeline {
       agent{
         label 'x86_64&&brew&&macOS'
       }
+      environment {
+        REPO = 'lib_spi'
+        // VIEW = "${env.JOB_NAME.contains('PR-') ? REPO+'_'+env.CHANGE_TARGET : REPO+'_'+env.BRANCH_NAME}"
+        VIEW = "lib_spi_feature_xs3_support"
+      }
       stages{
+        stage('Get view') {
+          steps {
+            xcorePrepareSandbox("${VIEW}", "${REPO}")
+          }
+        }
         stage('Builds') {
           steps {
             forAllMatch("${REPO}/examples", "AN*/") { path ->
