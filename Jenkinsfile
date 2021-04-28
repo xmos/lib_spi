@@ -47,23 +47,11 @@ pipeline {
             }
           }
         }
-        stage('Builds') {
-          steps {
-            forAllMatch("${REPO}/examples", "AN*/") { path ->
-              runXdoc("${path}/doc")
-            }
-            // Temporarily disable this due to Jenkins Agent issue on some agents. Luciano working with Brennan on this
-            // runXdoc("${REPO}/${REPO}/doc")
-
-            // Archive all the generated .pdf docs
-            archiveArtifacts artifacts: "${REPO}/**/pdf/*.pdf", fingerprint: true, allowEmptyArchive: true
-          }
-        }
 
         stage('Build XCOREAI') {
           steps {
             dir("${REPO}") {
-              forAllMatch("${REPO}/examples", "AN*/") { path ->
+              forAllMatch("examples", "AN*/") { path ->
                 runXmake(path, 'clean') //Necessary because we previously built in same path for XS1/2 so we need to remove build files
                 runXmake(path, '', 'XCOREAI=1')
                 dir(path) {
@@ -107,6 +95,25 @@ pipeline {
       }
     }//stage - Standard build and XS1/2 tests
 
+    stage('Documentation'){
+      agent{
+        label 'x86_64&&brew&&macOS'
+      }
+      stages{
+        stage('Builds') {
+          steps {
+            forAllMatch("${REPO}/examples", "AN*/") { path ->
+              runXdoc("${path}/doc")
+            }
+            runXdoc("${REPO}/${REPO}/doc")
+
+            // Archive all the generated .pdf docs
+            archiveArtifacts artifacts: "${REPO}/**/pdf/*.pdf", fingerprint: true, allowEmptyArchive: true
+          }
+        }
+      }
+    }
+
     stage('xcore.ai Verification'){
       agent {
         label 'xcore.ai-explorer'
@@ -133,10 +140,10 @@ pipeline {
 
               sh 'tree'
 
-              // Run all the tests
-              // app_adaptive - expect
-              sh 'xrun --io --id 0 bin/xcoreai/app_adaptive.xe &> app_adaptive_test.txt'
-              sh 'cat app_adaptive_test.txt && diff --ignore-blank-lines --ignore-trailing-space app_adaptive_test.txt tests/adaptive_test.expect'
+              // Run the tests and look for what we expect
+              sh 'xrun --io --id 0 bin/app_name.xe &> app_name.txt'
+              // Look for config register 0 value from wifi module
+              sh 'grep 2005400 app_name.txt'
 
             }
           }
