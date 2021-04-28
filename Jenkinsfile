@@ -59,7 +59,7 @@ pipeline {
               }
 
               // Build Tests
-              dir('tests/') {
+              dir('legacy_tests/') {
                 script {
                   tests = [
                     "spi_master_async_multi_client",
