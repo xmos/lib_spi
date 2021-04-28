@@ -120,6 +120,11 @@ pipeline {
           }
         }
       }
+      post {
+        cleanup {
+          xcoreCleanSandbox()
+        }
+      }
     }
 
     stage('xcore.ai Verification'){
