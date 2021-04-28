@@ -76,8 +76,8 @@ pipeline {
                   ]
                   tests.each() {
                     dir(it) {
-                      runXmake(".", "", "XCOREAI=1")
-                      stash name: it, includes: 'bin/*/*.xe, '
+                      // runXmake(".", "", "XCOREAI=1")
+                      // stash name: it, includes: 'bin/**/*.xe, '
                     }
                   }
                 }
