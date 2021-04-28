@@ -37,12 +37,14 @@ pipeline {
     }
     stage('Builds') {
       steps {
-        dir("${REPO}") {
-          xcoreAllAppNotesBuild('examples')
-          dir("${REPO}") {
-            //runXdoc('doc')
-          }
+        forAllMatch("${REPO}/examples", "AN*/") { path ->
+          runXdoc("${path}/doc")
         }
+        runXdoc("${REPO}/${REPO}/doc")
+
+        // Archive all the generated .pdf docs
+        archiveArtifacts artifacts: "${REPO}/**/pdf/*.pdf", fingerprint: true, allowEmptyArchive: true
+
       }
     }
   }
