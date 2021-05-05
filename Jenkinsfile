@@ -1,4 +1,4 @@
-@Library('xmos_jenkins_shared_library@v0.14.2') _
+@Library('xmos_jenkins_shared_library@v0.16.2') _
 
 getApproval()
 
@@ -37,12 +37,14 @@ pipeline {
     }
     stage('Builds') {
       steps {
-        dir("${REPO}") {
-          xcoreAllAppNotesBuild('examples')
-          dir("${REPO}") {
-            //runXdoc('doc')
-          }
+        forAllMatch("${REPO}/examples", "AN*/") { path ->
+          runXdoc("${path}/doc")
         }
+        runXdoc("${REPO}/${REPO}/doc")
+
+        // Archive all the generated .pdf docs
+        archiveArtifacts artifacts: "${REPO}/**/pdf/*.pdf", fingerprint: true, allowEmptyArchive: true
+
       }
     }
   }

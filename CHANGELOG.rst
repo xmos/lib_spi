@@ -1,6 +1,12 @@
 SPI library change log
 ======================
 
+3.2.0
+-----
+
+  * CHANGED: Use XMOS Public Licence Version 1
+  * CHANGED: Rearrange documentation files
+
 3.1.1
 -----
 
