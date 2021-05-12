@@ -138,18 +138,6 @@ pipeline {
         TOOLS_PATH = "/XMOS/tools/${params.TOOLS_VERSION}/XMOS/xTIMEcomposer/${params.TOOLS_VERSION}"
       }
       stages{
-        stage('Reset XTAGs') {
-          steps {
-            sh 'echo "reset xtag stage"'
-            unstash "reset_xtags"
-            // Reset XTAGs
-            sh 'echo "GOT THIS FAR"'
-            sh 'tree'
-            sh "python -m pip install git+git://github0.xmos.com/xmos-int/xtagctl.git@v1.2.0"
-            echo "AND HERE"
-            sh "python python/reset_xtags.py 2"
-          }
-        }
         stage('Install Dependencies') {
           steps {
             sh '/XMOS/get_tools.py ' + params.TOOLS_VERSION
@@ -159,7 +147,16 @@ pipeline {
         stage('xrun'){
           steps{
             toolsEnv(TOOLS_PATH) {  // load xmos tools
+              unstash "reset_xtags"
+
               sh 'tree'
+              withVenv{
+                sh 'echo "GOT THIS FAR"'
+                sh 'tree'
+                sh "python -m pip install git+git://github0.xmos.com/xmos-int/xtagctl.git@v1.2.0"
+                echo "AND HERE"
+                sh "python python/reset_xtags.py 2" //Note 2 xtags to reset
+              }
 
               forAllMatch("examples", "AN*/") { path ->
                 unstash path.split("/")[-1]
