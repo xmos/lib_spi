@@ -150,7 +150,7 @@ pipeline {
                 viewEnv {
                   withVenv {
                     // Reset XTAGs
-                    sh "python -m pip git@github0.xmos.com:xmos-int/xtagctl@v1.2.0"
+                    sh "python -m pip install git+git@github0.xmos.com:xmos-int/xtagctl@v1.2.0"
                     // sh "pip install -e ${WORKSPACE}/xtagctl"
                     sh "python reset_xtags.py 2"
                   }
