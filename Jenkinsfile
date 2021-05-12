@@ -58,7 +58,8 @@ pipeline {
                 }
               }
               sh 'echo "stash reset_xtags pre"'
-              stash name: "reset_xtags", includes: "**/python/reset_xtags.py", allowEmpty: False
+              sh 'tree'
+              stash name: "reset_xtags", includes: "**/python/reset_xtags.py"
               sh 'echo "stash reset_xtags post"'
 
 
