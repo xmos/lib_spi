@@ -148,13 +148,9 @@ pipeline {
           steps{
             toolsEnv(TOOLS_PATH) {  // load xmos tools
               unstash "reset_xtags"
-              sh 'tree'
-              sh 'rm -f ~/.xtag/acquired' //Hacky but ensure it is always available
+              sh 'rm -f ~/.xtag/acquired' //Hacky but ensure it is always available when previous run left lock file
               withVenv{
-                sh 'echo "GOT THIS FAR"'
-                sh 'tree'
                 sh "python -m pip install git+git://github0.xmos.com/xmos-int/xtagctl.git@v1.2.0"
-                echo "AND HERE"
                 sh "python python/reset_xtags.py 2" //Note 2 xtags to reset on xcore.ai-explorer
               }
             }
@@ -166,13 +162,13 @@ pipeline {
               forAllMatch("examples", "AN*/") { path ->
                 unstash path.split("/")[-1]
               }
-
-              sh 'tree'
               // Run the tests and look for what we expect
               sh 'xrun --io --id 0 bin/AN00160_using_SPI_master.xe &> AN00160_using_SPI_master.txt'
               // Look for config register 0 value from wifi module
               sh 'grep 2005400 AN00160_using_SPI_master.txt'
 
+              //Just run this and ensure we get no error (like wrong arch). We have no SPI master HW so cannot test it
+              sh 'xrun--id 0 bin/AN00161_using_SPI_slave.xe'
             }
           }
         }
