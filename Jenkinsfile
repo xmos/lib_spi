@@ -141,18 +141,14 @@ pipeline {
         stage('Reset XTAGs') {
           steps {
             sh 'echo "reset xtag stage"'
-            dir("${REPO}") {
-              sh 'echo "reset xtag stage"'
-              withVenv {
-                unstash "reset_xtags"
-                // Reset XTAGs
-                sh 'echo "GOT THIS FAR"'
-                sh 'tree'
-                sh "python -m pip install git+git://github0.xmos.com/xmos-int/xtagctl.git@v1.2.0"
-                // sh "pip install -e ${WORKSPACE}/xtagctl"
-                echo "AND HERE"
-                sh "python python/reset_xtags.py 2"
-              }
+            withVenv {
+              unstash "reset_xtags"
+              // Reset XTAGs
+              sh 'echo "GOT THIS FAR"'
+              sh 'tree'
+              sh "python -m pip install git+git://github0.xmos.com/xmos-int/xtagctl.git@v1.2.0"
+              echo "AND HERE"
+              sh "python python/reset_xtags.py 2"
             }
           }
         }
