@@ -77,9 +77,9 @@ pipeline {
                   ]
                   tests.each() {
                     dir(it) {
-                      // Temporaily remove this stage for faster debug of later stages
-                      // runXmake(".", "", "XCOREAI=1")
-                      // stash name: it, includes: 'bin/**/*.xe, '
+                      //Build all test under XS3 to check for build errors
+                      runXmake(".", "", "XCOREAI=1")
+                      stash name: it, includes: 'bin/**/*.xe, '
                     }
                   }
                 }
