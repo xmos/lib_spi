@@ -57,6 +57,8 @@ pipeline {
                   stash name: path.split("/")[-1], includes: 'bin/*, '
                 }
               }
+              stash name: "reset_xtags", includes: "python/reset_xtags.py", allowEmpty: False
+
 
               // Build Tests
               dir('legacy_tests/') {
@@ -141,15 +143,15 @@ pipeline {
           steps {
             dir("${REPO}") {
               dir("python") {
-                viewEnv {
-                  withVenv {
-                    // Reset XTAGs
-                    sh 'echo "GOT THIS FAR"'
-                    sh "python -m pip install git+git://github0.xmos.com/xmos-int/xtagctl.git@v1.2.0"
-                    // sh "pip install -e ${WORKSPACE}/xtagctl"
-                    echo "AND HERE"
-                    sh "python reset_xtags.py 2"
-                  }
+                withVenv {
+                  unstash "reset_xtags"
+                  // Reset XTAGs
+                  sh 'echo "GOT THIS FAR"'
+                  sh 'tree'
+                  sh "python -m pip install git+git://github0.xmos.com/xmos-int/xtagctl.git@v1.2.0"
+                  // sh "pip install -e ${WORKSPACE}/xtagctl"
+                  echo "AND HERE"
+                  sh "python reset_xtags.py 2"
                 }
               }
             }
