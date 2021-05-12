@@ -168,7 +168,7 @@ pipeline {
               sh 'grep 2005400 AN00160_using_SPI_master.txt'
 
               //Just run this and ensure we get no error (like wrong arch). We have no SPI master HW so cannot test it
-              sh 'xrun--id 0 bin/AN00161_using_SPI_slave.xe'
+              sh 'xrun --id 0 bin/AN00161_using_SPI_slave.xe'
             }
           }
         }
