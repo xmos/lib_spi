@@ -137,12 +137,6 @@ pipeline {
         TOOLS_PATH = "/XMOS/tools/${params.TOOLS_VERSION}/XMOS/xTIMEcomposer/${params.TOOLS_VERSION}"
       }
       stages{
-        stage('Install Dependencies') {
-          steps {
-            sh '/XMOS/get_tools.py ' + params.TOOLS_VERSION
-            installDependencies()
-          }
-        }
         stage('Reset XTAGs') {
           steps {
             dir("${REPO}") {
@@ -150,13 +144,21 @@ pipeline {
                 viewEnv {
                   withVenv {
                     // Reset XTAGs
+                    sh 'echo "GOT THIS FAR"'
                     sh "python -m pip install git+git://github0.xmos.com/xmos-int/xtagctl.git@v1.2.0"
                     // sh "pip install -e ${WORKSPACE}/xtagctl"
+                    echo "AND HERE"
                     sh "python reset_xtags.py 2"
                   }
                 }
               }
             }
+          }
+        }
+        stage('Install Dependencies') {
+          steps {
+            sh '/XMOS/get_tools.py ' + params.TOOLS_VERSION
+            installDependencies()
           }
         }
         stage('xrun'){
