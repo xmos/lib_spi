@@ -57,7 +57,7 @@ pipeline {
                   stash name: path.split("/")[-1], includes: 'bin/*, '
                 }
               }
-              stash name: "reset_xtags", includes: "python/reset_xtags.py", allowEmpty: False
+              stash name: "reset_xtags", includes: "**/python/reset_xtags.py", allowEmpty: False
 
 
               // Build Tests
