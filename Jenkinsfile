@@ -143,6 +143,22 @@ pipeline {
             installDependencies()
           }
         }
+        stage('Reset XTAGs') {
+          steps {
+            dir("${REPO}") {
+              dir("python") {
+                viewEnv {
+                  withVenv {
+                    // Reset XTAGs
+                    sh "python -m pip git@github0.xmos.com:xmos-int/xtagctl@v1.2.0"
+                    // sh "pip install -e ${WORKSPACE}/xtagctl"
+                    sh "python reset_xtags.py 2"
+                  }
+                }
+              }
+            }
+          }
+        }
         stage('xrun'){
           steps{
             toolsEnv(TOOLS_PATH) {  // load xmos tools
