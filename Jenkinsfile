@@ -19,8 +19,7 @@ pipeline {
 
       environment {
         REPO = 'lib_spi'
-        // VIEW = "${env.JOB_NAME.contains('PR-') ? REPO+'_'+env.CHANGE_TARGET : REPO+'_'+env.BRANCH_NAME}"
-        VIEW = "lib_spi_feature_xs3_support"
+        VIEW = "${env.JOB_NAME.contains('PR-') ? REPO+'_'+env.CHANGE_TARGET : REPO+'_'+env.BRANCH_NAME}"
       }
       options {
         skipDefaultCheckout()
@@ -40,9 +39,9 @@ pipeline {
           steps {
             dir("${REPO}/legacy_tests") {
               viewEnv() {
-                // Use Pipfile in legacy_tests, not lib_spi/Pipfile
-                // installPipfile(true)
-                // runPython("./runtests.py --junit-output=${REPO}_tests.xml")
+                Use Pipfile in legacy_tests, not lib_spi/Pipfile
+                installPipfile(true)
+                runPython("./runtests.py --junit-output=${REPO}_tests.xml")
               }
             }
           }
@@ -77,7 +76,7 @@ pipeline {
                   ]
                   tests.each() {
                     dir(it) {
-                      //Build all test under XS3 to check for build errors
+                      //Build all tests tagetting XS3 to check for build errors only
                       runXmake(".", "", "XCOREAI=1")
                       stash name: it, includes: 'bin/**/*.xe, '
                     }
@@ -101,8 +100,7 @@ pipeline {
       }
       environment {
         REPO = 'lib_spi'
-        // VIEW = "${env.JOB_NAME.contains('PR-') ? REPO+'_'+env.CHANGE_TARGET : REPO+'_'+env.BRANCH_NAME}"
-        VIEW = "lib_spi_feature_xs3_support"
+        VIEW = "${env.JOB_NAME.contains('PR-') ? REPO+'_'+env.CHANGE_TARGET : REPO+'_'+env.BRANCH_NAME}"
       }
       stages{
         stage('Get view') {
@@ -148,7 +146,7 @@ pipeline {
           steps{
             toolsEnv(TOOLS_PATH) {  // load xmos tools
               unstash "reset_xtags"
-              sh 'rm -f ~/.xtag/acquired' //Hacky but ensure it is always available when previous run left lock file
+              sh 'rm -f ~/.xtag/acquired' //Hacky but ensure it always works even when previous failed run left lock file present
               withVenv{
                 sh "python -m pip install git+git://github0.xmos.com/xmos-int/xtagctl.git@v1.2.0"
                 sh "python python/reset_xtags.py 2" //Note 2 xtags to reset on xcore.ai-explorer
