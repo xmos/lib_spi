@@ -23,7 +23,7 @@ typedef struct internal_ctx {
     uint8_t* out_buf_cur;
     uint8_t* out_buf_end;
     uint32_t cs_val;
-    uint32_t running;
+    volatile uint32_t running;
     port_t p_miso;
     port_t p_mosi;
     port_t p_cs;
@@ -202,10 +202,17 @@ DEFINE_INTERRUPT_CALLBACK(spi_isr_grp, cs_isr, arg)
 
             /* Must get first bit on the wire before clock edge */
             if (ctx->cpha == 0) {
+                port_set_master(ctx->p_miso);
+                port_set_no_ready(ctx->p_miso);
                 port_set_clock(ctx->p_miso, XS1_CLKBLK_REF);
+
                 spi_io_port_outpw(ctx->p_miso, out_word, 1);
                 port_sync(ctx->p_miso);
+
+                port_set_ready_strobed(ctx->p_miso);
+                port_set_slave(ctx->p_miso);
                 port_set_clock(ctx->p_miso, ctx->cb_clk);
+
                 out_word >>= 1;
                 spi_io_port_outpw(ctx->p_miso, out_word, 31);
             } else {
@@ -322,7 +329,6 @@ void spi_slave(
         }
         interrupt_mask_all();
         {
-            asm volatile( "" ::: "memory" );
             if (int_ctx.running) {
                 receive_word(&int_ctx, in_word);
                 out_word = get_next_word(&int_ctx);
