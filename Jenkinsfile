@@ -56,7 +56,6 @@ pipeline {
                   stash name: path.split("/")[-1], includes: 'bin/*, '
                 }
               }
-              stash name: "reset_xtags", includes: "**/python/reset_xtags.py"
 
               // Build Tests
               dir('legacy_tests/') {
@@ -145,11 +144,10 @@ pipeline {
         stage('Reset XTAGs'){
           steps{
             toolsEnv(TOOLS_PATH) {  // load xmos tools
-              unstash "reset_xtags"
               sh 'rm -f ~/.xtag/acquired' //Hacky but ensure it always works even when previous failed run left lock file present
               withVenv{
-                sh "python -m pip install git+git://github0.xmos.com/xmos-int/xtagctl.git@v1.3.1"
-                sh "python python/reset_xtags.py 2" //Note 2 xtags to reset on xcore.ai-explorer
+                sh "python -m pip install -e ${WORKSPACE}/xtagctl"
+                sh "xtagctl reset_all XCORE-AI-EXPLORER"
               }
             }
           }
