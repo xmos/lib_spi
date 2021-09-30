@@ -1,4 +1,4 @@
-@Library('xmos_jenkins_shared_library@v0.16.2') _
+@Library('xmos_jenkins_shared_library@v0.16.4') _
 
 getApproval()
 
@@ -7,7 +7,7 @@ pipeline {
   parameters {
     string(
       name: 'TOOLS_VERSION',
-      defaultValue: '15.0.2',
+      defaultValue: '15.1.1',
       description: 'The tools version to build with (check /projects/tools/ReleasesTools/)'
     )
   }
