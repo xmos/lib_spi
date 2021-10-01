@@ -1,4 +1,4 @@
-@Library('xmos_jenkins_shared_library@v0.16.2') _
+@Library('xmos_jenkins_shared_library@v0.16.4') _
 
 getApproval()
 
@@ -7,7 +7,7 @@ pipeline {
   parameters {
     string(
       name: 'TOOLS_VERSION',
-      defaultValue: '15.0.2',
+      defaultValue: '15.1.1',
       description: 'The tools version to build with (check /projects/tools/ReleasesTools/)'
     )
   }
@@ -133,7 +133,7 @@ pipeline {
       }
       environment {
         // '/XMOS/tools' from get_tools.py and rest from tools installers
-        TOOLS_PATH = "/XMOS/tools/${params.TOOLS_VERSION}/XMOS/xTIMEcomposer/${params.TOOLS_VERSION}"
+        TOOLS_PATH = "/XMOS/tools/${params.TOOLS_VERSION}/XMOS/XTC/${params.TOOLS_VERSION}"
       }
       stages{
         stage('Install Dependencies') {
@@ -148,7 +148,7 @@ pipeline {
               unstash "reset_xtags"
               sh 'rm -f ~/.xtag/acquired' //Hacky but ensure it always works even when previous failed run left lock file present
               withVenv{
-                sh "python -m pip install git+git://github0.xmos.com/xmos-int/xtagctl.git@v1.2.0"
+                sh "python -m pip install git+git://github0.xmos.com/xmos-int/xtagctl.git@v1.3.1"
                 sh "python python/reset_xtags.py 2" //Note 2 xtags to reset on xcore.ai-explorer
               }
             }
