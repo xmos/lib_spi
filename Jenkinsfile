@@ -19,7 +19,7 @@ pipeline {
 
       environment {
         REPO = 'lib_spi'
-        VIEW = getViewName(REPO)
+        VIEW = 'lib_spi_develop'
       }
       options {
         skipDefaultCheckout()
