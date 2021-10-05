@@ -14,7 +14,7 @@ pipeline {
   stages {
     stage('Standard build and XS1/2 tests') {
       agent {
-        label 'x86_64&&brew'
+        label 'animo'
       }
 
       environment {
