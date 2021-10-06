@@ -4,6 +4,9 @@ getApproval()
 
 pipeline {
   agent none
+  options {
+    skipDefaultCheckout()
+  }
   parameters {
     string(
       name: 'TOOLS_VERSION',
@@ -20,9 +23,6 @@ pipeline {
       environment {
         REPO = 'lib_spi'
         VIEW = getViewName(REPO)
-      }
-      options {
-        skipDefaultCheckout()
       }
       stages {
         stage('Get view') {
