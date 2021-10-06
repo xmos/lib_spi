@@ -1,6 +1,11 @@
 SPI library change log
 ======================
 
+3.3.0
+-----
+
+  * ADDED: Support for XS3
+
 3.2.0
 -----
 

@@ -8,10 +8,18 @@
 #include <platform.h>
 
 /* These ports are used for the SPI master */
+#ifdef XCORE_AI_EXPLORER
+out buffered port:32   p_sclk  = WIFI_CLK;
+out port               p_ss[1] = {WIFI_CS_N};
+in buffered port:32    p_miso  = WIFI_MISO;
+out buffered port:32   p_mosi  = WIFI_MOSI;
+out port               p_rstn  = WIFI_WUP_RST_N;
+#else
 out buffered port:32   p_sclk  = on tile[0]: XS1_PORT_1I;
 out port               p_ss[1] = on tile[0]: {XS1_PORT_1J};
 in buffered port:32    p_miso  = on tile[0]: XS1_PORT_1K;
 out buffered port:32   p_mosi  = on tile[0]: XS1_PORT_1L;
+#endif
 
 clock clk0 = on tile[0]: XS1_CLKBLK_1;
 clock clk1 = on tile[0]: XS1_CLKBLK_2;
@@ -25,7 +33,21 @@ void app(client spi_master_if spi)
 {
     uint8_t val;
     printstrln("Sending SPI traffic");
-    delay_microseconds(30);
+#if XCORE_AI_EXPLORER
+    
+    p_rstn <: 0x2; //Take out of reset and wait
+    delay_microseconds(1000);
+    spi.begin_transaction(0, 1000, SPI_MODE_1);
+
+    uint32_t addr = 0;
+    uint32_t command = 0x8002 | (addr << 12); //Read command
+    val = spi.transfer8(command >> 8);
+    val = spi.transfer8(command & 0xff);
+    uint32_t reg;
+    reg = spi.transfer32(0x00);
+    spi.end_transaction(0);
+    printhexln(reg << 16 | reg >> 16);
+#else
     spi.begin_transaction(0, 100, SPI_MODE_0);
     val = spi.transfer8(0xab);
     val = spi.transfer32(0xcc);
@@ -36,6 +58,7 @@ void app(client spi_master_if spi)
     spi.begin_transaction(0, 100, SPI_MODE_0);
     val = spi.transfer8(0x22);
     spi.end_transaction(100);
+#endif
 
     printstrln("Done.");
     _exit(0);
