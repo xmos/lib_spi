@@ -28,17 +28,17 @@ pipeline {
             xcoreLibraryChecks("${REPO}")
           }
         }
-        stage('Legacy tests') {
-          steps {
-            dir("${REPO}/legacy_tests") {
-              viewEnv() {
-                // Use Pipfile in legacy_tests, not lib_spi/Pipfile
-                installPipfile(true)
-                runPython("./runtests.py --junit-output=${REPO}_tests.xml")
-              }
-            }
-          }
-        }
+//        stage('Legacy tests') {
+//          steps {
+//            dir("${REPO}/legacy_tests") {
+//              viewEnv() {
+//                // Use Pipfile in legacy_tests, not lib_spi/Pipfile
+//                installPipfile(true)
+//                runPython("./runtests.py --junit-output=${REPO}_tests.xml")
+//              }
+//            }
+//          }
+//        }
 
         stage('Build XCOREAI') {
           steps {
