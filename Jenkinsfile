@@ -7,15 +7,15 @@ pipeline {
   options {
     skipDefaultCheckout()
   }
+  environment {
+    REPO = 'lib_spi'
+    VIEW = getViewName(REPO)
+  }
+
   stages {
     stage('Standard build and XS1/2 tests') {
       agent {
         label 'x86_64&&brew'
-      }
-
-      environment {
-        REPO = 'lib_spi'
-        VIEW = getViewName(REPO)
       }
       stages {
         stage('Get view') {
@@ -90,10 +90,6 @@ pipeline {
       agent{
         label 'x86_64&&brew&&macOS'
       }
-      environment {
-        REPO = 'lib_spi'
-        VIEW = getViewName(REPO)
-      }
       stages{
         stage('Get view') {
           steps {
@@ -134,7 +130,7 @@ pipeline {
             dir("${REPO}") {
               viewEnv() {
                 withVenv() {
-                  sh "pip install -e ${env.WORKSPACE}/xtagctl"
+                  sh "pip install -e ${WORKSPACE}/xtagctl"
                   sh "xtagctl reset_all XCORE-AI-EXPLORER"
                 }
               }
