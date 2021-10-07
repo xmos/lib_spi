@@ -7,13 +7,6 @@ pipeline {
   options {
     skipDefaultCheckout()
   }
-  parameters {
-    string(
-      name: 'TOOLS_VERSION',
-      defaultValue: '15.1.1',
-      description: 'The tools version to build with (check /projects/tools/ReleasesTools/)'
-    )
-  }
   stages {
     stage('Standard build and XS1/2 tests') {
       agent {
@@ -56,7 +49,6 @@ pipeline {
                   stash name: path.split("/")[-1], includes: 'bin/*, '
                 }
               }
-              stash name: "reset_xtags", includes: "**/python/reset_xtags.py"
 
               // Build Tests
               dir('legacy_tests/') {
@@ -122,7 +114,7 @@ pipeline {
       }
       post {
         cleanup {
-          xcoreCleanSandbox()
+          cleanWs()
         }
       }
     }
@@ -131,32 +123,27 @@ pipeline {
       agent {
         label 'xcore.ai-explorer'
       }
-      environment {
-        // '/XMOS/tools' from get_tools.py and rest from tools installers
-        TOOLS_PATH = "/XMOS/tools/${params.TOOLS_VERSION}/XMOS/XTC/${params.TOOLS_VERSION}"
-      }
       stages{
-        stage('Install Dependencies') {
+        stage('Get view') {
           steps {
-            sh '/XMOS/get_tools.py ' + params.TOOLS_VERSION
-            installDependencies()
+            xcorePrepareSandbox("${VIEW}", "${REPO}")
           }
         }
         stage('Reset XTAGs'){
           steps{
-            toolsEnv(TOOLS_PATH) {  // load xmos tools
-              unstash "reset_xtags"
-              sh 'rm -f ~/.xtag/acquired' //Hacky but ensure it always works even when previous failed run left lock file present
-              withVenv{
-                sh "python -m pip install git+git://github0.xmos.com/xmos-int/xtagctl.git@v1.3.1"
-                sh "python python/reset_xtags.py 2" //Note 2 xtags to reset on xcore.ai-explorer
+            dir("${REPO}") {
+              viewEnv() {
+                withVenv() {
+                  sh "pip install -e ${env.WORKSPACE}/xtagctl"
+                  sh "xtagctl reset_all XCORE-AI-EXPLORER"
+                }
               }
             }
           }
         }
         stage('xrun'){
           steps{
-            toolsEnv(TOOLS_PATH) {  // load xmos tools
+            viewEnv() {
               forAllMatch("examples", "AN*/") { path ->
                 unstash path.split("/")[-1]
               }
