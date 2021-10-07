@@ -4,12 +4,14 @@ getApproval()
 
 pipeline {
   agent none
-  options {
-    skipDefaultCheckout()
-  }
+
   environment {
     REPO = 'lib_spi'
     VIEW = getViewName(REPO)
+  }
+
+  options {
+    skipDefaultCheckout()
   }
 
   stages {
@@ -28,17 +30,17 @@ pipeline {
             xcoreLibraryChecks("${REPO}")
           }
         }
-//        stage('Legacy tests') {
-//          steps {
-//            dir("${REPO}/legacy_tests") {
-//              viewEnv() {
-//                // Use Pipfile in legacy_tests, not lib_spi/Pipfile
-//                installPipfile(true)
-//                runPython("./runtests.py --junit-output=${REPO}_tests.xml")
-//              }
-//            }
-//          }
-//        }
+        stage('Legacy tests') {
+          steps {
+            dir("${REPO}/legacy_tests") {
+              viewEnv() {
+                // Use Pipfile in legacy_tests, not lib_spi/Pipfile
+                installPipfile(true)
+                runPython("./runtests.py --junit-output=${REPO}_tests.xml")
+              }
+            }
+          }
+        }
 
         stage('Build XCOREAI') {
           steps {
@@ -123,13 +125,9 @@ pipeline {
         stage('Get view') {
           steps {
             xcorePrepareSandbox("${VIEW}", "${REPO}")
-          }
-        }
-        stage('Reset XTAGs'){
-          steps{
             dir("${REPO}") {
-              viewEnv() {
-                withVenv() {
+              viewEnv {
+                withVenv {
                   sh "pip install -e ${WORKSPACE}/xtagctl"
                   sh "xtagctl reset_all XCORE-AI-EXPLORER"
                 }
@@ -139,17 +137,21 @@ pipeline {
         }
         stage('xrun'){
           steps{
-            viewEnv() {
-              forAllMatch("examples", "AN*/") { path ->
-                unstash path.split("/")[-1]
-              }
-              // Run the tests and look for what we expect
-              sh 'xrun --io --id 0 bin/AN00160_using_SPI_master.xe &> AN00160_using_SPI_master.txt'
-              // Look for config register 0 value from wifi module
-              sh 'grep 2005400 AN00160_using_SPI_master.txt'
+            dir("${REPO}") {
+              viewEnv {
+                withVenv {
+                  forAllMatch("examples", "AN*/") { path ->
+                    unstash path.split("/")[-1]
+                  }
+                  // Run the tests and look for what we expect
+                  sh 'xrun --io --id 0 bin/AN00160_using_SPI_master.xe &> AN00160_using_SPI_master.txt'
+                  // Look for config register 0 value from wifi module
+                  sh 'grep 2005400 AN00160_using_SPI_master.txt'
 
-              //Just run this and ensure we get no error (like wrong arch). We have no SPI master HW so cannot test it
-              sh 'xrun --id 0 bin/AN00161_using_SPI_slave.xe'
+                  //Just run this and ensure we get no error (like wrong arch). We have no SPI master HW so cannot test it
+                  sh 'xrun --id 0 bin/AN00161_using_SPI_slave.xe'
+                }
+              }
             }
           }
         }
