@@ -4,25 +4,20 @@ getApproval()
 
 pipeline {
   agent none
-  parameters {
-    string(
-      name: 'TOOLS_VERSION',
-      defaultValue: '15.1.1',
-      description: 'The tools version to build with (check /projects/tools/ReleasesTools/)'
-    )
+
+  environment {
+    REPO = 'lib_spi'
+    VIEW = getViewName(REPO)
   }
+
+  options {
+    skipDefaultCheckout()
+  }
+
   stages {
     stage('Standard build and XS1/2 tests') {
       agent {
         label 'x86_64&&brew'
-      }
-
-      environment {
-        REPO = 'lib_spi'
-        VIEW = getViewName(REPO)
-      }
-      options {
-        skipDefaultCheckout()
       }
       stages {
         stage('Get view') {
@@ -56,7 +51,6 @@ pipeline {
                   stash name: path.split("/")[-1], includes: 'bin/*, '
                 }
               }
-              stash name: "reset_xtags", includes: "**/python/reset_xtags.py"
 
               // Build Tests
               dir('legacy_tests/') {
@@ -98,10 +92,6 @@ pipeline {
       agent{
         label 'x86_64&&brew&&macOS'
       }
-      environment {
-        REPO = 'lib_spi'
-        VIEW = getViewName(REPO)
-      }
       stages{
         stage('Get view') {
           steps {
@@ -122,7 +112,7 @@ pipeline {
       }
       post {
         cleanup {
-          xcoreCleanSandbox()
+          cleanWs()
         }
       }
     }
@@ -131,42 +121,37 @@ pipeline {
       agent {
         label 'xcore.ai-explorer'
       }
-      environment {
-        // '/XMOS/tools' from get_tools.py and rest from tools installers
-        TOOLS_PATH = "/XMOS/tools/${params.TOOLS_VERSION}/XMOS/XTC/${params.TOOLS_VERSION}"
-      }
       stages{
-        stage('Install Dependencies') {
+        stage('Get view') {
           steps {
-            sh '/XMOS/get_tools.py ' + params.TOOLS_VERSION
-            installDependencies()
-          }
-        }
-        stage('Reset XTAGs'){
-          steps{
-            toolsEnv(TOOLS_PATH) {  // load xmos tools
-              unstash "reset_xtags"
-              sh 'rm -f ~/.xtag/acquired' //Hacky but ensure it always works even when previous failed run left lock file present
-              withVenv{
-                sh "python -m pip install git+git://github0.xmos.com/xmos-int/xtagctl.git@v1.3.1"
-                sh "python python/reset_xtags.py 2" //Note 2 xtags to reset on xcore.ai-explorer
+            xcorePrepareSandbox("${VIEW}", "${REPO}")
+            dir("${REPO}") {
+              viewEnv {
+                withVenv {
+                  sh "pip install -e ${WORKSPACE}/xtagctl"
+                  sh "xtagctl reset_all XCORE-AI-EXPLORER"
+                }
               }
             }
           }
         }
         stage('xrun'){
           steps{
-            toolsEnv(TOOLS_PATH) {  // load xmos tools
-              forAllMatch("examples", "AN*/") { path ->
-                unstash path.split("/")[-1]
-              }
-              // Run the tests and look for what we expect
-              sh 'xrun --io --id 0 bin/AN00160_using_SPI_master.xe &> AN00160_using_SPI_master.txt'
-              // Look for config register 0 value from wifi module
-              sh 'grep 2005400 AN00160_using_SPI_master.txt'
+            dir("${REPO}") {
+              viewEnv {
+                withVenv {
+                  forAllMatch("examples", "AN*/") { path ->
+                    unstash path.split("/")[-1]
+                  }
+                  // Run the tests and look for what we expect
+                  sh 'xrun --io --id 0 bin/AN00160_using_SPI_master.xe &> AN00160_using_SPI_master.txt'
+                  // Look for config register 0 value from wifi module
+                  sh 'grep 2005400 AN00160_using_SPI_master.txt'
 
-              //Just run this and ensure we get no error (like wrong arch). We have no SPI master HW so cannot test it
-              sh 'xrun --id 0 bin/AN00161_using_SPI_slave.xe'
+                  //Just run this and ensure we get no error (like wrong arch). We have no SPI master HW so cannot test it
+                  sh 'xrun --id 0 bin/AN00161_using_SPI_slave.xe'
+                }
+              }
             }
           }
         }
