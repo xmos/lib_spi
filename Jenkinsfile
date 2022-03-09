@@ -1,4 +1,4 @@
-@Library('xmos_jenkins_shared_library@v0.16.4') _
+@Library('xmos_jenkins_shared_library@v0.18.0') _
 
 getApproval()
 
@@ -17,7 +17,7 @@ pipeline {
   stages {
     stage('Standard build and XS1/2 tests') {
       agent {
-        label 'x86_64&&brew'
+        label 'x86_64 && linux'
       }
       stages {
         stage('Get view') {
@@ -90,7 +90,7 @@ pipeline {
 
     stage('Documentation'){
       agent{
-        label 'x86_64&&brew&&macOS'
+        label 'x86_64&&macOS'
       }
       stages{
         stage('Get view') {
@@ -165,7 +165,7 @@ pipeline {
 
     stage('Update view files') {
       agent {
-        label 'x86_64&&brew'
+        label 'x86_64 && linux'
       }
       when {
         expression { return currentBuild.currentResult == "SUCCESS" }
