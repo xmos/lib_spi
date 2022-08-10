@@ -1,4 +1,4 @@
-# Copyright 2015-2021 XMOS LIMITED.
+# Copyright 2015-2022 XMOS LIMITED.
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
 import xmostest
 
@@ -28,12 +28,12 @@ class SPISlaveChecker(xmostest.SimThread):
         ss_value = xsi.sample_port_pins(self._ss_port)
         xsi.drive_port_pins(self._ss_port,1)
 
-        print "SPI Slave checker started"
+        print("SPI Slave checker started")
         while True:
             #first do the setup rx
             strobe_val = xsi.sample_port_pins(self._setup_strobe_port)
-	    if strobe_val == 1:
-              self.wait_for_port_pins_change([self._setup_strobe_port])
+            if strobe_val == 1:
+                self.wait_for_port_pins_change([self._setup_strobe_port])
 
             expected_cpol = self.get_setup_data(xsi, self._setup_strobe_port, self._setup_data_port)
             xsi.drive_port_pins(self._sck_port, expected_cpol)

@@ -1,4 +1,4 @@
-# Copyright 2015-2021 XMOS LIMITED.
+# Copyright 2015-2022 XMOS LIMITED.
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
 import xmostest
 
@@ -26,15 +26,15 @@ class SPIMasterChecker(xmostest.SimThread):
         sck_value = xsi.sample_port_pins(self._sck_port)
         ss_value = []
 
-	for i in range(len(self._ss_ports)):
-          ss_value.append(xsi.sample_port_pins(self._ss_ports[i]))
+        for i in range(len(self._ss_ports)):
+            ss_value.append(xsi.sample_port_pins(self._ss_ports[i]))
 
-        print "SPI Master checker started"
+        print("SPI Master checker started")
         while True:
             #first do the setup rx
             strobe_val = xsi.sample_port_pins(self._setup_strobe_port)
-	    if strobe_val == 1:
-              self.wait_for_port_pins_change([self._setup_strobe_port])
+            if strobe_val == 1:
+                self.wait_for_port_pins_change([self._setup_strobe_port])
 
             expected_cpol = self.get_setup_data(xsi, self._setup_strobe_port, self._setup_data_port)
             expected_cpha = self.get_setup_data(xsi, self._setup_strobe_port, self._setup_data_port)
@@ -50,8 +50,8 @@ class SPIMasterChecker(xmostest.SimThread):
             all_ss_deserted = True
             for i in range(len(self._ss_ports)):
                if (xsi.sample_port_pins(self._ss_ports[i]) == 0):
-		 all_ss_deserted = False
-                 break
+                   all_ss_deserted = False
+                   break
 
             while not all_ss_deserted:
               self.wait_for_port_pins_change(self._ss_ports)
@@ -101,7 +101,7 @@ class SPIMasterChecker(xmostest.SimThread):
               for i in range(len(self._ss_ports)):
                 if i != active_slave and xsi.sample_port_pins(self._ss_ports[i]) == 0:
                   error = True
-                  print "Second slave selected during first transaction"
+                  print("Second slave selected during first transaction")
 
               if (ss_value == xsi.sample_port_pins(self._ss_ports[active_slave]) and (sck_value == xsi.sample_port_pins(self._sck_port))):
                 continue
@@ -146,15 +146,15 @@ class SPIMasterChecker(xmostest.SimThread):
                       expected_rx_byte = rx_data[(rx_bit_counter/8) - 1]
                       #print "slave got {seen} and expected {expect}".format(seen=rx_byte, expect=expected_rx_byte)
                       if expected_rx_byte != rx_byte:
-                        print "ERROR: slave recieved incorrect data Got:%02x Expected:%02x"%(rx_byte, expected_rx_byte)
+                        print("ERROR: slave recieved incorrect data Got:%02x Expected:%02x"%(rx_byte, expected_rx_byte))
                         error = True
                       rx_byte = 0
               else:
                 if clock_edge_number != expected_num_bytes*2*8:
                   error = True
-                  print "ERROR: incorrect number of clock edges at slave {seen}/{expect}".format(seen=clock_edge_number, expect=expected_num_bytes*2*8)
+                  print("ERROR: incorrect number of clock edges at slave {seen}/{expect}".format(seen=clock_edge_number, expect=expected_num_bytes*2*8))
                 if error:
-                  print "Fail: CPOL:{cpol} CPHA:{cpha} KHz:{freq} MOSI Enabled:{mosi_enabled} MISO Enabled:{miso_enabled}".format(
+                  print("Fail: CPOL:{cpol} CPHA:{cpha} KHz:{freq} MOSI Enabled:{mosi_enabled} MISO Enabled:{miso_enabled}".format(
 			cpol=expected_cpol, cpha=expected_cpha,
                         mosi_enabled = expected_mosi_enabled, miso_enabled = expected_miso_enabled,
-                        freq=expected_frequency_in_khz)
+                        freq=expected_frequency_in_khz))
