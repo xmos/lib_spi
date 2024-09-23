@@ -1,6 +1,11 @@
 SPI library change log
 ======================
 
+UNRELEASED
+----------
+
+  * ADDED:     Support for XCommon CMake build system
+
 3.3.0
 -----
 
