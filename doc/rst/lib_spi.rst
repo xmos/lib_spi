@@ -158,7 +158,7 @@ Asynchronous SPI master clock speeds
 
 The asynchronous SPI master is limited only by the clock divider on the
 clock block. This means that for the 100MHz reference clock,
-the asynchronous master can output a clock at up to 100MHz
+the asynchronous master can output a clock at up to 100MHz, port timing and hardware permitting.
 
 .. list-table:: SPI master timings (asynchronous)
  :header-rows: 1
@@ -328,7 +328,7 @@ the slave select line.
 Operations such as ``spi.transfer8`` will
 block until the operation is completed on the bus.
 More information on interfaces and tasks can be be found in
-the :ref:`XMOS Programming Guide<programming_guide>`. By default the
+the `XMOS Programming Guide <https://www.xmos.com/documentation/XM-014363-PC/html/prog-guide/index.html>`_. By default the
 SPI synchronous master mode component does not use any logical cores of its
 own. It is a *distributed* task which means it will perform its
 function on the logical core of the application task connected to
@@ -475,7 +475,7 @@ SPI slave components are instantiated as parallel tasks that run in a
 ``par`` statement. The application can connect via an interface
 connection.
 
-.. figure:: ../images/spi_slave_task_diag.pdf
+.. figure:: ../images/spi_slave_task_diag.svg
 
   SPI slave task diagram
 
@@ -542,9 +542,11 @@ subsequent transfers either provide or consume data::
      }
   }
 
-Note that the time taken to handle the callbacks will determine the
-timing requirements of the SPI slave. See application note AN00161 for
-more details on different ways of working with the SPI slave component.
+.. note::
+
+    The time taken to handle the callbacks will determine the
+    timing requirements of the SPI slave. See application note AN00161 for
+    more details on different ways of working with the SPI slave component.
 
 |newpage|
 
@@ -588,7 +590,7 @@ To configure the build, run the following from an XTC command prompt:
 .. code-block:: console
 
   cd examples
-  cd app_template
+  cd AN00160_using_SPI_master
   cmake -G "Unix Makefiles" -B build
 
 Any missing dependencies will be downloaded by the build system at this configure step.
@@ -602,14 +604,19 @@ Finally, the application binaries can be built using ``xmake``:
 Running
 =======
 
-To run the application return to the ``/examples/app_template`` directory and run the following
+To run the application return to the ``/examples/AN00160_using_SPI_master`` directory and run the following
 command:
 
 .. code-block:: console
 
-  xrun --xscope bin/app_template.xe
+  xrun --xscope bin/SYNC/app_spi_master_SYNC.xe
 
-As application runs and prints "Hello world!" to the console.
+As application runs that reads a value from the SPI connected WiFi chip and prints the following output to the console::
+
+  Sending SPI traffic
+  2005400
+  Done.
+
 
 |newpage|
 
@@ -618,38 +625,47 @@ As application runs and prints "Hello world!" to the console.
 Resource Usage
 **************
 
-TODO - Turn me into a table
+Each of the SPI implementations use a number of `xcore` resources which include ports, clock-blocks and may include hardware threads. The table :numref:`res_use_table`
 
-  * - configuration: Master (synchronous, zero clock blocks)
-    - globals: out buffered port:32 p_sclk = XS1_PORT_1A; out buffered port:32 p_mosi =  XS1_PORT_1B; in buffered port:32 p_miso = XS1_PORT_1C; out port p_ss[1] = {XS1_PORT_1D};
-    - locals: interface spi_master_if i[1];
-    - fn: spi_master(i, 1, p_sclk, p_mosi, p_miso, p_ss, 1, null);
-    - pins: 4
-    - ports: 4 (1-bit)
-  * - configuration: Master (synchronous, one clock block)
-    - globals: out buffered port:32 p_sclk = XS1_PORT_1A; out buffered port:32 p_mosi =  XS1_PORT_1B; in buffered port:32 p_miso = XS1_PORT_1C; out port p_ss[1] = {XS1_PORT_1D};clock cb = XS1_CLKBLK_1;
-    - locals: interface spi_master_if i[1];
-    - fn: spi_master(i, 1, p_sclk, p_mosi, p_miso, p_ss, 1, cb);
-    - pins: 4
-    - ports: 4 (1-bit)
-  * - configuration: Master (asynchronous)
-    - globals: out buffered port:32 p_sclk = XS1_PORT_1A; out buffered port:32 p_mosi =  XS1_PORT_1B; in buffered port:32 p_miso = XS1_PORT_1C; out port p_ss[1] = {XS1_PORT_1D};clock cb0 = XS1_CLKBLK_1; clock cb1 = XS1_CLKBLK_2;
-    - locals: interface spi_master_async_if i[1];
-    - fn: spi_master_async(i, 1, p_sclk, p_mosi, p_miso, p_ss, 1, cb0, cb1);
-    - pins: 4
-    - ports: 4 (1-bit)
-  * - configuration: Slave (32 bit transfer mode)
-    - globals: in port p_sclk = XS1_PORT_1A; in buffered port:32 p_mosi = XS1_PORT_1B; out buffered port:32 p_miso = XS1_PORT_1C; in port p_ss = XS1_PORT_1D;clock cb = XS1_CLKBLK_1;
-    - locals: interface spi_slave_callback_if i;
-    - fn: spi_slave(i, p_sclk, p_mosi, p_miso, p_ss, cb, SPI_MODE_0, SPI_TRANSFER_SIZE_32);
-    - pins: 4
-    - ports: 4 (1-bit)
-  * - configuration: Slave (8 bit transfer mode)
-    - globals: in port p_sclk = XS1_PORT_1A; in buffered port:32 p_mosi = XS1_PORT_1B; out buffered port:32 p_miso = XS1_PORT_1C; in port p_ss = XS1_PORT_1D;clock cb = XS1_CLKBLK_1;
-    - locals: interface spi_slave_callback_if i;
-    - fn: spi_slave(i, p_sclk, p_mosi, p_miso, p_ss, cb, SPI_MODE_0, SPI_TRANSFER_SIZE_8);
-    - pins: 4
-    - ports: 4 (1-bit)
+
+.. _res_use_table:
+
+.. list-table:: `xcore` resource usage for SPI
+   :widths: 20 30 5 10 5
+   :header-rows: 1
+   :stub-columns: 1
+
+   * - configuration
+     - api
+     - pins
+     - ports
+     - threads
+   * - Master (synchronous, zero clock blocks)
+     - spi_master(i, 1, p_sclk, p_mosi, p_miso, p_ss, 1, null);
+     - 4
+     - 4 (1-bit)
+     - 0
+   * - Master (synchronous, one clock block)
+     - spi_master(i, 1, p_sclk, p_mosi, p_miso, p_ss, 1, cb);
+     - 4
+     - 4 (1-bit)
+     - 0
+   * - Master (asynchronous)
+     - spi_master_async(i, 1, p_sclk, p_mosi, p_miso, p_ss, 1, cb0, cb1);
+     - 4
+     - 4 (1-bit)
+     - 1
+   * - Slave (32 bit transfer mode)
+     - spi_slave(i, p_sclk, p_mosi, p_miso, p_ss, cb, SPI_MODE_0, SPI_TRANSFER_SIZE_32);
+     - 4
+     - 4 (1-bit)
+     - 1
+   * - Slave (8 bit transfer mode)
+     - spi_slave(i, p_sclk, p_mosi, p_miso, p_ss, cb, SPI_MODE_0, SPI_TRANSFER_SIZE_8);
+     - 4
+     - 4 (1-bit)
+     - 1
+
 
 The number of pins is reduced if either of the data lines are not required.
 
@@ -663,10 +679,12 @@ Master API
 
 All SPI master functions can be accessed via the ``spi.h`` header::
 
-  #include <spi.h>
+  #include "spi.h"
 
-You will also have to add ``lib_spi`` to the
-``USED_MODULES`` field of your application Makefile.
+You will also have to add ``lib_spi`` to the application's ``APP_DEPENDENT_MODULES`` list in
+`CMakeLists.txt`, for example::
+
+    set(APP_DEPENDENT_MODULES "lib_spi")
 
 Supporting types
 ................
@@ -691,14 +709,14 @@ Creating an SPI master instance
 SPI master interface
 .....................
 
-.. doxygeninterface:: spi_master_if
+.. doxygengroup:: spi_master_if
 
 |newpage|
 
 SPI master asynchronous interface
 .................................
 
-.. doxygeninterface:: spi_master_async_if
+.. doxygengroup:: spi_master_async_if
 
 |newpage|
 
@@ -726,7 +744,7 @@ Creating an SPI slave instance
 The SPI slave interface API
 ...........................
 
-.. doxygeninterface:: spi_slave_callback_if
+.. doxygengroup:: spi_slave_callback_if
 
 
 
