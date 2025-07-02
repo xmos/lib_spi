@@ -1,9 +1,24 @@
-.. include:: ../../../README.rst
+####################
+lib_spi: SPI library
+####################
 
-.. include:: resource_usage_summary.rst
+************
+Introduction
+************
 
+A software defined, industry-standard, SPI (serial peripheral
+interface) component
+that allows you to control an SPI bus via the
+xCORE GPIO hardware-response ports. SPI is a four-wire hardware
+bi-directional serial interface.
+
+The SPI bus can be used by multiple tasks within the xCORE device
+and (each addressing the same or different slaves) and
+is compatible with other slave devices on the same bus.
+
+***************************
 External signal description
----------------------------
+***************************
 
 The SPI protocol requires a clock, one or more slave selects
 and either one or two data wires.
@@ -31,8 +46,9 @@ the end of the transfer, the *SS* is de-asserted.
 If the slave select line is not driven high then the slave should
 ignore any transitions on the other lines.
 
-SPI modes
-.........
+*********
+SPI Modes
+*********
 
 The data sample points for SPI are defined by the clock polarity (CPOL) and clock phase (CPHA)
 parameters. SPI clock polarity may be inverted or non-inverted by the CPOL and the CPHA parameter
@@ -53,9 +69,9 @@ The setup and hold timings are inherited from the underlying xCORE
 device. For details on these timing please refer to the device datasheet.
 
 Mode 0 - CPOL: 0 CPHA 1
-~~~~~~~~~~~~~~~~~~~~~~~
+=======================
 
-.. figure:: images/wavedrom_mode0.png
+.. figure:: ../images/wavedrom_mode0.png
    :width: 100%
 
    Mode 0
@@ -63,54 +79,47 @@ Mode 0 - CPOL: 0 CPHA 1
 The master and slave will drive out their first data bit on the first rising edge of the clock and sample on the subsequent falling edge.
 
 Mode 1 - CPOL: 0 CPHA 0
-~~~~~~~~~~~~~~~~~~~~~~~
+=======================
 
-.. figure:: images/wavedrom_mode1.png
+.. figure:: ../images/wavedrom_mode1.png
    :width: 100%
 
    Mode 1
 
 The master and slave will drive out their first data bit before the first rising edge of the clock then drive on subsequent falling edges. They will sample on rising edges.
 
-Mode 2 - CPOL: 1 CPHA 0
-~~~~~~~~~~~~~~~~~~~~~~~
 
-.. figure:: images/wavedrom_mode2.png
+Mode 2 - CPOL: 1 CPHA 0
+=======================
+
+.. figure:: ../images/wavedrom_mode2.png
    :width: 100%
 
    Mode 2
 
 The master and slave will drive out their first data bit before the first falling edge of the clock then drive on subsequent rising edges. They will sample on falling edges.
 
-Mode 3 - CPOL: 1 CPHA 1
-~~~~~~~~~~~~~~~~~~~~~~~
 
-.. figure:: images/wavedrom_mode3.png
+Mode 3 - CPOL: 1 CPHA 1
+=======================
+
+.. figure:: ../images/wavedrom_mode3.png
    :width: 100%
 
    Mode 3
 
 The master and slave will drive out their first data bit on the first falling edge of the clock and sample on the subsequent rising edge.
 
+|newpage|
+
+*********************************
 SPI master timing characteristics
-.................................
-
-The application calls functions to begin a transaction (which asserts
-the slave select line) and to transfer data. So the minimum time
-between these (*t1*) can be controlled by the application.
-
-The inter-transmission gap (*t2*) is also controlled by the user
-application since the function to specify the end of the transaction
-(i.e. the de-assertion of the slave select line) has an argument which
-is the minimum amount of time before which another transaction can start.
-
-Synchronous SPI master clock speeds
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+*********************************
 
 The maximum speed that the SPI bus can be driven depends on whether a
 clock block is used, the speed of the logical core that the SPI code
 is running on and where both the *MISO* and *MOSI* lines are used. The
-timings can be seen in :ref:`spi_master_sync_timings`.
+timings can be seen in :numref:`spi_master_sync_timings`.
 
 .. _spi_master_sync_timings:
 
@@ -145,7 +154,7 @@ timings can be seen in :ref:`spi_master_sync_timings`.
 
 
 Asynchronous SPI master clock speeds
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+====================================
 
 The asynchronous SPI master is limited only by the clock divider on the
 clock block. This means that for the 100MHz reference clock,
@@ -167,17 +176,19 @@ the asynchronous master can output a clock at up to 100MHz
 
 |newpage|
 
+
+**********************************
 Connecting to the xCORE SPI master
-..................................
+**********************************
 
 The SPI wires need to be connected to the xCORE device as shown in
-:ref:`spi_master_xcore_connect`. The signals can be connected to any
+:numref:`spi_master_xcore_connect`. The signals can be connected to any
 one bit ports on the device provide they do not overlap any other used
 ports and are all on the same tile.
 
 .. _spi_master_xcore_connect:
 
-.. figure:: images/spi_master_connect.*
+.. figure:: ../images/spi_master_connect.*
    :width: 40%
 
    SPI master connection to the xCORE device
@@ -191,7 +202,7 @@ slave select wires. This means that a single slave select assertion
 cannot be used to communicate with multiple slaves at the same time.
 
 SPI slave timings
-.................
+=================
 
 The logical core running the SPI slave task will wait for the slave
 select line to assert and then begin processing the transaction. At
@@ -218,17 +229,19 @@ restrictions on the master.
 
 |newpage|
 
+
+*********************************
 Connecting to the xCORE SPI slave
-.................................
+*********************************
 
 The SPI wires need to be connected to the xCORE device as shown in
-:ref:`spi_slave_xcore_connect`. The signals can be connected to any
+:numref:`spi_slave_xcore_connect`. The signals can be connected to any
 one bit ports on the device provide they do not overlap any other used
 ports and are all on the same tile.
 
 .. _spi_slave_xcore_connect:
 
-.. figure:: images/spi_slave_connect.*
+.. figure:: ../images/spi_slave_connect.*
    :width: 40%
 
    SPI slave connection to the xCORE device
@@ -239,11 +252,14 @@ driven high.
 If the *MISO* line is not required then it need not be connected. The
 *MOSI* line must always be connected.
 
-Usage
------
+|newpage|
+
+************
+Master Usage
+************
 
 SPI master synchronous operation
-................................
+================================
 
 There are two types of interface for SPI master components:
 synchronous and asynchronous.
@@ -259,7 +275,7 @@ SPI master components are instantiated as parallel tasks that run in a
 ``par`` statement. For synchronous operation, the application can
 connect via an interface connection using the ``spi_master_if`` interface type:
 
-.. figure:: images/spi_master_task_diag.*
+.. figure:: ../images/spi_master_task_diag.*
 
    SPI master task diagram
 
@@ -288,7 +304,7 @@ devices via different slave lines.
 
 The final parameter of the ``spi_master`` task is an optional clock
 block. If the clock block is supplied then the maximum transfer rate
-of the SPI bus is increased (see :ref:`spi_master_sync_timings`). If
+of the SPI bus is increased (see :numref:`spi_master_sync_timings`). If
 ``null`` is supplied instead then the performance is less but no clock
 block is used.
 
@@ -319,23 +335,24 @@ function on the logical core of the application task connected to
 it (provided the application task is on the same tile).
 
 Synchronous master usage state machine
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+......................................
 
 The function calls made on the SPI master interface must follow the
-sequence shown by the state machine in :ref:`spi_master_usage_state_machine`.
+sequence shown by the state machine in :numref:`spi_master_usage_state_machine`.
 If this sequence is not followed then the behavior is undefined.
 
 .. _spi_master_usage_state_machine:
 
-.. figure:: images/spi_master_sync_state.*
+.. figure:: ../images/spi_master_sync_state.*
    :width: 40%
 
    SPI master use state machine
 
 |newpage|
 
+
 SPI master asynchronous operation
-.................................
+=================================
 
 The synchronous API will block your application until the bus
 operation is complete. In cases where the application cannot afford to
@@ -411,7 +428,7 @@ core with other tasks (including the application task it is connected to).
 |newpage|
 
 Asynchronous master command buffering
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.....................................
 
 In order to provide asynchronous behaviour for multiple clients the asynchronous master
 will store up to one ``begin_transaction`` and one ``init_transfer_array_8`` or
@@ -423,22 +440,22 @@ asynchronously. Consequently, after client *Y* has issued
 able to continue operation whilst waiting for the notification.
 
 Asynchronous master usage state machine
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.......................................
 
 The function calls made on the SPI master asynchronous interface must follow the
 sequence shown by the state machine in
-:ref:`spi_master_usage_state_machine_async`.
+:numref:`spi_master_usage_state_machine_async`.
 If this sequence is not followed then the behavior is undefined.
 
 .. _spi_master_usage_state_machine_async:
 
-.. figure:: images/spi_master_async_state.*
+.. figure:: ../images/spi_master_async_state.*
    :width: 60%
 
    SPI master use state machine (asynchronous)
 
 Master inter-transaction gap
-............................
+============================
 
 For both synchronous and asynchronous modes the ``end_transaction`` requires a
 slave select deassert time. This parameter will provide a minimum deassert time between
@@ -449,14 +466,16 @@ satisfied.
 
 |newpage|
 
+
+***********
 Slave usage
-...........
+***********
 
 SPI slave components are instantiated as parallel tasks that run in a
 ``par`` statement. The application can connect via an interface
 connection.
 
-.. figure:: images/spi_slave_task_diag.pdf
+.. figure:: ../images/spi_slave_task_diag.pdf
 
   SPI slave task diagram
 
@@ -527,8 +546,11 @@ Note that the time taken to handle the callbacks will determine the
 timing requirements of the SPI slave. See application note AN00161 for
 more details on different ways of working with the SPI slave component.
 
+|newpage|
+
+********************
 Disabling data lines
-....................
+********************
 
 The *MOSI* and *MISO* parameters of the ``spi_master`` task are
 optional. So in the top-level ``par`` statement the function can be
@@ -542,8 +564,102 @@ optional (but the *MISO* port must be provided).
 The ``spi_slave`` task has an optional *MISO* parameter (but the
 *MOSI* port must be supplied).
 
+|newpage|
+
+********
+Examples
+********
+
+Building
+========
+
+The following section assumes that the `XMOS XTC tools <https://www.xmos.com/software-tools/>`_ has
+been downloaded and installed (see `README` for required version).
+
+Installation instructions can be found `here <https://xmos.com/xtc-install-guide>`_. Particular
+attention should be paid to the section `Installation of required third-party tools
+<https://www.xmos.com/documentation/XM-014363-PC-10/html/installation/install-configure/install-tools/install_prerequisites.html>`_.
+
+The application uses the `XMOS` build and dependency system, `xcommon-cmake <https://www.xmos.com/file/xcommon-cmake-documentation/?version=latest>`_. `xcommon-cmake`
+is bundled with the `XMOS` XTC tools.
+
+To configure the build, run the following from an XTC command prompt:
+
+.. code-block:: console
+
+  cd examples
+  cd app_template
+  cmake -G "Unix Makefiles" -B build
+
+Any missing dependencies will be downloaded by the build system at this configure step.
+
+Finally, the application binaries can be built using ``xmake``:
+
+.. code-block:: console
+
+  xmake -j -C build
+
+Running
+=======
+
+To run the application return to the ``/examples/app_template`` directory and run the following
+command:
+
+.. code-block:: console
+
+  xrun --xscope bin/app_template.xe
+
+As application runs and prints "Hello world!" to the console.
+
+|newpage|
+
+
+**************
+Resource Usage
+**************
+
+TODO - Turn me into a table
+
+  * - configuration: Master (synchronous, zero clock blocks)
+    - globals: out buffered port:32 p_sclk = XS1_PORT_1A; out buffered port:32 p_mosi =  XS1_PORT_1B; in buffered port:32 p_miso = XS1_PORT_1C; out port p_ss[1] = {XS1_PORT_1D};
+    - locals: interface spi_master_if i[1];
+    - fn: spi_master(i, 1, p_sclk, p_mosi, p_miso, p_ss, 1, null);
+    - pins: 4
+    - ports: 4 (1-bit)
+  * - configuration: Master (synchronous, one clock block)
+    - globals: out buffered port:32 p_sclk = XS1_PORT_1A; out buffered port:32 p_mosi =  XS1_PORT_1B; in buffered port:32 p_miso = XS1_PORT_1C; out port p_ss[1] = {XS1_PORT_1D};clock cb = XS1_CLKBLK_1;
+    - locals: interface spi_master_if i[1];
+    - fn: spi_master(i, 1, p_sclk, p_mosi, p_miso, p_ss, 1, cb);
+    - pins: 4
+    - ports: 4 (1-bit)
+  * - configuration: Master (asynchronous)
+    - globals: out buffered port:32 p_sclk = XS1_PORT_1A; out buffered port:32 p_mosi =  XS1_PORT_1B; in buffered port:32 p_miso = XS1_PORT_1C; out port p_ss[1] = {XS1_PORT_1D};clock cb0 = XS1_CLKBLK_1; clock cb1 = XS1_CLKBLK_2;
+    - locals: interface spi_master_async_if i[1];
+    - fn: spi_master_async(i, 1, p_sclk, p_mosi, p_miso, p_ss, 1, cb0, cb1);
+    - pins: 4
+    - ports: 4 (1-bit)
+  * - configuration: Slave (32 bit transfer mode)
+    - globals: in port p_sclk = XS1_PORT_1A; in buffered port:32 p_mosi = XS1_PORT_1B; out buffered port:32 p_miso = XS1_PORT_1C; in port p_ss = XS1_PORT_1D;clock cb = XS1_CLKBLK_1;
+    - locals: interface spi_slave_callback_if i;
+    - fn: spi_slave(i, p_sclk, p_mosi, p_miso, p_ss, cb, SPI_MODE_0, SPI_TRANSFER_SIZE_32);
+    - pins: 4
+    - ports: 4 (1-bit)
+  * - configuration: Slave (8 bit transfer mode)
+    - globals: in port p_sclk = XS1_PORT_1A; in buffered port:32 p_mosi = XS1_PORT_1B; out buffered port:32 p_miso = XS1_PORT_1C; in port p_ss = XS1_PORT_1D;clock cb = XS1_CLKBLK_1;
+    - locals: interface spi_slave_callback_if i;
+    - fn: spi_slave(i, p_sclk, p_mosi, p_miso, p_ss, cb, SPI_MODE_0, SPI_TRANSFER_SIZE_8);
+    - pins: 4
+    - ports: 4 (1-bit)
+
+The number of pins is reduced if either of the data lines are not required.
+
+
+*************
+API Reference
+*************
+
 Master API
-----------
+==========
 
 All SPI master functions can be accessed via the ``spi.h`` header::
 
@@ -584,8 +700,10 @@ SPI master asynchronous interface
 
 .. doxygeninterface:: spi_master_async_if
 
+|newpage|
+
 Slave API
----------
+=========
 
 All SPI slave functions can be accessed via the ``spi.h`` header::
 
@@ -610,13 +728,6 @@ The SPI slave interface API
 
 .. doxygeninterface:: spi_slave_callback_if
 
-|newpage|
 
-|appendix|
 
-Known Issues
-------------
 
-There are no known issues with this library.
-
-.. include:: ../../../CHANGELOG.rst

@@ -1,10 +1,11 @@
-SPI library change log
-======================
+lib_spi change log
+==================
 
-UNRELEASED
-----------
+3.4.0
+-----
 
-  * ADDED:     Support for XCommon CMake build system
+  * CHANGED: Refresh to use latest doc builder and library format
+  * ADDED: Support for XCommon CMake build system
 
 3.3.0
 -----
