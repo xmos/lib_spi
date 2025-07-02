@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# Copyright 2015-2021 XMOS LIMITED.
+# Copyright 2015-2025 XMOS LIMITED.
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
 import xmostest
 from spi_slave_checker import SPISlaveChecker

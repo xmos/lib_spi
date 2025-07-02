@@ -19,12 +19,12 @@ pipeline {
     )
     string(
       name: 'TOOLS_VERSION',
-      defaultValue: '-j -b markp_xsim_expose_signals_from_usb_shim latest',
+      defaultValue: '15.3.1',
       description: 'The XTC tools version'
     )
     string(
       name: 'XMOSDOC_VERSION',
-      defaultValue: 'v7.2.0',
+      defaultValue: 'v7.3.0',
       description: 'The xmosdoc version'
     )
     string(

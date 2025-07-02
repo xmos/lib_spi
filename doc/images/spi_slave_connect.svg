@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" version="1.1" width="254" height="126" viewBox="0 0 254 126">
+<defs>
+<clipPath id="clip_0">
+<path transform="matrix(1,0,0,-1,-73,633)" d="M0 0H595V842H0Z"/>
+</clipPath>
+<clipPath id="clip_1">
+<path transform="matrix(1,0,0,-1,-73,633)" d="M0 .1H595.2V841.89999H0Z" clip-rule="evenodd"/>
+</clipPath>
+</defs>
+<g>
+<g>
+<g clip-path="url(#clip_0)">
+<g clip-path="url(#clip_1)">
+<path transform="matrix(1,0,0,-1,-73,633)" d="M0 842H595.2V.1H0V842Z" fill="#ffffff" fill-rule="evenodd"/>
+<path transform="matrix(1,0,0,-1,-73,633)" d="M154.5 507.5H73.7V632.2H235.3V507.5H154.5Z" fill="#ffffff" fill-rule="evenodd"/>
+<path transform="matrix(1,0,0,-1,-73,633)" stroke-width="0" stroke-linecap="butt" stroke-linejoin="round" fill="none" stroke="#000000" d="M154.5 507.5H73.7V632.2H235.3V507.5H154.5Z"/>
+<text xml:space="preserve" transform="matrix(1 0 -0 1 -73 633)" font-size="18" font-family="TwCenMT"><tspan y="-577.7" x="86 95 105.89 119.768 128.768 136.742 141.638 151.628 160.52 168.494 172.40001 179.38402">xCORE device</tspan></text>
+<path transform="matrix(1,0,0,-1,-73,633)" stroke-width="0" stroke-linecap="butt" stroke-linejoin="round" fill="none" stroke="#000000" d="M226.8 606.7H323.1"/>
+<text xml:space="preserve" transform="matrix(1 0 -0 1 -73 633)" font-size="12" font-family="TwCenMT"><tspan y="-610.4" x="300.2 306.2 313.4 317.9">SCLK</tspan></text>
+<path transform="matrix(1,0,0,-1,-73,633)" d="M215.4 595.4H204.1V618.1H226.8V595.4H215.4Z" fill="#d1d3d4" fill-rule="evenodd"/>
+<path transform="matrix(1,0,0,-1,-73,633)" stroke-width="0" stroke-linecap="butt" stroke-linejoin="round" fill="none" stroke="#464749" d="M215.4 595.4H204.1V618.1H226.8V595.4H215.4Z"/>
+<text xml:space="preserve" transform="matrix(1 0 -0 1 -73 633)" font-size="8" font-family="TwCenMT"><tspan y="-608.7" x="207.9 212.396 214.49199 218.892 220.788">1 bit</tspan></text>
+<text xml:space="preserve" transform="matrix(1 0 -0 1 -73 633)" font-size="8" font-family="TwCenMT"><tspan y="-599.8" x="208.8 213.20001 217.296 219.89601">port</tspan></text>
+<path transform="matrix(1,0,0,-1,-73,633)" stroke-width="0" stroke-linecap="butt" stroke-linejoin="round" fill="none" stroke="#000000" d="M226.8 581.2H323.1"/>
+<text xml:space="preserve" transform="matrix(1 0 -0 1 -73 633)" font-size="12" font-family="TwCenMT"><tspan y="-584.8" x="300.2 309.404 318.60798 324.692">MOSI</tspan></text>
+<path transform="matrix(1,0,0,-1,-73,633)" d="M215.4 569.9H204.1V592.6H226.8V569.9H215.4Z" fill="#d1d3d4" fill-rule="evenodd"/>
+<path transform="matrix(1,0,0,-1,-73,633)" stroke-width="0" stroke-linecap="butt" stroke-linejoin="round" fill="none" stroke="#464749" d="M215.4 569.9H204.1V592.6H226.8V569.9H215.4Z"/>
+<text xml:space="preserve" transform="matrix(1 0 -0 1 -73 633)" font-size="8" font-family="TwCenMT"><tspan y="-583.1" x="207.9 212.396 214.49199 218.892 220.788">1 bit</tspan></text>
+<text xml:space="preserve" transform="matrix(1 0 -0 1 -73 633)" font-size="8" font-family="TwCenMT"><tspan y="-574.2" x="208.8 213.20001 217.296 219.89601">port</tspan></text>
+<path transform="matrix(1,0,0,-1,-73,633)" stroke-width="0" stroke-linecap="butt" stroke-linejoin="round" fill="none" stroke="#000000" d="M226.8 555.7H323.1"/>
+<text xml:space="preserve" transform="matrix(1 0 -0 1 -73 633)" font-size="12" font-family="TwCenMT"><tspan y="-559.3" x="300.2 309.404 312.008 318.008">MISO</tspan></text>
+<path transform="matrix(1,0,0,-1,-73,633)" d="M215.4 544.4H204.1V567H226.8V544.4H215.4Z" fill="#d1d3d4" fill-rule="evenodd"/>
+<path transform="matrix(1,0,0,-1,-73,633)" stroke-width="0" stroke-linecap="butt" stroke-linejoin="round" fill="none" stroke="#464749" d="M215.4 544.4H204.1V567H226.8V544.4H215.4Z"/>
+<text xml:space="preserve" transform="matrix(1 0 -0 1 -73 633)" font-size="8" font-family="TwCenMT"><tspan y="-557.6" x="207.9 212.396 214.49199 218.892 220.788">1 bit</tspan></text>
+<text xml:space="preserve" transform="matrix(1 0 -0 1 -73 633)" font-size="8" font-family="TwCenMT"><tspan y="-548.7" x="208.8 213.20001 217.296 219.89601">port</tspan></text>
+<path transform="matrix(1,0,0,-1,-73,633)" stroke-width="0" stroke-linecap="butt" stroke-linejoin="round" fill="none" stroke="#000000" d="M226.8 530.2H323.1"/>
+<text xml:space="preserve" transform="matrix(1 0 -0 1 -73 633)" font-size="12" font-family="TwCenMT"><tspan y="-533.8" x="300.2 306.2">SS</tspan></text>
+<path transform="matrix(1,0,0,-1,-73,633)" d="M215.4 518.9H204.1V541.5H226.8V518.9H215.4Z" fill="#d1d3d4" fill-rule="evenodd"/>
+<path transform="matrix(1,0,0,-1,-73,633)" stroke-width="0" stroke-linecap="butt" stroke-linejoin="round" fill="none" stroke="#464749" d="M215.4 518.9H204.1V541.5H226.8V518.9H215.4Z"/>
+<text xml:space="preserve" transform="matrix(1 0 -0 1 -73 633)" font-size="8" font-family="TwCenMT"><tspan y="-532.1" x="207.9 212.396 214.49199 218.892 220.788">1 bit</tspan></text>
+<text xml:space="preserve" transform="matrix(1 0 -0 1 -73 633)" font-size="8" font-family="TwCenMT"><tspan y="-523.2" x="208.8 213.20001 217.296 219.89601">port</tspan></text>
+</g>
+</g>
+</g>
+</g>
+</svg>

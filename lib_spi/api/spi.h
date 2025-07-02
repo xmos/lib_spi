@@ -1,10 +1,29 @@
-// Copyright 2014-2021 XMOS LIMITED.
+// Copyright 2014-2025 XMOS LIMITED.
 // This Software is subject to the terms of the XMOS Public Licence: Version 1.
 #ifndef _spi_h_
 #define _spi_h_
 #include <xs1.h>
 #include <stdint.h>
 #include <stddef.h>
+#include <xccompat.h>
+
+// These are needed for DOXYGEN to render properly
+#ifndef __DOXYGEN__
+#define static_const_unsigned static const unsigned
+#define static_const_size_t static const size_t
+#define out_port out port
+#define in_port in port
+#define async_master_shutdown shutdown
+#define async_master_send_stop_bit send_stop_bit
+#define async_master_read read
+#define async_master_write write
+#define slave_void  slave void
+#define static_const_spi_mode_t static const spi_mode_t
+#define static_const_spi_transfer_type_t static const spi_transfer_type_t
+#define static_const_spi_transfer_type_t static const spi_transfer_type_t
+#define uint32_t_movable_ptr_t uint32_t * movable
+#define uint8_t_movable_ptr_t uint8_t * movable
+#endif
 
 /** This type indicates what mode an SPI component should use */
 typedef enum spi_mode_t {
@@ -16,7 +35,14 @@ typedef enum spi_mode_t {
 
 
 /** This interface allows clients to interact with SPI master task. */
+#ifndef __DOXYGEN__
 typedef interface spi_master_if {
+#endif
+
+  /**
+   * \addtogroup spi_master_if
+   * @{
+   */
 
   /** Begin a transaction.
    *
@@ -67,7 +93,11 @@ typedef interface spi_master_if {
    *  \returns       the data read in from the MISO port.
    */
   uint32_t transfer32(uint32_t data);
+#ifndef __DOXYGEN__
 } spi_master_if;
+#endif
+
+/**@}*/ // END: addtogroup spi_master_if
 
 /** Task that implements the SPI proctocol in master mode that is
     connected to a multiple slaves on the bus.
@@ -92,21 +122,29 @@ typedef interface spi_master_if {
     \param clk           a clock for the component to use.
 */
 [[distributable]]
-void spi_master(server interface spi_master_if i[num_clients],
-        static const size_t num_clients,
-        out buffered port:32 sclk,
-        out buffered port:32 ?mosi,
-        in buffered port:32 ?miso,
-        out port p_ss[num_slaves],
-        static const size_t num_slaves,
-        clock ?clk);
+void spi_master(
+        SERVER_INTERFACE(spi_master_if, i[num_clients]),
+        static_const_size_t num_clients,
+        out_buffered_port_32_t sclk,
+        NULLABLE_RESOURCE(out_buffered_port_32_t, mosi),
+        NULLABLE_RESOURCE(in_buffered_port_32_t, miso),
+        out_port p_ss[num_slaves],
+        static_const_size_t num_slaves,
+        NULLABLE_RESOURCE(clock, clk));
+
+/**
+ * \addtogroup spi_master_async_if
+ * @{
+ */
 
 /** Asynchronous interface to an SPI component.
  *
  *  This interface allows programs to offload SPI bus transfers to another
  *  task. An asynchronous notification occurs when the transfer is complete.
  */
+#ifndef __DOXYGEN__
 typedef interface spi_master_async_if  {
+#endif
   /** Begin a transaction.
    *
    *  This will start a transaction on the bus. During a transaction, no
@@ -149,8 +187,8 @@ typedef interface spi_master_async_if  {
    *                  transfer will consist of undefined values.
    *  \param nbytes   The number of bytes to transfer over the bus.
    */
-  void init_transfer_array_8(uint8_t * movable inbuf,
-                             uint8_t * movable outbuf,
+  void init_transfer_array_8(uint8_t_movable_ptr_t inbuf,
+                             uint8_t_movable_ptr_t outbuf,
                              size_t nbytes);
 
   /** Initialize Transfer an array of bytes over the spi bus.
@@ -168,8 +206,8 @@ typedef interface spi_master_async_if  {
    *                  transfer will consist of undefined values.
    *  \param nwords   The number of words to transfer over the bus.
    */
-  void init_transfer_array_32(uint32_t * movable inbuf,
-                              uint32_t * movable outbuf,
+  void init_transfer_array_32(uint32_t_movable_ptr_t inbuf,
+                              uint32_t_movable_ptr_t outbuf,
                               size_t nwords);
 
 
@@ -192,8 +230,8 @@ typedef interface spi_master_async_if  {
    *                  pointer that was transmitted during the transfer.
    */
   [[clears_notification]]
-  void retrieve_transfer_buffers_8(uint8_t * movable &inbuf,
-                                   uint8_t * movable &outbuf);
+  void retrieve_transfer_buffers_8(REFERENCE_PARAM(uint8_t_movable_ptr_t, inbuf),
+                                   REFERENCE_PARAM(uint8_t_movable_ptr_t, outbuf));
 
 
   /** Retrieve transfer buffers.
@@ -208,14 +246,18 @@ typedef interface spi_master_async_if  {
    *                  pointer that was transmitted during the transfer.
    */
   [[clears_notification]]
-  void retrieve_transfer_buffers_32(uint32_t * movable &inbuf,
-                                    uint32_t * movable &outbuf);
+  void retrieve_transfer_buffers_32(REFERENCE_PARAM(uint32_t_movable_ptr_t, inbuf),
+                                    REFERENCE_PARAM(uint32_t_movable_ptr_t, outbuf));
 
   /** Shut down the interface server.
    */
   void shutdown(void);
-} spi_master_async_if;
 
+  /**@}*/ // END: addtogroup spi_master_async_if
+
+#ifndef __DOXYGEN__
+} spi_master_async_if;
+#endif
 
 /** SPI master component for asynchronous API.
  *
@@ -235,22 +277,30 @@ typedef interface spi_master_async_if  {
  *  \param clk1           a clock for the component to use.
  */
 [[combinable]]
-void spi_master_async(server interface spi_master_async_if i[num_clients],
-        static const size_t num_clients,
-        out buffered port:32 sclk,
-        out buffered port:32 ?mosi,
-        in buffered port:32 miso,
-        out port p_ss[num_slaves],
-        static const size_t num_slaves,
+void spi_master_async(
+        SERVER_INTERFACE(spi_master_async_if, i[num_clients]),
+        static_const_size_t num_clients,
+        out_buffered_port_32_t sclk,
+        NULLABLE_RESOURCE(out_buffered_port_32_t, mosi),
+        in_buffered_port_32_t miso,
+        out_port p_ss[num_slaves],
+        static_const_size_t num_slaves,
         clock clk0,
         clock clk1);
 
 /**** SLAVE ****/
 
+/**
+ * \addtogroup spi_slave_callback_if
+ * @{
+ */
+
 /** This interface allows clients to interact with SPI slave tasks by
  *  completing callbacks that show how to handle data.
  */
+#ifndef __DOXYGEN__
 typedef interface spi_slave_callback_if {
+#endif
 
   /** This callback will get called when the master de-asserts on the slave
    *  select line to end a transaction.
@@ -280,8 +330,12 @@ typedef interface spi_slave_callback_if {
    *  \param valid_bits the number of valid bits of data received from the master.
    */
   void master_supplied_data(uint32_t datum, uint32_t valid_bits);
-
+#ifndef __DOXYGEN__
 } spi_slave_callback_if;
+#endif
+
+  /**@}*/ // END: addtogroup spi_slave_callback_if
+
 
 /** This type specifies the transfer size from the SPI slave component
     to the application */
@@ -307,13 +361,13 @@ typedef enum spi_transfer_type_t {
  *                       ``SPI_TRANSFER_SIZE_8`` or ``SPI_TRANSFER_SIZE_32``.
  */
  [[combinable]]
-  void spi_slave(client spi_slave_callback_if spi_i,
-                 in port p_sclk,
-                 in buffered port:32 p_mosi,
-                 out buffered port:32 ?p_miso,
-                 in port p_ss,
+  void spi_slave(CLIENT_INTERFACE(spi_slave_callback_if, spi_i),
+                 in_port p_sclk,
+                 in_buffered_port_32_t p_mosi,
+                 NULLABLE_RESOURCE(out_buffered_port_32_t, p_miso),
+                 in_port p_ss,
                  clock clk,
-                 static const spi_mode_t mode,
-                 static const spi_transfer_type_t transfer_type);
+                 static_const_spi_mode_t mode,
+                 static_const_spi_transfer_type_t transfer_type);
 
 #endif // _spi_h_

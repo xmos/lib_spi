@@ -1,7 +1,7 @@
 # This file provides overrides to the Doxyfile configuration
 
 PROJECT_NAME           = lib_spi
-PROJECT_BRIEF          = "SPI library"
+PROJECT_BRIEF          = "SPI Library"
 
 INPUT                  = ../lib_spi/api
 

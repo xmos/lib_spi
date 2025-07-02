@@ -11,7 +11,7 @@ documentation:
   linkcheck_ignore_regex: ['']
   latex_toc_depth: 3
   latex_secnum_depth: 3
-  cognidox_part_number: XM-006232-PC
+  cognidox_part_number: XM-015352-UG
   doxygen_projects:
     lib_spi:
       doxyfile_path: doc/Doxyfile.inc
