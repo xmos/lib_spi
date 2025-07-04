@@ -97,6 +97,18 @@ typedef interface spi_master_if {
 } spi_master_if;
 #endif
 
+
+[[distributable]]
+void spi_master_fwk(
+        SERVER_INTERFACE(spi_master_if, i[num_clients]),
+        static_const_size_t num_clients,
+        out_buffered_port_32_t sclk,
+        NULLABLE_RESOURCE(out_buffered_port_32_t, mosi),
+        NULLABLE_RESOURCE(in_buffered_port_32_t, miso),
+        out_port p_ss[num_slaves],
+        static_const_size_t num_slaves,
+        NULLABLE_RESOURCE(clock, clk));
+
 /**@}*/ // END: addtogroup spi_master_if
 
 /** Task that implements the SPI proctocol in master mode that is
