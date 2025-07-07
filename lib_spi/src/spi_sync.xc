@@ -245,7 +245,7 @@ void spi_master(server interface spi_master_if i[num_clients],
         clock ?cb){
 
     for(unsigned i=0;i<num_slaves;i++)
-        p_ss[i] <: 1;
+        p_ss[i] <: 0xffffffff;
 
     if(!isnull(cb)){
         stop_clock(cb);
@@ -313,7 +313,7 @@ void spi_master(server interface spi_master_if i[num_clients],
                 unsigned time;
                 partout(sclk, 1, cpol);
                 sync(sclk);
-                p_ss[selected_device] <: 1 @ time;
+                p_ss[selected_device] <: 0xffffffff @ time;
 
                 //TODO should this be allowed? (0.6ms max without it)
                 if(ss_deassert_time > 0xffff)
@@ -321,7 +321,7 @@ void spi_master(server interface spi_master_if i[num_clients],
 
                 time += ss_deassert_time;
 
-                p_ss[selected_device] @ time <: 1;
+                p_ss[selected_device] @ time <: 0xffffffff;
                 break;
             }
             case i[int x].transfer8(uint8_t data)-> uint8_t r :{
@@ -338,6 +338,11 @@ void spi_master(server interface spi_master_if i[num_clients],
                 } else {
                     r = transfer32_sync_one_clkblk(sclk, mosi, miso, data, cpol, cpha);
                 }
+                break;
+            }
+
+            case i[int x].set_ss_port_bit(unsigned port_bit):{
+                // Do nothing this is invalid since this component sets all port bits high/low during select
                 break;
             }
         }

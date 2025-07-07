@@ -6,7 +6,7 @@ lib_spi change log
 
   * CHANGED: Refresh to use latest doc builder and library format
   * ADDED: Support for XCommon CMake build system
-  * REMOVED: XCORE-200 targets in examples (now targets xcore.ai explorer)
+  * REMOVED: XCORE-200 targets in examples (now targets XK-EVK-XU316)
 
 3.3.0
 -----

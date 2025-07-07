@@ -27,10 +27,10 @@
 
 /** This type indicates what mode an SPI component should use */
 typedef enum spi_mode_t {
-  SPI_MODE_0, /**< SPI Mode 0 - Polarity = 0, Clock Edge = 1 */
-  SPI_MODE_1, /**< SPI Mode 1 - Polarity = 0, Clock Edge = 0 */
-  SPI_MODE_2, /**< SPI Mode 2 - Polarity = 1, Clock Edge = 0 */
-  SPI_MODE_3, /**< SPI Mode 3 - Polarity = 1, Clock Edge = 1 */
+  SPI_MODE_0 = 0, /**< SPI Mode 0 - Polarity = 0, Sampling clock Edge = 1 */
+  SPI_MODE_1 = 1, /**< SPI Mode 1 - Polarity = 0, Sampling clock Edge = 0 */
+  SPI_MODE_2 = 2, /**< SPI Mode 2 - Polarity = 1, Sampling Clock Edge = 0 */
+  SPI_MODE_3 = 3, /**< SPI Mode 3 - Polarity = 1, Sampling Clock Edge = 1 */
 } spi_mode_t;
 
 
@@ -93,6 +93,18 @@ typedef interface spi_master_if {
    *  \returns       the data read in from the MISO port.
    */
   uint32_t transfer32(uint32_t data);
+
+
+  /** Sets the bit of port which is used for slave select (> 1b port type only)
+   *  and only for spi_master_fwk. spi_master sets all bits in each port high/low
+   *
+   *  The default value (if this is not called) is bit zero which is suitable
+   *  for 1-bit ports or where bit 0 of a wider port is used.
+   *
+   *  \param ss_port_bit   Which bit number in the port to use for slave select.
+   */
+  void set_ss_port_bit(unsigned ss_port_bit);
+
 #ifndef __DOXYGEN__
 } spi_master_if;
 #endif
@@ -105,7 +117,7 @@ void spi_master_fwk(
         out_buffered_port_32_t sclk,
         NULLABLE_RESOURCE(out_buffered_port_32_t, mosi),
         NULLABLE_RESOURCE(in_buffered_port_32_t, miso),
-        out_port p_ss[num_slaves],
+        out_port p_ss,
         static_const_size_t num_slaves,
         NULLABLE_RESOURCE(clock, clk));
 
@@ -128,8 +140,11 @@ void spi_master_fwk(
     \param sclk          the SPI clock port.
     \param mosi          the SPI MOSI (master out, slave in) port.
     \param miso          the SPI MISO (master in, slave out) port.
-    \param p_ss          an array of ports connected to the slave select signals
-                         of the slave.
+    \param p_ss          A port connected to the slave select signals
+                         of the slave. Multiple slaves may be supported
+                         by specifying, for example, a 4-bit port.
+                         Please specify mapping of bits to slaves using
+                         i.set_ss_port_bit()
     \param num_slaves    The number of slave devices on the bus.
     \param clk           a clock for the component to use.
 */

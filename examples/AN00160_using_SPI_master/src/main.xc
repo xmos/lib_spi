@@ -8,20 +8,18 @@
 #include <platform.h>
 
 
-out buffered port:32   p_sclk  = WIFI_CLK;
-out port               p_ss[1] = {WIFI_CS_N};
-in buffered port:32    p_miso  = WIFI_MISO;
-out buffered port:32   p_mosi  = WIFI_MOSI;
-out port               p_rstn  = WIFI_WUP_RST_N;
+out buffered port:32   p_sclk         = WIFI_CLK;
+out port               p_ss[1]        = {WIFI_CS_N};
+in buffered port:32    p_miso         = WIFI_MISO;
+out buffered port:32   p_mosi         = WIFI_MOSI;
+out port               p_rstn         = WIFI_WUP_RST_N;
 
 clock clk0 = on tile[0]: XS1_CLKBLK_1;
 clock clk1 = on tile[0]: XS1_CLKBLK_2;
 
 /* This application function sends some traffic as SPI master using
- * the synchronous interface. Since this is run in simulation
- * there is no slave, so the incoming data (stored in the 'val'
- * variable) will just be zero.
- */
+ * the synchronous interface. It reads the config register (address 0)
+ * of the WFM200S using a 16b command and prints the 32b read result */ 
 void app(client spi_master_if spi)
 {
     uint8_t val;
@@ -29,17 +27,19 @@ void app(client spi_master_if spi)
     
     p_rstn <: 0x2; //Take out of reset and wait
     delay_microseconds(1000);
-    spi.begin_transaction(0, 1000, SPI_MODE_1);
+    spi.begin_transaction(0, 1000, SPI_MODE_0);
 
-    uint32_t addr = 0;
-    uint32_t command = 0x8002 | (addr << 12); //Read command
-    val = spi.transfer8(command >> 8);
+    uint32_t reg_addr = 0; // Read reg 0
+    uint32_t read_cmd = 0x8000; // Read
+    uint32_t num_16b_words = 2; // 32b
+    uint32_t command = read_cmd | num_16b_words | (reg_addr << 12); //Do read command
+    val = spi.transfer8(command >> 8);// MSB first
     val = spi.transfer8(command & 0xff);
     uint32_t reg;
-    reg = spi.transfer32(0x00);
+    reg = spi.transfer32(0x00); //Read result
     spi.end_transaction(0);
-    printhexln(reg << 16 | reg >> 16);
 
+    printhexln(reg >> 16);  // Should be 0x5400
     printstrln("Done.");
     _exit(0);
 }

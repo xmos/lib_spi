@@ -213,7 +213,6 @@ void spi_master_end_transaction(
 
     port_sync(spi->cs_port);
 
-    printstrln("there");
     port_out(spi->cs_port, cs_deassert_val);
     port_sync(spi->cs_port);
 

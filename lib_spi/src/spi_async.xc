@@ -173,7 +173,7 @@ void spi_master_async(server interface spi_master_async_if i[num_clients],
     int currently_performing_a_transaction = 0;
 
     for(unsigned i=0;i<num_slaves;i++)
-        p_ss[i] <: 1;
+        p_ss[i] <: 0xffffffff;
 
     stop_clock(cb0);
 
@@ -248,13 +248,13 @@ void spi_master_async(server interface spi_master_async_if i[num_clients],
                 }
                 sync(sclk);
                 unsigned time;
-                p_ss[active_device] <: 1 @ time;
+                p_ss[active_device] <: 0xffffffff @ time;
 
                 //TODO should this be allowed? (0.6ms max without it)
                 if(ss_deassert_time > 0xffff)
                    delay_ticks(ss_deassert_time&0xffff0000);
                 time += ss_deassert_time;
-                p_ss[active_device] @ time <: 1;
+                p_ss[active_device] @ time <: 0xffffffff;
 
                 if(tr_fill > 0){
                     //begin a new transaction - the tail of the list is the next one to go

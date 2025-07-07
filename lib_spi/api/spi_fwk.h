@@ -244,9 +244,6 @@ inline void spi_master_delay_before_next_transfer(
     port_clear_trigger_time(spi->cs_port);
 
     /* Assert CS now */
-    printstrln("here");
-    printhexln(spi->cs_port);
-    printhexln(dev->cs_assert_val);
     port_out(spi->cs_port, dev->cs_assert_val);
     port_sync(spi->cs_port);
 
