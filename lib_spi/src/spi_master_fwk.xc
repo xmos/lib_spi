@@ -51,9 +51,9 @@ void spi_master_fwk(server interface spi_master_if i[num_clients],
     while(1){
         select {
             case accepting_new_transactions => i[int x].begin_transaction(unsigned device_index,
-                    unsigned speed_in_khz, spi_mode_t mode):{
-                    accepting_new_transactions = 0;
-                    spi_master_start_transaction(&spi_dev);
+                unsigned speed_in_khz, spi_mode_t mode):{
+                accepting_new_transactions = 0;
+                spi_master_start_transaction(&spi_dev);
                 break;
             }
             case i[int x].end_transaction(unsigned ss_deassert_time):{
