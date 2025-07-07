@@ -1,38 +1,69 @@
-SPI Library
-===========
+:orphan:
 
+####################
+lib_spi: SPI library
+####################
+
+:vendor: XMOS
+:version: 3.4.0
+:scope: General Use
+:description: SPI Master and Slave components
+:category: General Purpose
+:keywords: SPI
+:devices: xcore-200, xcore.ai
+
+*******
 Summary
--------
+*******
 
-A software defined, industry-standard, SPI (serial peripheral
-interface) component
-that allows you to control an SPI bus via the
-xCORE GPIO hardware-response ports. SPI is a four-wire hardware
-bi-directional serial interface.
+SPI is a four-wire hardware bi-directional serial interface.
+This library provides a  software defined, industry-standard, SPI (serial peripheral
+interface) component that allows control a SPI bus via the `xcore` GPIO ports. 
 
-The SPI bus can be used by multiple tasks within the xCORE device
-and (each addressing the same or different slaves) and
-is compatible with other slave devices on the same bus.
-
+********
 Features
-........
+********
 
- * SPI master and SPI slave modes.
- * Supports speed of up to 100 Mbit.
- * Multiple slave device support
- * All clock polarity and phase configurations supported.
+* SPI master and SPI slave modes.
+* Supports speed of up to 100 Mbit.
+* Multiple slave device support
+* All clock polarity and phase configurations supported.
 
+************
+Known issues
+************
 
-Software version and dependencies
-.................................
+* None
 
-The CHANGELOG contains information about the current and previous versions.
-For a list of direct dependencies, look for DEPENDENT_MODULES in lib_spi/module_build_info.
+****************
+Development repo
+****************
 
+* `lib_spi <https://www.github.com/xmos/lib_spi>`_
+
+**************
+Required tools
+**************
+
+* XMOS XTC Tools: 15.3.1
+
+*********************************
+Required libraries (dependencies)
+*********************************
+
+* None
+
+*************************
 Related application notes
-.........................
+*************************
 
-The following application notes use this library:
+* AN00160 - How to communicate as SPI master
+* AN00161 - How to communicate as SPI slave
 
-  * AN00160 - How to communicate as SPI master
-  * AN00161 - How to communicate as SPI slave
+
+*******
+Support
+*******
+
+This package is supported by XMOS Ltd. Issues can be raised against the software at
+`www.xmos.com/support <https://www.xmos.com/support>`_

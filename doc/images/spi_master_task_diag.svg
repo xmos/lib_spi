@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" version="1.1" width="244" height="63" viewBox="0 0 244 63">
+<defs>
+<clipPath id="clip_0">
+<path transform="matrix(1,0,0,-1,-237,775)" d="M0 0H595V842H0Z"/>
+</clipPath>
+<clipPath id="clip_1">
+<path transform="matrix(1,0,0,-1,-237,775)" d="M0 .1H595.2V841.89999H0Z" clip-rule="evenodd"/>
+</clipPath>
+</defs>
+<g>
+<g>
+<g clip-path="url(#clip_0)">
+<g clip-path="url(#clip_1)">
+<path transform="matrix(1,0,0,-1,-237,775)" d="M0 842H595.2V.1H0V842Z" fill="#ffffff" fill-rule="evenodd"/>
+<path transform="matrix(1,0,0,-1,-237,775)" d="M452.1 772.6C468.2 772.6 480.5 759.7 480.5 742.8 480.5 725.9 468.2 713 452.1 713 436.1 713 423.8 725.9 423.8 742.8 423.8 759.7 436.1 772.6 452.1 772.6ZM423.8 772.6V772.6ZM480.5 713V713Z" fill="#808080" fill-rule="evenodd"/>
+<path transform="matrix(1,0,0,-1,-237,775)" stroke-width=".28299" stroke-linecap="butt" stroke-linejoin="round" fill="none" stroke="#808080" d="M452.1 772.6C468.2 772.6 480.5 759.7 480.5 742.8 480.5 725.9 468.2 713 452.1 713 436.1 713 423.8 725.9 423.8 742.8 423.8 759.7 436.1 772.6 452.1 772.6Z"/>
+<path transform="matrix(1,0,0,-1,-237,775)" stroke-width=".28299" stroke-linecap="butt" stroke-linejoin="round" fill="none" stroke="#808080" d="M423.8 772.6V772.6Z"/>
+<path transform="matrix(1,0,0,-1,-237,775)" stroke-width=".28299" stroke-linecap="butt" stroke-linejoin="round" fill="none" stroke="#808080" d="M480.5 713V713Z"/>
+<text fill="#808080" xml:space="preserve" transform="matrix(1 0 -0 1 -237 775)" font-size="12" font-family="ArialMT"><tspan y="-745.4" x="440.7 448.78804 456.78004 460.16404">SPI </tspan></text>
+<text fill="#808080" xml:space="preserve" transform="matrix(1 0 -0 1 -237 775)" font-size="12" font-family="ArialMT"><tspan y="-731.9" x="433.7 443.79203 450.476 456.476 459.86003 466.544">master</tspan></text>
+<path transform="matrix(1,0,0,-1,-237,775)" d="M450.7 774C466.8 774 479.1 761.1 479.1 744.2 479.1 727.3 466.8 714.4 450.7 714.4 434.6 714.4 422.4 727.3 422.4 744.2 422.4 761.1 434.6 774 450.7 774ZM422.4 774V774ZM479.1 714.4V714.4Z" fill="#ffffff" fill-rule="evenodd"/>
+<path transform="matrix(1,0,0,-1,-237,775)" stroke-width=".28299" stroke-linecap="butt" stroke-linejoin="round" fill="none" stroke="#000000" d="M450.7 774C466.8 774 479.1 761.1 479.1 744.2 479.1 727.3 466.8 714.4 450.7 714.4 434.6 714.4 422.4 727.3 422.4 744.2 422.4 761.1 434.6 774 450.7 774Z"/>
+<path transform="matrix(1,0,0,-1,-237,775)" stroke-width=".28299" stroke-linecap="butt" stroke-linejoin="round" fill="none" stroke="#000000" d="M422.4 774V774Z"/>
+<path transform="matrix(1,0,0,-1,-237,775)" stroke-width=".28299" stroke-linecap="butt" stroke-linejoin="round" fill="none" stroke="#000000" d="M479.1 714.4V714.4Z"/>
+<text xml:space="preserve" transform="matrix(1 0 -0 1 -237 775)" font-size="12" font-family="ArialMT"><tspan y="-746.8" x="439.3 447.388 455.38 458.764">SPI </tspan></text>
+<text xml:space="preserve" transform="matrix(1 0 -0 1 -237 775)" font-size="12" font-family="ArialMT"><tspan y="-733.3" x="432.3 442.392 449.076 455.076 458.376 465.168">master</tspan></text>
+<path transform="matrix(1,0,0,-1,-237,775)" d="M267.9 772.6C283.9 772.6 296.2 759.7 296.2 742.8 296.2 725.9 283.9 713 267.9 713 251.8 713 239.5 725.9 239.5 742.8 239.5 759.7 251.8 772.6 267.9 772.6ZM239.5 772.6V772.6ZM296.2 713V713Z" fill="#808080" fill-rule="evenodd"/>
+<path transform="matrix(1,0,0,-1,-237,775)" stroke-width=".28299" stroke-linecap="butt" stroke-linejoin="round" fill="none" stroke="#808080" d="M267.9 772.6C283.9 772.6 296.2 759.7 296.2 742.8 296.2 725.9 283.9 713 267.9 713 251.8 713 239.5 725.9 239.5 742.8 239.5 759.7 251.8 772.6 267.9 772.6Z"/>
+<path transform="matrix(1,0,0,-1,-237,775)" stroke-width=".28299" stroke-linecap="butt" stroke-linejoin="round" fill="none" stroke="#808080" d="M239.5 772.6V772.6Z"/>
+<path transform="matrix(1,0,0,-1,-237,775)" stroke-width=".28299" stroke-linecap="butt" stroke-linejoin="round" fill="none" stroke="#808080" d="M296.2 713V713Z"/>
+<text fill="#808080" xml:space="preserve" transform="matrix(1 0 -0 1 -237 775)" font-size="12" font-family="ArialMT"><tspan y="-738.6" x="257.8 264.48399 271.16798">app</tspan></text>
+<path transform="matrix(1,0,0,-1,-237,775)" d="M266.5 774C282.5 774 294.8 761.1 294.8 744.2 294.8 727.3 282.5 714.4 266.5 714.4 250.4 714.4 238.1 727.3 238.1 744.2 238.1 761.1 250.4 774 266.5 774ZM238.1 774V774ZM294.8 714.4V714.4Z" fill="#ffffff" fill-rule="evenodd"/>
+<path transform="matrix(1,0,0,-1,-237,775)" stroke-width=".28299" stroke-linecap="butt" stroke-linejoin="round" fill="none" stroke="#000000" d="M266.5 774C282.5 774 294.8 761.1 294.8 744.2 294.8 727.3 282.5 714.4 266.5 714.4 250.4 714.4 238.1 727.3 238.1 744.2 238.1 761.1 250.4 774 266.5 774Z"/>
+<path transform="matrix(1,0,0,-1,-237,775)" stroke-width=".28299" stroke-linecap="butt" stroke-linejoin="round" fill="none" stroke="#000000" d="M238.1 774V774Z"/>
+<path transform="matrix(1,0,0,-1,-237,775)" stroke-width=".28299" stroke-linecap="butt" stroke-linejoin="round" fill="none" stroke="#000000" d="M294.8 714.4V714.4Z"/>
+<text xml:space="preserve" transform="matrix(1 0 -0 1 -237 775)" font-size="12" font-family="ArialMT"><tspan y="-740.1" x="256.4 263.08399 269.76799">app</tspan></text>
+<path transform="matrix(1,0,0,-1,-237,775)" stroke-width=".28299" stroke-linecap="butt" stroke-linejoin="round" fill="none" stroke="#000000" d="M413.4 744.2H294.8"/>
+<path transform="matrix(1,0,0,-1,-237,775)" d="M422.4 744.2 413 747.3V741.1L422.4 744.2Z" fill-rule="evenodd"/>
+<text xml:space="preserve" transform="matrix(1 0 -0 1 -237 775)" font-size="9" font-family="TwCenMT"><tspan y="-734.3" x="335.9 338.897 343.79304 345.69206 350.28205 356.27604 361.17207 364.16908 366.57206 371.16206 374.15907 378.65907 380.64808">spi_master_if</tspan></text>
+</g>
+</g>
+</g>
+</g>
+</svg>
