@@ -1,0 +1,13 @@
+cmake_minimum_required(VERSION 3.21)
+include($ENV{XMOS_CMAKE_PATH}/xcommon.cmake)
+project(lib_spi_tests)
+
+add_subdirectory(spi_master_sync_benchmark)
+add_subdirectory(spi_master_sync_rx_tx)
+add_subdirectory(spi_master_sync_multi_device)
+add_subdirectory(spi_master_sync_multi_client)
+add_subdirectory(spi_master_sync_clock_port_sharing)
+add_subdirectory(spi_slave_benchmark)
+add_subdirectory(spi_slave_rx_tx)
+add_subdirectory(spi_master_async_rx_tx)
+add_subdirectory(spi_master_async_multi_client)

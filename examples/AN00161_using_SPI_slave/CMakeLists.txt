@@ -11,7 +11,7 @@ set(APP_XSCOPE_SRCS config.xscope)
 
 # Includes, Dependencies
 list(APPEND APP_INCLUDES src)
-list(APPEND APP_DEPENDENT_MODULES "lib_spi")
+include(${CMAKE_CURRENT_LIST_DIR}/../deps.cmake)
 
 # Flags
 set(
