@@ -8,11 +8,19 @@
 #include <platform.h>
 
 
+<<<<<<< HEAD
 out buffered port:32   p_sclk         = WIFI_CLK;
 out port               p_ss[1]        = {WIFI_CS_N};
 in buffered port:32    p_miso         = WIFI_MISO;
 out buffered port:32   p_mosi         = WIFI_MOSI;
 out port               p_rstn         = WIFI_WUP_RST_N;
+=======
+out buffered port:32   p_sclk  = WIFI_CLK;
+out port               p_ss[1] = {WIFI_CS_N};
+in buffered port:32    p_miso  = WIFI_MISO;
+out buffered port:32   p_mosi  = WIFI_MOSI;
+out port               p_rstn  = WIFI_WUP_RST_N;
+>>>>>>> origin/develop
 
 clock clk0 = on tile[0]: XS1_CLKBLK_1;
 clock clk1 = on tile[0]: XS1_CLKBLK_2;

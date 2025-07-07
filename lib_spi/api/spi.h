@@ -109,6 +109,8 @@ typedef interface spi_master_if {
 } spi_master_if;
 #endif
 
+/**@}*/ // END: addtogroup spi_master_if
+
 
 [[distributable]]
 void spi_master_fwk(
@@ -120,8 +122,6 @@ void spi_master_fwk(
         out_port p_ss,
         static_const_size_t num_slaves,
         NULLABLE_RESOURCE(clock, clk));
-
-/**@}*/ // END: addtogroup spi_master_if
 
 /** Task that implements the SPI proctocol in master mode that is
     connected to a multiple slaves on the bus.
