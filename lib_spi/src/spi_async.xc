@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include <print.h>
 #include "spi.h"
 
 typedef struct {
@@ -25,10 +26,11 @@ static void transfer8_async(
         out buffered port:32 ?mosi,
         in buffered port:32 miso,
         uint8_t data){
+    // printf("0x%x\n", data);
 
     if(!isnull(mosi)) {
         clearbuf(mosi);
-        mosi <: (bitrev(data)>>24);
+        mosi <: (bitrev(data)>>24); // This outputs LSb first so reverse.
     }
 
     clearbuf(miso); //TODO remove- if possible
@@ -44,7 +46,7 @@ static void transfer32_async(
 
     if(!isnull(mosi)) {
         clearbuf(mosi);
-        mosi <: bitrev(data);
+        mosi <: bitrev(byterev(data));
     }
 
     clearbuf(miso); //TODO remove - if possible
@@ -99,7 +101,7 @@ static void setup_new_transaction(
     sync(p_ss[currently_selected_device]);
 }
 
-static void init_init_transfer_array_8(
+static void init_transfer_array_8(
         out buffered port:32 sclk,
         out buffered port:32 ?mosi,
         in buffered port:32 miso,
@@ -111,14 +113,16 @@ static void init_init_transfer_array_8(
         asm volatile ("settw res[%0], %1"::"r"(mosi), "r"(8));
     asm volatile ("settw res[%0], %1"::"r"(miso), "r"(8));
 
-    if((active_mode == SPI_MODE_1 || active_mode == SPI_MODE_2) && (!isnull(mosi))){
+    // In modes 0 and 2 we need to present the first data bit BEFORE we clock
+    if((active_mode == SPI_MODE_0 || active_mode == SPI_MODE_2) && (!isnull(mosi))){
             unsigned b = data>>7;
             asm volatile ("setclk res[%0], %1"::"r"(mosi), "r"(XS1_CLKBLK_REF));
             partout(mosi, 1, b);
+            sync(mosi);
             asm volatile ("setclk res[%0], %1"::"r"(mosi), "r"(cb1));
             data = data<<1; //This is shifted up as the MSB is already on this pin
     }
-    transfer8_async(sclk, mosi, miso,  data);
+    transfer8_async(sclk, mosi, miso, data);
 }
 
 static void first_transfer_array_32(
@@ -133,10 +137,12 @@ static void first_transfer_array_32(
         asm volatile ("settw res[%0], %1"::"r"(mosi), "r"(32));
     asm volatile ("settw res[%0], %1"::"r"(miso), "r"(32));
 
-    if((active_mode == SPI_MODE_1 || active_mode == SPI_MODE_2) && (!isnull(mosi))){
+    // In modes 0 and 2 we need to present the first data bit BEFORE we clock
+    if((active_mode == SPI_MODE_0 || active_mode == SPI_MODE_2) && (!isnull(mosi))){
             unsigned b = bitrev(data);
             asm volatile ("setclk res[%0], %1"::"r"(mosi), "r"(XS1_CLKBLK_REF));
             partout(mosi, 1, b);
+            sync(mosi);
             asm volatile ("setclk res[%0], %1"::"r"(mosi), "r"(cb1));
             data = data<<1; //This is shifted up as the MSB is already on this pin
     }
@@ -190,8 +196,9 @@ void spi_master_async(server interface spi_master_async_if i[num_clients],
 
     start_clock(cb0);
 
-    if(!isnull(mosi))
-        mosi <: 0xffffffff;
+    if(!isnull(mosi)){
+        partout(mosi, 1, 0);
+    }
 
     clearbuf(miso);
 
@@ -280,7 +287,7 @@ void spi_master_async(server interface spi_master_async_if i[num_clients],
                         buffer_rx = move(tr_buffer[index].buffer_rx);
                         buffer_transfer_width = tr_buffer[index].buffer_transfer_width;
                         if(buffer_transfer_width == 8){
-                            init_init_transfer_array_8(sclk, mosi, miso, active_mode, cb1, ((uint8_t*movable)buffer_tx)[0]);
+                            init_transfer_array_8(sclk, mosi, miso, active_mode, cb1, ((uint8_t*movable)buffer_tx)[0]);
                         } else {
                             first_transfer_array_32(sclk, mosi, miso, active_mode, cb1, buffer_tx[0]);
                         }
@@ -314,7 +321,7 @@ void spi_master_async(server interface spi_master_async_if i[num_clients],
                         i[x].transfer_complete();
                     } else {
                         buffer_transfer_width = 8;
-                        init_init_transfer_array_8(sclk, mosi, miso, active_mode, cb1, ((uint8_t*movable)buffer_tx)[0]);
+                        init_transfer_array_8(sclk, mosi, miso, active_mode, cb1, ((uint8_t*movable)buffer_tx)[0]);
                     }
                 }
 
@@ -361,8 +368,10 @@ void spi_master_async(server interface spi_master_async_if i[num_clients],
                     if((current_index*sizeof(uint8_t)) == buffer_nbytes){
                         i[active_client].transfer_complete();
                     } else {
-                        transfer8_async(sclk, mosi, miso,
-                                ((uint8_t*movable)buffer_tx)[current_index]);
+                        // We need to handle the mode 0 data before clock so now using this
+                        init_transfer_array_8(sclk, mosi, miso, active_mode, cb1, ((uint8_t*movable)buffer_tx)[current_index]);
+                        // transfer8_async(sclk, mosi, miso,
+                        //         ((uint8_t*movable)buffer_tx)[current_index]);
                     }
                 } else {
                     data = bitrev(data);
@@ -371,7 +380,9 @@ void spi_master_async(server interface spi_master_async_if i[num_clients],
                     if((current_index*sizeof(uint32_t)) == buffer_nbytes){
                        i[active_client].transfer_complete();
                     } else {
-                        transfer32_async(sclk, mosi, miso, buffer_tx[current_index]);
+                        // We need to handle the mode 0 data before clock so now using this
+                        first_transfer_array_32(sclk, mosi, miso, active_mode, cb1, buffer_tx[current_index]);
+                        // transfer32_async(sclk, mosi, miso, buffer_tx[current_index]);
                     }
                 }
                 break;

@@ -30,7 +30,6 @@ def do_test(capfd, combined, id):
     
     Pyxsim.run_on_simulator_(
         binary,
-        # tester = tester,
         #simargs=['--vcd-tracing', '-o ./spi_master_sync_multi_device/trace.vcd -tile tile[0] -pads -functions'],
         do_xe_prebuild = False,
         simthreads = [checker],

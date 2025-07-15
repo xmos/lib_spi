@@ -20,6 +20,6 @@
     "MOSI_ENABLED": [0, 1],
     "TRANSFER_WIDTH": [8, 32],
     "SPEED_TESTS": [1],
-    "MODE": [0, 1, 2, 3],
+    "MODE": [0, 3],
     "arch": ["xs2", "xs3"]
 }

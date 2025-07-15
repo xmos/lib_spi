@@ -32,6 +32,7 @@ def do_test(capfd, burnt, cb_enabled, miso_mosi_enabled, arch, id):
     
     Pyxsim.run_on_simulator_(
         binary,
+        #simargs=['--vcd-tracing', '-o ./trace.vcd -tile tile[0] -ports -pads -functions'],
         do_xe_prebuild = False,
         simthreads = [checker],
         capfd=capfd)

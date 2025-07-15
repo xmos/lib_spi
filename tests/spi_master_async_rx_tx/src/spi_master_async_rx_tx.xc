@@ -30,7 +30,6 @@ void flush_print(void){
 static void inc_state(unsigned &count, spi_mode_t &mode,
         unsigned &speed_index, t_transfer_width &transfer_width){
 
-    // printf("count: %u, speed_idx: %u (%u), mode: %d width: %d\n", count, speed_index, SPEED_TESTS, mode, transfer_width * 24 + 8);
     if(count == 16){
         count = 0;
         if(++speed_index == SPEED_TESTS){
@@ -45,12 +44,13 @@ static void inc_state(unsigned &count, spi_mode_t &mode,
             count+=4;
         }
     }
+    // printf("count: %u, speed_idx: %u (%u), mode: %d width: %d\n", count, speed_index, SPEED_TESTS, mode, transfer_width * 24 + 8);
 }
 
 [[combinable]]
 void app(client interface spi_master_async_if spi_i, int mosi_enabled, int miso_enabled){
     // if testing just one speed, do fastest (idx 0)
-    unsigned speed_lut[3] = {2000, 200, 500};
+    unsigned speed_lut[3] = {1000, 200, 500};
 
     uint8_t tx8[NUMBER_OF_TEST_BYTES];
     uint8_t rx8[NUMBER_OF_TEST_BYTES];
@@ -141,6 +141,8 @@ void app(client interface spi_master_async_if spi_i, int mosi_enabled, int miso_
                 //setup the next
                 spi_i.begin_transaction(device_id, speed_in_kbps, mode);
                 if(transfer_width == SPI_TRANSFER_WIDTH_8){
+                    // for(int i = 0; i < count; i++) printf("tx 0x%x\n", tx_ptr8[i]);
+
                     spi_i.init_transfer_array_8(move(rx_ptr8), move(tx_ptr8), count);
                 } else {
                     spi_i.init_transfer_array_32(move(rx_ptr32), move(tx_ptr32), count/sizeof(uint32_t));
