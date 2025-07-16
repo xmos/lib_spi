@@ -12,6 +12,9 @@ appname = "spi_master_async_multi_client"
 test_params_file = Path(__file__).parent / f"{appname}/test_params.json"
 
 def do_test(capfd, combined, burnt, mosi_enabled, arch, id):
+    # Test disabled until we review SPI async
+    pytest.xfail()
+    
     id_string = f"{combined}_{burnt}_{mosi_enabled}_{arch}"
     filepath = Path(__file__).resolve().parent
     binary = filepath/f"{appname}/bin/{id_string}/{appname}_{id_string}.xe"

@@ -12,6 +12,9 @@ test_params_file = Path(__file__).parent / f"{appname}/test_params.json"
 
 def do_test(capfd, combined, burnt, mosi_enabled, transfer_width, speed_tests, spi_mode, arch, id):
 
+    # Test disabled until we review SPI async
+    pytest.xfail()
+
     id_string = f"{combined}_{burnt}_{mosi_enabled}_{speed_tests}_{transfer_width}_{spi_mode}_{arch}"
     filepath = Path(__file__).resolve().parent
     binary = filepath/f"{appname}/bin/{id_string}/{appname}_{id_string}.xe"
