@@ -5,9 +5,19 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "spi.h"
+#include "spi_sync_tester.h"
+extern "C"{
+    #include "../src/spi_fwk.h"
+}
+
+// access internal functions
+extern void spi_master_determine_clock_settings(spi_master_source_clock_t *source_clock, unsigned *divider, unsigned speed_in_khz);
+extern unsigned spi_master_get_actual_clock_rate(spi_master_source_clock_t source_clock, unsigned divider);
+
+
 
 in buffered port:32   p_miso  = XS1_PORT_1A;
-out port              p_ss[1] = {XS1_PORT_1B};
+out port              p_ss    = XS1_PORT_1B;
 out buffered port:32  p_sclk  = XS1_PORT_1C;
 out buffered port:32  p_mosi  = XS1_PORT_1D;
 clock                 cb      = XS1_CLKBLK_1;
@@ -15,72 +25,46 @@ clock                 cb      = XS1_CLKBLK_1;
 out port setup_strobe_port = XS1_PORT_1E;
 out port setup_data_port = XS1_PORT_16B;
 
-static unsigned get_max_byte_speed(client interface spi_master_if i){
-    unsigned now, then;
-    timer t;
-    t:> then;
-    i.begin_transaction(0, 100, SPI_MODE_3);
-    i.transfer8(0xff);
-    i.end_transaction(100);
-    t:> now;
-    unsigned best_time_so_far = now-then;
-    unsigned min = 0000, max = 6000;
-    while(1){
-        //unsigned test_speed = (min + max)/2;
-        unsigned test_speed = min + (max-min)/32;
-        t:> then;
-        i.begin_transaction(0, test_speed, SPI_MODE_3);
-        i.transfer8(test_speed);
-        i.end_transaction(100);
-        t:> now;
-        if(now-then < best_time_so_far){
-            best_time_so_far = (now-then);
-            min = test_speed;
-        } else {
-            if(max == test_speed)
-                return test_speed;
-            max = test_speed;
-        }
-    }
-    return 1000;
-}
 
-static unsigned get_max_word_speed(client interface spi_master_if i){
-    unsigned now, then;
-    timer t;
-    t:> then;
-    i.begin_transaction(0, 100, SPI_MODE_3);
-    i.transfer32(0xff);
-    i.transfer32(0xff);
-    i.end_transaction(100);
-    t:> now;
-    unsigned best_time_so_far = now-then;
-    unsigned min = 0000, max = 6000;
+static unsigned get_max_speed(unsigned transfer_width, client interface spi_master_if i){
+    unsigned min_test_speed = 1000, max_test_speed = 150000;//kbps
+    unsigned iteration = 0;
+    unsigned test_speed = min_test_speed;
     while(1){
-        //unsigned test_speed = (min + max)/2;
-        unsigned test_speed = min + (max-min)/32;
-        t:> then;
-        // printf("testing: %u\n", test_speed);
-        i.begin_transaction(0, test_speed, SPI_MODE_3);
-        i.transfer32(0xff);
-        i.transfer32(0xff);
-        i.end_transaction(100);
-        t:> now;
-        if(now-then < best_time_so_far){
-            best_time_so_far = (now-then);
-            min = test_speed;
+        // Make sure we set the actual speed attainable
+        spi_master_source_clock_t source_clock;
+        unsigned divider;
+        spi_master_determine_clock_settings(&source_clock, &divider, test_speed);
+        unsigned actual_test_speed = spi_master_get_actual_clock_rate(source_clock, divider);
+
+        printf("testing:%u:%u:", transfer_width, actual_test_speed);
+        int error = 0;
+        if(transfer_width == 8){
+            error = test_transfer8(i, setup_strobe_port, setup_data_port, 0, 100,
+                                    SPI_MODE, actual_test_speed, MOSI_ENABLED, MISO_ENABLED);
         } else {
-            if(max == test_speed)
-                return test_speed;
-            max = test_speed;
+            error = test_transfer32(i, setup_strobe_port, setup_data_port, 0, 100,
+                                        SPI_MODE, actual_test_speed, MOSI_ENABLED, MISO_ENABLED);
         }
+
+
+
+        if(error){
+            printf("FAIL\n");
+            test_speed = (test_speed + min_test_speed) / 2;
+
+        } else {
+            printf("PASS\n");
+            test_speed = (test_speed + max_test_speed) / 2;
+        }
+        if(iteration++ == 7) return 0; // 7 always gets us there
     }
-    return 1000;
+    return 0;
 }
 
 void app(client interface spi_master_if i, int mosi_enabled, int miso_enabled){
-    printf("%d\n", get_max_byte_speed(i));
-    printf("%d\n", get_max_word_speed(i));
+    printf("%d\n", get_max_speed(8, i));
+    printf("%d\n", get_max_speed(32, i));
     _Exit(1);
 }
 
@@ -105,16 +89,10 @@ static void load(static const unsigned num_threads){
 #define MISO null
 #endif
 
-#if CB_ENABLED
-#define CB cb
-#else
-#define CB null
-#endif
-
 int main(){
     interface spi_master_if i[1];
     par {
-        spi_master(i, 1, p_sclk, MOSI, MISO, p_ss, 1, CB);
+        spi_master_fwk(i, 1, p_sclk, MOSI, MISO, p_ss, 1, cb);
         app(i[0], MOSI_ENABLED, MISO_ENABLED);
         load(BURNT_THREADS);
     }

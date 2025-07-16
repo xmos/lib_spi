@@ -1,6 +1,6 @@
 {
     "BURNT_THREADS": [3, 7],
-    "CB_ENABLED": [0, 1],
     "MISO_MOSI_ENABLED": ["miso", "mosi", "miso_and_mosi"],
+    "SPI_MODE": [0, 1, 2, 3],
     "arch": ["xs2", "xs3"]
 }

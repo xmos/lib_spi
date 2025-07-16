@@ -18,18 +18,20 @@ class Resultlogger(Pyxsim.testers.ComparisonTester):
         self.result = dict(item.split('=') for item in id.split(', '))
 
     def run(self, output):
-        print(output)
         ignore_list = ["SPI Master checker"]
         result_8b = None
         result_32b = None
-        for line in output:
+        for line in output: print(line)
+        for line in reversed(output):
             if any(skip in line for skip in ignore_list):
                 continue
-            if result_8b is None:
-                result_8b = line
-                continue
-            if result_32b is None:
-                result_32b = line
+            if "PASS" in line:
+                width, speed = line.split(':')[1:3]
+                if int(width) == 8 and result_8b is None:
+                    result_8b = speed
+                    continue
+                if int(width) == 32 and result_32b is None:
+                    result_32b = speed
         self.result["result_8b"] = result_8b
         self.result["result_32b"] = result_32b
         assert result_8b and result_32b, "No timing results found"
@@ -46,8 +48,8 @@ def remove_test_results():
     # Post test cleanup
     sort_csv_table(test_results_file)
 
-def do_benchmark_sync(capfd, burnt, cb_enabled, miso_mosi_enabled, arch, id):
-    id_string = f"{burnt}_{cb_enabled}_{miso_mosi_enabled}_{arch}"
+def do_benchmark_sync(capfd, burnt, spi_mode, miso_mosi_enabled, arch, id):
+    id_string = f"{burnt}_{spi_mode}_{miso_mosi_enabled}_{arch}"
     filepath = Path(__file__).resolve().parent
     binary = filepath/f"{appname}/bin/{id_string}/{appname}_{id_string}.xe"
     assert binary.exists(), f"Binary file {binary} not present - please pre-build"
@@ -66,6 +68,7 @@ def do_benchmark_sync(capfd, burnt, cb_enabled, miso_mosi_enabled, arch, id):
         tester = tester,
         do_xe_prebuild = False,
         simthreads = [checker],
+        simargs=['--vcd-tracing', '-o ./trace.vcd -tile tile[0] -clock-blocks -ports -ports-detailed -pads -functions'],
         capfd=capfd)
 
 
