@@ -225,8 +225,8 @@ static uint32_t transfer32_sync_one_clkblk(
 
 static void get_mode_bits(spi_mode_t mode, unsigned &cpol, unsigned &cpha){
     switch(mode){
-        case SPI_MODE_0:cpol = 0; cpha= 1; break;
-        case SPI_MODE_1:cpol = 0; cpha= 0; break;
+        case SPI_MODE_0:cpol = 0; cpha= 0; break;
+        case SPI_MODE_1:cpol = 0; cpha= 1; break;
         case SPI_MODE_2:cpol = 1; cpha= 0; break;
         case SPI_MODE_3:cpol = 1; cpha= 1; break;
     }

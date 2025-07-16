@@ -2,6 +2,13 @@
 
 @Library('xmos_jenkins_shared_library@v0.39.0') _
 
+def clone_test_deps() {
+  dir("${WORKSPACE}") {
+    sh "git clone git@github.com:xmos/test_support"
+    sh "git -C test_support checkout v2.0.0"
+  }
+}
+
 getApproval()
 
 pipeline {
@@ -57,12 +64,12 @@ pipeline {
     }
 
     stage('Library checks') {
-        steps {
-            warnError("Library checks failed")
-            {
-                runLibraryChecks("${WORKSPACE}/${REPO_NAME}", "${params.INFR_APPS_VERSION}")
-            }
+      steps {
+        warnError("Library checks failed")
+        {
+          runLibraryChecks("${WORKSPACE}/${REPO_NAME}", "${params.INFR_APPS_VERSION}")
         }
+      }
     }
 
     stage('Documentation') {
@@ -74,33 +81,34 @@ pipeline {
     }
 
 
-    //stage('Tests')
-    //{
-    //  steps {
-    //      withTools(params.TOOLS_VERSION) {
-    //        dir("${REPO}/tests") {
-    //          createVenv(reqFile: "requirements.txt")
-    //          withVenv{
-    //            runPytest("--numprocesses=8 --testlevel=${params.TEST_LEVEL})
-    //          }
-    //        } // dir
-    //      } // withTools
-    //  } // steps
-    //  post
-    //  {
-    //    failure
-    //    {
-    //      //archiveArtifacts artifacts: "${REPO}/tests/logs/*.txt", fingerprint: true, allowEmptyArchive: true
-    //    }
-    //  }
-    //}
+    stage('Tests')
+    {
+      steps {
+        withTools(params.TOOLS_VERSION) {
+          clone_test_deps()
+          dir("${REPO_NAME}/tests") {
+            createVenv(reqFile: "requirements.txt")
+            xcoreBuild()
+            withVenv{
+              runPytest("--numprocesses=auto --testlevel=${params.TEST_LEVEL}")
+            }
+          } // dir
+        } // withTools
+      } // steps
+      post
+      {
+        always{
+          archiveArtifacts artifacts: "${REPO_NAME}/tests/logs/*.txt", fingerprint: true, allowEmptyArchive: true
+        }
+      }
+    }
 
     stage("Archive")
     {
-        steps
-        {
-            archiveSandbox(REPO_NAME)
-        }
+      steps
+      {
+        archiveSandbox(REPO_NAME)
+      }
     }
   }
   post {
