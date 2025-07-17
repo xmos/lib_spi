@@ -98,12 +98,16 @@ typedef interface spi_master_if {
   /** Sets the bit of port which is used for slave select (> 1b port type only)
    *  and only for spi_master_fwk. spi_master sets all bits in each port high/low
    *
-   *  The default value (if this is not called) is bit zero which is suitable
-   *  for 1-bit ports or where bit 0 of a wider port is used.
+   *  The default value (if this is not called) is the bit number is equal to 
+   *  the device_index (0->0, 1->1 etc.). 
    *
    *  \param ss_port_bit   Which bit number in the port to use for slave select.
    */
   void set_ss_port_bit(unsigned ss_port_bit);
+
+  /** Shut down the interface server.
+   */
+  void shutdown(void);
 
 #ifndef __DOXYGEN__
 } spi_master_if;

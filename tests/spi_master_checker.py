@@ -1,14 +1,12 @@
 # Copyright 2015-2025 XMOS LIMITED.
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
 import Pyxsim as px
-from typing import Sequence
 from functools import partial
 
 # We need to disable output buffering for this test to work on MacOS; this has
 # no effect on Linux systems. Let's redefine print once to avoid putting the 
 # same argument everywhere.
 print = partial(print, flush=True)
-
 
 class SPIMasterChecker(px.SimThread):
     """"
@@ -19,13 +17,14 @@ class SPIMasterChecker(px.SimThread):
                  sck_port: str, 
                  mosi_port: str, 
                  miso_port: str, 
-                 ss_ports: Sequence[str], 
+                 ss_port: str, 
                  setup_strobe_port: str, 
                  setup_data_port: str) -> None:
         self._miso_port = miso_port
         self._mosi_port = mosi_port
         self._sck_port = sck_port
-        self._ss_ports = ss_ports
+        self._ss_port = ss_port
+        self._ss_port_width = px.pyxsim.xsi_get_port_width(ss_port.split(':')[1] if ":" in ss_port else ss_port) # May need to trim on tile[x]:
         self._setup_strobe_port = setup_strobe_port
         self._setup_data_port = setup_data_port
 
@@ -40,6 +39,8 @@ class SPIMasterChecker(px.SimThread):
     def run(self) -> None:
         xsi: px.pyxsim.Xsi = self.xsi
 
+        print("SPI Master checker started")
+
         # some timing constants
         xsi_tick_freq_hz = float(1e15) # pending merge of https://github.com/xmos/test_support/blob/develop/lib/python/Pyxsim/pyxsim.py#L246-L265
         millisecond_ticks = xsi_tick_freq_hz / 1e3
@@ -47,15 +48,11 @@ class SPIMasterChecker(px.SimThread):
         nanosecond_ticks = xsi_tick_freq_hz / 1e9
 
         sck_value = xsi.sample_port_pins(self._sck_port)
-        ss_value = []
-
-        for i in range(len(self._ss_ports)):
-            ss_value.append(xsi.sample_port_pins(self._ss_ports[i]))
-
-        print("SPI Master checker started")
+        ss_value = xsi.sample_port_pins(self._ss_port)
+        ss_deaserted_value = (0xffffffff >> (32 - self._ss_port_width))
 
         while True:
-            #first do the setup rx
+            #first do the setup rx from DUT
             strobe_val = xsi.sample_port_pins(self._setup_strobe_port)
             if strobe_val == 1:
                 self.wait_for_port_pins_change([self._setup_strobe_port])
@@ -73,29 +70,28 @@ class SPIMasterChecker(px.SimThread):
             clock_half_period = millisecond_ticks / (expected_frequency_in_khz*2)
 
             all_ss_deserted = True
-            for i in range(len(self._ss_ports)):
-                if (xsi.sample_port_pins(self._ss_ports[i]) == 0):
-                    all_ss_deserted = False
-                    break
+            if (xsi.sample_port_pins(self._ss_port) != ss_deaserted_value):
+                all_ss_deserted = False
 
+            # Wait until all SS go high
             while not all_ss_deserted:
-                self.wait_for_port_pins_change(self._ss_ports)
-                all_ss_deserted = True
-                for i in range(len(self._ss_ports)):
-                    all_ss_deserted = all_ss_deserted and (xsi.sample_port_pins(self._ss_ports[i]) == 1)
+                self.wait_for_port_pins_change([self._ss_port])
+                all_ss_deserted = True if xsi.sample_port_pins(self._ss_port) == ss_deaserted_value else False
 
             error = False
 
-            active_slave = -1
 
+            # Wait for any SS to assert
+            active_slave = -1 # no active slaves
             while(active_slave == -1):
-                self.wait_for_port_pins_change(self._ss_ports)
-
-                for i in range(len(self._ss_ports)):
-                    if xsi.sample_port_pins(self._ss_ports[i]) == 0:
+                self.wait_for_port_pins_change([self._ss_port])
+                ss_port_val = xsi.sample_port_pins(self._ss_port)
+                for i in range(self._ss_port_width):
+                    if ((ss_port_val >> i) & 1) == 0:
+                        assert active_slave == -1, f"more than one SS asserted, SS port val: 0x{ss_port_val:x}"
                         active_slave = i
-                        break
-
+                        # print(f"active_slave: {active_slave}")
+                        
             last_clock_event_time = xsi.get_time()
 
             rx_bit_counter = 0
@@ -118,21 +114,24 @@ class SPIMasterChecker(px.SimThread):
                 tx_bit_counter += 1
                 tx_byte = tx_byte << 1
 
-            ss_value = xsi.sample_port_pins(self._ss_ports[active_slave])
+            ss_value = ((xsi.sample_port_pins(self._ss_port) >> active_slave) & 1)
             sck_value = xsi.sample_port_pins(self._sck_port)
 
             while ss_value == 0:
-                self.wait_for_port_pins_change(self._ss_ports + [self._sck_port])
+                self.wait_for_port_pins_change([self._ss_port] + [self._sck_port])
 
-                for i in range(len(self._ss_ports)):
-                    if i != active_slave and xsi.sample_port_pins(self._ss_ports[i]) == 0:
+                # check no other SS asserted
+                ss_port_val = xsi.sample_port_pins(self._ss_port) & ss_deaserted_value
+                # print(f"{self._ss_port}, 0x{ss_port_val:x}, 0x{ss_deaserted_value:x}, {active_slave}, {(ss_deaserted_value & ~(1 << active_slave)):x}")
+                for i in range(self._ss_port_width):
+                    if not ss_port_val & (1 << i) and i != active_slave:
                         error = True
-                        print("Second slave selected during first transaction")
+                        print(f"Second slave selected during first transaction, SS port val: 0x{ss_port_val:x} at time: {xsi.get_time() / nanosecond_ticks}ns")
 
-                if (ss_value == xsi.sample_port_pins(self._ss_ports[active_slave]) and (sck_value == xsi.sample_port_pins(self._sck_port))):
+                if (ss_value == ((xsi.sample_port_pins(self._ss_port) >> active_slave) & 1) and (sck_value == xsi.sample_port_pins(self._sck_port))):
                     continue
 
-                ss_value = xsi.sample_port_pins(self._ss_ports[active_slave])
+                ss_value = ((xsi.sample_port_pins(self._ss_port) >> active_slave) & 1)
                 sck_value = xsi.sample_port_pins(self._sck_port)
 
                 if ss_value == 0:

@@ -19,7 +19,7 @@ def do_test(capfd, burnt, spi_mode, miso_mosi_enabled, arch, id):
     checker = SPIMasterChecker("tile[0]:XS1_PORT_1C",
                                "tile[0]:XS1_PORT_1D",
                                "tile[0]:XS1_PORT_1A",
-                               ["tile[0]:XS1_PORT_1B"],
+                               "tile[0]:XS1_PORT_1B",
                                "tile[0]:XS1_PORT_1E",
                                "tile[0]:XS1_PORT_16B")
 
@@ -32,7 +32,7 @@ def do_test(capfd, burnt, spi_mode, miso_mosi_enabled, arch, id):
     
     Pyxsim.run_on_simulator_(
         binary,
-        simargs=['--vcd-tracing', '-o ./trace.vcd -tile tile[0] -ports -pads -functions'],
+        simargs=['--vcd-tracing', '-o ./trace.vcd -tile tile[0] -ports -ports-detailed -pads -functions'],
         do_xe_prebuild = False,
         simthreads = [checker],
         capfd=capfd)

@@ -345,8 +345,12 @@ void spi_master(server interface spi_master_if i[num_clients],
                 // Do nothing this is invalid since this component sets all port bits high/low during select
                 break;
             }
+
+            case i[int x].shutdown(void):{
+                // Do nothing currently
+                break; 
+            }
         }
     }
-
 }
 

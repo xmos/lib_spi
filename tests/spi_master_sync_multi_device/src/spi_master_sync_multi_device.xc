@@ -10,7 +10,7 @@
 #define NUM_SS 2
 
 in buffered port:32   p_miso  = XS1_PORT_1A;
-out port              p_ss[2] = {XS1_PORT_1B, XS1_PORT_1G};
+out port              p_ss    = XS1_PORT_4A;
 out buffered port:32  p_sclk  = XS1_PORT_1C;
 out buffered port:32  p_mosi  = XS1_PORT_1D;
 clock                 cb      = XS1_CLKBLK_1;
@@ -73,16 +73,10 @@ static void load(static const unsigned num_threads){
 #define MISO null
 #endif
 
-#if CB_ENABLED
-#define CB cb
-#else
-#define CB null
-#endif
-
 int main(){
     interface spi_master_if i[1];
     par {
-        spi_master(i, 1, p_sclk, MOSI, MISO, p_ss, NUM_SS, CB);
+        spi_master_fwk(i, 1, p_sclk, MOSI, MISO, p_ss, NUM_SS, cb);
         app(i[0], NUM_SS,  MOSI_ENABLED, MISO_ENABLED);
         load(BURNT_THREADS);
     }

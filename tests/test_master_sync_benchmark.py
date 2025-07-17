@@ -57,7 +57,7 @@ def do_benchmark_sync(capfd, burnt, spi_mode, miso_mosi_enabled, arch, id):
     checker = SPIMasterChecker("tile[0]:XS1_PORT_1C",
                                "tile[0]:XS1_PORT_1D",
                                "tile[0]:XS1_PORT_1A",
-                               ["tile[0]:XS1_PORT_1B"],
+                               "tile[0]:XS1_PORT_1B",
                                "tile[0]:XS1_PORT_1E",
                                "tile[0]:XS1_PORT_16B")
 

@@ -9,10 +9,11 @@
 #include "spi_sync_tester.h"
 
 in buffered port:32   p_miso  = XS1_PORT_1A;
-out port              p_ss[1] = {XS1_PORT_1B};
+out port              p_ss    = XS1_PORT_1B;
 out buffered port:32  p_sclk  = XS1_PORT_1C;
 out buffered port:32  p_mosi  = XS1_PORT_1D;
 clock                 cb      = XS1_CLKBLK_1;
+
 
 out port setup_strobe_port = XS1_PORT_1E;
 out port setup_data_port = XS1_PORT_16B;
@@ -23,6 +24,7 @@ void app(client interface spi_master_if i, int mosi_enabled, int miso_enabled, c
         i.begin_transaction(0, 736, SPI_MODE_3);
         i.transfer8(0xff);
         i.end_transaction(100);
+        delay_microseconds(1);
         c <: 1;
     }
 }
@@ -72,11 +74,6 @@ static void load(static const unsigned num_threads){
 #define MISO null
 #endif
 
-#if CB_ENABLED
-#define CB cb
-#else
-#define CB null
-#endif
 /*
  * Tests:
  *  - no client is ever starved
@@ -86,7 +83,7 @@ int main(){
     chan c[3];
     interface spi_master_if i[3];
     par {
-        spi_master(i, 3, p_sclk, MOSI, MISO, p_ss, 1, CB);
+        spi_master_fwk(i, 3, p_sclk, MOSI, MISO, p_ss, 1, cb);
         app(i[0], MOSI_ENABLED, MISO_ENABLED, c[0]);
         app(i[1], MOSI_ENABLED, MISO_ENABLED, c[1]);
         app(i[2], MOSI_ENABLED, MISO_ENABLED, c[2]);

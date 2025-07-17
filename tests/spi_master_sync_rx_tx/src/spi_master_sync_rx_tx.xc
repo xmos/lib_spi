@@ -18,7 +18,7 @@ out port setup_data_port = XS1_PORT_16B;
 
 void app(client interface spi_master_if i, int mosi_enabled, int miso_enabled, int spi_mode){
 #define SPEED_TESTS 3
-    unsigned speed_lut[SPEED_TESTS] = {1000, 10000, 50000}; // Speed in kHz
+    unsigned speed_lut[SPEED_TESTS] = {1000, 10000, 33000}; // Speed in kHz
 
     // printf("Device 8 SPI_MODE: %d\n", spi_mode);
     for(unsigned speed_index = 0; speed_index < SPEED_TESTS; speed_index++){

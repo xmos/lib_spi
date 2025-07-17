@@ -5,6 +5,7 @@ import Pyxsim
 import pytest
 from spi_master_checker import SPIMasterChecker
 from helpers import generate_tests_from_json, create_if_needed
+from itertools import zip_longest
 
 
 appname = "spi_master_sync_multi_device"
@@ -19,7 +20,7 @@ def do_test(capfd, burnt, cb_enabled, miso_mosi_enabled, arch, id):
     checker = SPIMasterChecker("tile[0]:XS1_PORT_1C",
                                "tile[0]:XS1_PORT_1D",
                                "tile[0]:XS1_PORT_1A",
-                               ["tile[0]:XS1_PORT_1B", "tile[0]:XS1_PORT_1G"],
+                               "tile[0]:XS1_PORT_4A", # multiple bits of this port for SS
                                "tile[0]:XS1_PORT_1E",
                                "tile[0]:XS1_PORT_16B")
 
@@ -32,7 +33,7 @@ def do_test(capfd, burnt, cb_enabled, miso_mosi_enabled, arch, id):
     
     Pyxsim.run_on_simulator_(
         binary,
-        #simargs=['--vcd-tracing', '-o ./spi_master_sync_multi_device/trace.vcd -tile tile[0] -pads -functions'],
+        # simargs=['--vcd-tracing', '-o trace.vcd -tile tile[0] -pads -ports -functions'],
         do_xe_prebuild = False,
         simthreads = [checker],
         capfd=capfd)
@@ -40,13 +41,16 @@ def do_test(capfd, burnt, cb_enabled, miso_mosi_enabled, arch, id):
     out, err = capfd.readouterr()
     output = out.split('\n')[:-1]
 
+    # Print expected vs actual as columns
     with capfd.disabled():
-        print(f"expected: {expected}")
-        print(f"Actual output: {output}")
+        print(err) # Show any exceptions
+        print(f"\n{'***EXPECTED***':<40}***ACTUAL***")
+        for e, o in zip_longest(expected, output, fillvalue = ''):
+            print(f"{str(e):<40}{str(o)}")
 
     assert tester.run(output)
 
 
 @pytest.mark.parametrize("params", generate_tests_from_json(test_params_file)[0], ids=generate_tests_from_json(test_params_file)[1])
-def test_master_sync_rx_tx(capfd, params, request):
+def test_master_sync_multi_device(capfd, params, request):
     do_test(capfd, *params, request.node.callspec.id)

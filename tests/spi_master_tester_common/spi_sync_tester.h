@@ -25,10 +25,11 @@ int test_transfer8(client interface spi_master_if i,
 
     for(unsigned j=0;j<NUMBER_OF_TEST_BYTES;j++){
         uint8_t rx = i.transfer8(tx_data[j]);
+        // printf("rx, test_transfer8 - 0x%x\n", rx);
         if(miso_enabled){
             if(rx != rx_data[j]) error = 1;
             if(VERBOSE && (rx != rx_data[j]))
-                printf("%02x %02x\n", rx, rx_data[j]);
+                printf("Got: %02x Expected: %02x\n", rx, rx_data[j]);
         }
     }
 

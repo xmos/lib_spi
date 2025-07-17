@@ -9,7 +9,7 @@
 #include "spi_sync_tester.h"
 
 in buffered port:32    p_miso   = XS1_PORT_1A;
-out port               p_ss[1]  = {XS1_PORT_1B};
+out port               p_ss     = XS1_PORT_1B;
 out buffered port:32   p_sclk   = XS1_PORT_1C;
 out buffered port:32   p_mosi   = XS1_PORT_1D;
 clock                  cb       = XS1_CLKBLK_1;
@@ -79,7 +79,7 @@ int main(){
 #endif
             par {
                 app(i[0], 1, 1);
-                spi_master(i, 1, p_sclk, p_mosi, p_miso, p_ss, 1, cb);
+                spi_master_fwk(i, 1, p_sclk, p_mosi, p_miso, p_ss, 1, cb);
             }
         }
     }

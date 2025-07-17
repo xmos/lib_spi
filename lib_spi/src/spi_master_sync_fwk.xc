@@ -14,6 +14,8 @@ extern "C"{
     #include "spi_fwk.h"
 }
 
+#define SPI_MAX_DEVICES 32 //Used to size the array of which bit in the SS port maps to which device
+
 // Optional function to determine the actual set speed for particular clock settings.
 unsigned spi_master_get_actual_clock_rate(spi_master_source_clock_t source_clock, unsigned divider){
     unsigned actual_speed_khz = ((source_clock == spi_master_source_clock_ref) ? PLATFORM_REFERENCE_MHZ : PLATFORM_NODE_0_SYSTEM_FREQUENCY_MHZ) * 1000 
@@ -63,14 +65,19 @@ void spi_master_fwk(server interface spi_master_if i[num_clients],
         // We will hit an exception shortly after this if NULL
     }
 
-    spi_master_t spi_ctx;
+    spi_master_t spi_master;
     spi_master_device_t spi_dev;
     unsafe{
-        spi_master_init(&spi_ctx, cb, (port)p_ss, (port)sclk, (port)mosi, (port)miso);
+        spi_master_init(&spi_master, cb, (port)p_ss, (port)sclk, (port)mosi, (port)miso);
     }
 
     int accepting_new_transactions = 1;
-    unsigned ss_port_bit[num_clients] = {0};
+
+    // By default use the port bit which is the number of the client (client 0 uses port bit 0 etc.)
+    uint8_t ss_port_bit[SPI_MAX_DEVICES];
+    for(int i = 0; i < SPI_MAX_DEVICES; i++){
+        ss_port_bit[i] = i;
+    }
 
     while(1){
         select {
@@ -92,16 +99,16 @@ void spi_master_fwk(server interface spi_master_if i[num_clients],
 
                 unsigned cpol = mode >> 1;
                 unsigned cpha = mode & 0x1;
-                spi_master_device_init(&spi_dev, &spi_ctx,
-                    ss_port_bit[x],
+                spi_master_device_init(&spi_dev, &spi_master,
+                    ss_port_bit[device_index],
                     cpol, cpha,
                     source_clock,
                     divider,
                     spi_master_sample_delay_0,
                     0, 0 ,0 ,0 );
 
-                spi_ctx.current_device = 0xffffffff;// This is needed to force mode and speed in spi_master_start_transaction()
-                                                    // Otherwise fwk_spi sees the next transaction as the same settings as last
+                spi_master.current_device = 0xffffffff; // This is needed to force mode and speed in spi_master_start_transaction()
+                                                        // Otherwise fwk_spi sees the next transaction on the existing device as the same settings as last on the same client
                 spi_master_start_transaction(&spi_dev);
                 break;
             }
@@ -114,7 +121,7 @@ void spi_master_fwk(server interface spi_master_if i[num_clients],
             }
 
             case i[int x].transfer8(uint8_t data)-> uint8_t r :{
-                spi_master_transfer(&spi_dev, (uint8_t *)&data, (uint8_t *)&r, 1);
+                spi_master_transfer(&spi_dev, (uint8_t *)&data, &r, 1);
                 break;
             }
 
@@ -127,7 +134,15 @@ void spi_master_fwk(server interface spi_master_if i[num_clients],
             }
 
             case i[int x].set_ss_port_bit(unsigned port_bit):{
+                if(port_bit > SPI_MAX_DEVICES){
+                    printstrln("Invalid port bit - must be less than SPI_MAX_DEVICES");
+                }
                 ss_port_bit[x] = port_bit;
+                break;
+            }
+
+            case i[int x].shutdown(void):{
+                spi_master_deinit(&spi_master);
                 break;
             }
         }

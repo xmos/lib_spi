@@ -23,7 +23,7 @@ def do_test(capfd, combined, burnt, mosi_enabled, transfer_width, speed_tests, s
     checker = SPIMasterChecker("tile[0]:XS1_PORT_1C",
                                "tile[0]:XS1_PORT_1D",
                                "tile[0]:XS1_PORT_1A",
-                               ["tile[0]:XS1_PORT_1B"],
+                               "tile[0]:XS1_PORT_1B",
                                "tile[0]:XS1_PORT_1E",
                                "tile[0]:XS1_PORT_16B")
 
@@ -45,7 +45,7 @@ def do_test(capfd, combined, burnt, mosi_enabled, transfer_width, speed_tests, s
     output = out.split('\n')[:-1]
 
     with capfd.disabled():
-        print()
+        print(err)
         print(f"{'Expected':<40}Actual")
         for e, o in zip_longest(expected, output, fillvalue = ''):
             print(f"{str(e):<40}{str(o)}")

@@ -74,30 +74,6 @@ typedef enum {
 } spi_master_source_clock_t;
 
 /**
- * Convenience macro that may be used to specify SPI Mode 0 to
- * spi_master_device_init() or spi_slave() in place of cpol and cpha.
- */
-#define SPI_MODE_0 0,0
-
-/**
- * Convenience macro that may be used to specify SPI Mode 1 to
- * spi_master_device_init() or spi_slave() in place of cpol and cpha.
- */
-#define SPI_MODE_1 0,1
-
-/**
- * Convenience macro that may be used to specify SPI Mode 2 to
- * spi_master_device_init() or spi_slave() in place of cpol and cpha.
- */
-#define SPI_MODE_2 1,0
-
-/**
- * Convenience macro that may be used to specify SPI Mode 3 to
- * spi_master_device_init() or spi_slave() in place of cpol and cpha.
- */
-#define SPI_MODE_3 1,1
-
-/**
  * Struct to hold a SPI master context.
  *
  * The members in this struct should not be accessed directly.
