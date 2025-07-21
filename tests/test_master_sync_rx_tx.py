@@ -4,7 +4,7 @@ from pathlib import Path
 import Pyxsim
 import pytest
 from spi_master_checker import SPIMasterChecker
-from helpers import generate_tests_from_json, create_if_needed
+from helpers import generate_tests_from_json, create_if_needed, print_expected_vs_output
 from itertools import zip_longest
 
 appname = "spi_master_sync_rx_tx"
@@ -32,22 +32,13 @@ def do_test(capfd, burnt, spi_mode, miso_mosi_enabled, arch, id):
     
     Pyxsim.run_on_simulator_(
         binary,
-        simargs=['--vcd-tracing', '-o ./trace.vcd -tile tile[0] -ports -ports-detailed -pads -functions'],
+        # simargs=['--vcd-tracing', '-o ./trace.vcd -tile tile[0] -ports -ports-detailed -pads -functions'],
         do_xe_prebuild = False,
         simthreads = [checker],
         capfd=capfd)
 
-    out, err = capfd.readouterr()
-    output = out.split('\n')[:-1]
-
-    with capfd.disabled():
-        print()
-        print(f"{'***EXPECTED***':<40}***ACTUAL***")
-        for e, o in zip_longest(expected, output, fillvalue = ''):
-            print(f"{str(e):<40}{str(o)}")
-
-    assert tester.run(output)
-
+    output = print_expected_vs_output(expected, capfd)
+    assert tester.run(output), output
 
 @pytest.mark.parametrize("params", generate_tests_from_json(test_params_file)[0], ids=generate_tests_from_json(test_params_file)[1])
 def test_master_sync_rx_tx(capfd, params, request):

@@ -4,8 +4,7 @@ from pathlib import Path
 import Pyxsim
 import pytest
 from spi_master_checker import SPIMasterChecker
-import os
-from helpers import generate_tests_from_json, create_if_needed
+from helpers import generate_tests_from_json, create_if_needed, print_expected_vs_output
 
 
 appname = "spi_master_sync_multi_client"
@@ -33,20 +32,14 @@ def do_test(capfd, burnt, cb_enabled, miso_mosi_enabled, arch, id):
     
     Pyxsim.run_on_simulator_(
         binary,
-        simargs=['--vcd-tracing', '-o ./spi_master_sync_multi_device/trace.vcd -tile tile[0] -pads -functions'],
+        # simargs=['--vcd-tracing', '-o ./spi_master_sync_multi_device/trace.vcd -tile tile[0] -pads -functions'],
         do_xe_prebuild = False,
         simthreads = [checker],
         capfd=capfd,
         timeout=30)
 
-    out, err = capfd.readouterr()
-    output = out.split('\n')[:-1]
-
-    with capfd.disabled():
-        print(f"expected: {expected}")
-        print(f"Actual output: {output}")
-
-    assert tester.run(output)
+    output = print_expected_vs_output(expected, capfd)
+    assert tester.run(output), output
 
 
 @pytest.mark.parametrize("params", generate_tests_from_json(test_params_file)[0], ids=generate_tests_from_json(test_params_file)[1])

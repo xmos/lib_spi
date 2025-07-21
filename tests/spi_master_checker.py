@@ -65,7 +65,7 @@ class SPIMasterChecker(px.SimThread):
             expected_device_id = self.get_setup_data(xsi, self._setup_strobe_port, self._setup_data_port)
             expected_interframe_space = self.get_setup_data(xsi, self._setup_strobe_port, self._setup_data_port)
             expected_num_bytes = self.get_setup_data(xsi, self._setup_strobe_port, self._setup_data_port)
-            # print(f"Got Settings:cpol {expected_cpol} cpha {expected_cpha} mosi {expected_miso_enabled} miso {expected_miso_enabled} expected_device_id {expected_device_id} expected_interframe_space {expected_interframe_space} expected_num_bytes {expected_num_bytes}")
+            # print(f"Got Settings cpol:{expected_cpol} cpha:{expected_cpha} mosi:{expected_miso_enabled} miso:{expected_miso_enabled} expected_frequency_in_khz:{expected_frequency_in_khz} expected_device_id:{expected_device_id} expected_interframe_space:{expected_interframe_space} expected_num_bytes:{expected_num_bytes}")
 
             clock_half_period = millisecond_ticks / (expected_frequency_in_khz*2)
 
@@ -138,7 +138,7 @@ class SPIMasterChecker(px.SimThread):
                     clock_event_time = xsi.get_time()
                     measured_time_elapsed = clock_event_time - last_clock_event_time
                     if clock_edge_number > 1 and (measured_time_elapsed*1.05) < clock_half_period :
-                        print(f"ERROR: Clock half period less than allowed for given SCLK frequency, measured_time_elapsed: {measured_time_elapsed/nanosecond_ticks}ns clock_half_period:{clock_half_period/nanosecond_ticks}ns")
+                        print(f"ERROR: Clock half period less than allowed for given SCLK frequency, measured_time_elapsed: {measured_time_elapsed/nanosecond_ticks:.2f}ns clock_half_period:{clock_half_period/nanosecond_ticks}ns, at time: {xsi.get_time() / nanosecond_ticks}ns")
                         error = True
                     last_clock_event_time = clock_event_time
 
@@ -169,13 +169,13 @@ class SPIMasterChecker(px.SimThread):
                                 expected_rx_byte = rx_data[(rx_bit_counter//8) - 1]
                                 #print "slave got {seen} and expected {expect}".format(seen=rx_byte, expect=expected_rx_byte)
                                 if expected_rx_byte != rx_byte:
-                                    print(f"ERROR: slave recieved incorrect data Got:{rx_byte:02x} Expected:{expected_rx_byte:02x} at time: {xsi.get_time() / nanosecond_ticks}ns")
+                                    print(f"ERROR: slave received incorrect data Got:{rx_byte:02x} Expected:{expected_rx_byte:02x} at time: {xsi.get_time() / nanosecond_ticks}ns")
                                     error = True
                                 # print(f"Checker got byte: {rx_byte:02x} at time {xsi.get_time() / nanosecond_ticks}ns")
                                 rx_byte = 0
                 else:
                     if clock_edge_number != expected_num_bytes*2*8:
                         error = True
-                        print(f"ERROR: incorrect number of clock edges at slave {clock_edge_number}/{expected_num_bytes*2*8}")
+                        print(f"ERROR: incorrect number of clock edges at slave {clock_edge_number}/{expected_num_bytes*2*8} at time: {xsi.get_time() / nanosecond_ticks}ns")
                     if error:
                         print(f"Fail: CPOL:{expected_cpol} CPHA:{expected_cpha} KHz:{expected_frequency_in_khz} MOSI Enabled:{expected_mosi_enabled} MISO Enabled:{expected_miso_enabled}")

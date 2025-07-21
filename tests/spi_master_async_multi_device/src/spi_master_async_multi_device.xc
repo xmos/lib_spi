@@ -10,7 +10,7 @@
 #define NUM_SS 2
 
 in buffered port:32    p_miso   = XS1_PORT_1A;
-out port               p_ss[2]  = {XS1_PORT_1B, XS1_PORT_1G};
+out port               p_ss     = XS1_PORT_4A;
 out buffered port:32   p_sclk   = XS1_PORT_1C;
 out buffered port:32   p_mosi   = XS1_PORT_1D;
 clock                  cb0      = XS1_CLKBLK_1;
@@ -19,7 +19,8 @@ clock                  cb1      = XS1_CLKBLK_2;
 out port setup_strobe_port = XS1_PORT_1E;
 out port setup_data_port = XS1_PORT_16B;
 
-#define KBPS 50000
+#define KBPS 10000
+
 static int test_transfer8(client interface spi_master_async_if i,
         out port setup_strobe_port,
         out port setup_data_port,
@@ -69,8 +70,6 @@ static int test_transfer8(client interface spi_master_async_if i,
     }
     if(error)
         printf("ERROR: master got the wrong data\n");
-    if(VERBOSE)
-        printf("Transfer complete, error:%d\n", error);
 
     return error;
 }
@@ -166,6 +165,8 @@ void app(client interface spi_master_async_if i, unsigned num_ss,
     test_transfer8 (i, setup_strobe_port, setup_data_port, 0, ifg,
             mode, KBPS, mosi_enabled, miso_enabled, NUMBER_OF_TEST_BYTES);
 
+    printf("Transfers complete\n");
+
     _Exit(0);
 }
 
@@ -188,7 +189,7 @@ static void load(static const unsigned num_threads){
 int main(){
     interface spi_master_async_if i[1];
     par {
-        spi_master_async(i, 1, p_sclk, MOSI, p_miso, p_ss, 2, cb0, cb1);
+        spi_master_async_fwk(i, 1, p_sclk, MOSI, p_miso, p_ss, 2, cb0, cb1);
         app(i[0], NUM_SS, MOSI_ENABLED, 1);
         load(BURNT_THREADS);
     }

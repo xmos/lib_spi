@@ -280,6 +280,18 @@ typedef interface spi_master_async_if  {
   void retrieve_transfer_buffers_32(REFERENCE_PARAM(uint32_t_movable_ptr_t, inbuf),
                                     REFERENCE_PARAM(uint32_t_movable_ptr_t, outbuf));
 
+
+  /** Sets the bit of port which is used for slave select (> 1b port type only)
+   *  and only for spi_master_fwk. spi_master sets all bits in each port high/low
+   *
+   *  The default value (if this is not called) is the bit number is equal to 
+   *  the device_index (0->0, 1->1 etc.). 
+   *
+   *  \param ss_port_bit   Which bit number in the port to use for slave select.
+   */
+  void set_ss_port_bit(unsigned ss_port_bit);
+
+
   /** Shut down the interface server.
    */
   void shutdown(void);
@@ -315,6 +327,18 @@ void spi_master_async(
         NULLABLE_RESOURCE(out_buffered_port_32_t, mosi),
         in_buffered_port_32_t miso,
         out_port p_ss[num_slaves],
+        static_const_size_t num_slaves,
+        clock clk0,
+        clock clk1);
+
+[[combinable]]
+void spi_master_async_fwk(
+        SERVER_INTERFACE(spi_master_async_if, i[num_clients]),
+        static_const_size_t num_clients,
+        out_buffered_port_32_t sclk,
+        NULLABLE_RESOURCE(out_buffered_port_32_t, mosi),
+        in_buffered_port_32_t miso,
+        out_port p_ss,
         static_const_size_t num_slaves,
         clock clk0,
         clock clk1);

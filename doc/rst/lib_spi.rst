@@ -433,10 +433,10 @@ Asynchronous master command buffering
 In order to provide asynchronous behaviour for multiple clients the asynchronous master
 will store up to one ``begin_transaction`` and one ``init_transfer_array_8`` or
 ``init_transfer_array_32`` from each client. This means that if the
-master is busy  doing a transfer for client *X*, then client *Y* will
+master is busy doing a transfer for client *X*, then client *Y* will
 still be able to begin a transaction and send data fully
 asynchronously. Consequently, after client *Y* has issued
-``init_transfer_array_8`` or ``init_transfer_array_32`` the it will be
+``init_transfer_array_8`` or ``init_transfer_array_32`` it will be
 able to continue operation whilst waiting for the notification.
 
 Asynchronous master usage state machine

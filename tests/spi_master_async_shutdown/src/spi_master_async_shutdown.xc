@@ -1,4 +1,4 @@
-// Copyright 2015-2025 XMOS LIMITED.
+// Copyright 2025 XMOS LIMITED.
 // This Software is subject to the terms of the XMOS Public Licence: Version 1.
 #include <platform.h>
 #include <xclib.h>
@@ -7,15 +7,19 @@
 #include "spi.h"
 #include "spi_async_tester.h"
 
-in buffered port:32    p_miso   = XS1_PORT_1A;
-out port               p_ss     = XS1_PORT_1B;
-out buffered port:32   p_sclk   = XS1_PORT_1C;
-out buffered port:32   p_mosi   = XS1_PORT_1D;
-clock                  cb0      = XS1_CLKBLK_1;
-clock                  cb1      = XS1_CLKBLK_2;
+in buffered port:32   p_miso  = XS1_PORT_1A;
+out port              p_ss    = XS1_PORT_1B;
+out buffered port:32  p_sclk  = XS1_PORT_1C;
+out buffered port:32  p_mosi  = XS1_PORT_1D;
+clock                 cb0     = XS1_CLKBLK_1;
+clock                 cb1     = XS1_CLKBLK_2;
 
 out port setup_strobe_port = XS1_PORT_1E;
 out port setup_data_port = XS1_PORT_16B;
+
+#define SPI_MODE SPI_MODE_0
+#define TRANSFER_WIDTH 8
+#define SPI_KBPS 10000
 
 typedef enum {
     SPI_TRANSFER_WIDTH_8,
@@ -27,16 +31,12 @@ void flush_print(void){
 }
 
 /* This counts up to 16 bytes (steps of 4 if 32b) */
-static void inc_state(unsigned &count, spi_mode_t &mode,
-        unsigned &speed_index, t_transfer_width &transfer_width){
-
+static void inc_state(unsigned &count, spi_mode_t &mode, t_transfer_width &transfer_width){
+    // printf("count: %u\n", count);
     if(count == 16){
-        count = 0;
-        if(++speed_index == SPEED_TESTS){
-            printf("Transfers complete\n");
-            flush_print();
-            _Exit(0);
-        }
+        printf("Transfers complete\n");
+        flush_print();
+        _Exit(0);
     } else {
         if(transfer_width == SPI_TRANSFER_WIDTH_8){
             count++;
@@ -44,20 +44,19 @@ static void inc_state(unsigned &count, spi_mode_t &mode,
             count+=4;
         }
     }
-    // printf("count: %u, speed_idx: %u (%u), mode: %d width: %d\n", count, speed_index, SPEED_TESTS, mode, transfer_width * 24 + 8);
+    // printf("count: %u, mode: %d width: %d\n", count, mode, transfer_width * 24 + 8);
 }
 
-[[combinable]]
-void app(client interface spi_master_async_if spi_i, int mosi_enabled, int miso_enabled){
-    // if testing just one speed, do fastest (idx 0)
-    unsigned speed_lut[3] = {10000, 1000, 100};
-
+void app(client interface spi_master_async_if spi_i){
     uint8_t tx8[NUMBER_OF_TEST_BYTES];
     uint8_t rx8[NUMBER_OF_TEST_BYTES];
 
     for(unsigned i=0;i<NUMBER_OF_TEST_BYTES;i++){
         tx8[i] = tx_data[i];
     }
+
+    const int mosi_enabled = 1;
+    const int miso_enabled = 1;
 
     uint8_t * movable tx_ptr8 = tx8;
     uint8_t * movable rx_ptr8 = rx8;
@@ -75,11 +74,10 @@ void app(client interface spi_master_async_if spi_i, int mosi_enabled, int miso_
     uint32_t * movable rx_ptr32 = rx32;
  
     unsigned inter_frame_gap = 1000;
-    unsigned speed_index = 0;
     unsigned device_id = 0;
 
     spi_mode_t mode = SPI_MODE;
-    unsigned speed_in_kbps = speed_lut[speed_index];
+    unsigned speed_in_kbps = SPI_KBPS;
     t_transfer_width transfer_width = TRANSFER_WIDTH == 8 ? SPI_TRANSFER_WIDTH_8 : SPI_TRANSFER_WIDTH_32;
     unsigned count = 0;    //bytes or words
 
@@ -90,6 +88,7 @@ void app(client interface spi_master_async_if spi_i, int mosi_enabled, int miso_
 
     //setup the transaction
     spi_i.begin_transaction(device_id, speed_in_kbps, mode);
+
     if(transfer_width == SPI_TRANSFER_WIDTH_8){
         spi_i.init_transfer_array_8(move(rx_ptr8), move(tx_ptr8), count);
     } else {
@@ -97,10 +96,8 @@ void app(client interface spi_master_async_if spi_i, int mosi_enabled, int miso_
     }
 
 
-
     while(1){
         select {
-
             case spi_i.transfer_complete():{
                 if(transfer_width == SPI_TRANSFER_WIDTH_8){
                     spi_i.retrieve_transfer_buffers_8(rx_ptr8, tx_ptr8);
@@ -116,7 +113,7 @@ void app(client interface spi_master_async_if spi_i, int mosi_enabled, int miso_
                             uint8_t rx = rx_ptr8[j];
                             if(rx != rx_data[j]) {
                                 printf("Error, incorrect 8b data at idx %u received: 0x%x expecting(0x%x)\n", j, rx, rx_data[j]);
-                                printf("Speed: %, mode: %u, count: %u\n", speed_in_kbps, mode, count);
+                                printf("Speed: %u, mode: %u, count: %u\n", speed_in_kbps, mode, count);
                                 flush_print();
                                 _Exit(1);
                             }
@@ -129,7 +126,7 @@ void app(client interface spi_master_async_if spi_i, int mosi_enabled, int miso_
                         if(miso_enabled){
                             if(rx != (rx_data, unsigned[])[j]) {
                                 printf("Error, incorrect 32b data at idx %u received: 0x%x expecting(0x%x)\n", j, rx, rx_data[j]);
-                                printf("Speed: %, mode: %u, count: %u\n", speed_in_kbps, mode, count);
+                                printf("Speed: %u, mode: %u, count: %u\n", speed_in_kbps, mode, count);
                                 flush_print();
                                 _Exit(1);
                             }
@@ -137,8 +134,17 @@ void app(client interface spi_master_async_if spi_i, int mosi_enabled, int miso_
                     }
 
                 }
-                //if error then abort
-                inc_state(count, mode, speed_index, transfer_width);
+                
+                inc_state(count, mode, transfer_width);
+
+                // We get a glitch in SS when we restart which is seen as 0 length transfer, so tell checker to expect that
+                broadcast_settings(setup_strobe_port, setup_data_port,
+                            0, speed_in_kbps, mosi_enabled, miso_enabled,
+                            device_id, inter_frame_gap, 0);
+
+                spi_i.shutdown();
+                delay_microseconds(100); // Allow time for SPI to reinit
+
                 if(transfer_width == SPI_TRANSFER_WIDTH_8){
                     broadcast_settings(setup_strobe_port, setup_data_port,
                                 mode, speed_in_kbps, mosi_enabled, miso_enabled,
@@ -163,38 +169,15 @@ void app(client interface spi_master_async_if spi_i, int mosi_enabled, int miso_
     }
 }
 
-static void load(static const unsigned num_threads){
-    switch(num_threads){
-    case 2: par {par(int i=0;i<2;i++) while(1);}break;
-    case 3: par {par(int i=0;i<3;i++) while(1);}break;
-    case 4: par {par(int i=0;i<4;i++) while(1);}break;
-    case 5: par {par(int i=0;i<5;i++) while(1);}break;
-    case 6: par {par(int i=0;i<6;i++) while(1);}break;
-    case 7: par {par(int i=0;i<7;i++) while(1);}break;
-    }
-}
-
-#if MOSI_ENABLED
-#define MOSI p_mosi
-#else
-#define MOSI null
-#endif
 
 int main(){
     interface spi_master_async_if i[1];
     par {
-#if COMBINED == 1
-        [[combine]]
-        par {
-            spi_master_async_fwk(i, 1, p_sclk, MOSI, p_miso, p_ss, 1, cb0, cb1);
-            app(i[0], MOSI_ENABLED, 1);
+        while(1){
+            spi_master_async_fwk(i, 1, p_sclk, p_mosi, p_miso, p_ss, 1, cb0, cb1);
+            // printf("restarting spi\n");
         }
-        load(BURNT_THREADS);
-#else
-        spi_master_async_fwk(i, 1, p_sclk, MOSI, p_miso, p_ss, 1, cb0, cb1);
-        app(i[0], MOSI_ENABLED, 1);
-        load(BURNT_THREADS);
-#endif
+        app(i[0]);
     }
     return 0;
 }

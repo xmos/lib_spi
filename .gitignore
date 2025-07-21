@@ -29,3 +29,4 @@ build/
 */build/*
 __gen
 *tests/logs/*
+*.gtkw

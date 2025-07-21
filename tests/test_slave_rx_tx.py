@@ -4,7 +4,7 @@ from pathlib import Path
 import Pyxsim
 import pytest
 from spi_slave_checker import SPISlaveChecker
-from helpers import generate_tests_from_json, create_if_needed
+from helpers import generate_tests_from_json, create_if_needed, print_expected_vs_output
 
 appname = "spi_slave_rx_tx"
 test_params_file = Path(__file__).parent / f"{appname}/test_params.json"
@@ -39,13 +39,7 @@ def do_slave_rx_tx(capfd, combined, burnt, miso_enabled, spi_mode, transfer_size
         capfd=capfd
         )
 
-    out, err = capfd.readouterr()
-    output = out.split('\n')[:-1]
-
-    with capfd.disabled():
-        print(f"expected: {expected}")
-        print(f"Actual output: {out}")
-
+    output = print_expected_vs_output(expected, capfd)
     assert tester.run(output)
 
 @pytest.mark.parametrize("params", generate_tests_from_json(test_params_file)[0], ids=generate_tests_from_json(test_params_file)[1])

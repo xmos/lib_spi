@@ -56,7 +56,10 @@ int test_transfer32(client interface spi_master_if i,
             mode, speed_in_kbps, mosi_enabled, miso_enabled, device_id, inter_frame_gap, NUMBER_OF_TEST_BYTES);
     i.begin_transaction(device_id, speed_in_kbps, mode);
     for(unsigned j=0;j<NUMBER_OF_TEST_WORDS;j++){
-        uint32_t rx = i.transfer32(byterev((tx_data, unsigned[])[j]));
+        // Note that the regression expects a byte orientated test pattern
+        // We convert to big endian for 32b transfers so we need to byterev first here to ensure little endian in the end and keep the regression happy
+        uint32_t tx = byterev(((const uint32_t *)tx_data)[j]); // Cast to 32b, deref and byterev
+        uint32_t rx = i.transfer32(tx);
         rx = byterev(rx);
         if(miso_enabled){
             if(rx != (rx_data, unsigned[])[j]) error = 1;

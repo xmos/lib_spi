@@ -5,16 +5,13 @@ import Pyxsim
 import pytest
 from spi_master_checker import SPIMasterChecker
 import os
-from helpers import generate_tests_from_json, create_if_needed
+from helpers import generate_tests_from_json, create_if_needed, print_expected_vs_output
 
 
 appname = "spi_master_async_multi_client"
 test_params_file = Path(__file__).parent / f"{appname}/test_params.json"
 
 def do_test(capfd, combined, burnt, mosi_enabled, arch, id):
-    # Test disabled until we review SPI async
-    pytest.xfail()
-    
     id_string = f"{combined}_{burnt}_{mosi_enabled}_{arch}"
     filepath = Path(__file__).resolve().parent
     binary = filepath/f"{appname}/bin/{id_string}/{appname}_{id_string}.xe"
@@ -23,7 +20,7 @@ def do_test(capfd, combined, burnt, mosi_enabled, arch, id):
     checker = SPIMasterChecker("tile[0]:XS1_PORT_1C",
                                "tile[0]:XS1_PORT_1D",
                                "tile[0]:XS1_PORT_1A",
-                               ["tile[0]:XS1_PORT_1B"],
+                               "tile[0]:XS1_PORT_1B",
                                "tile[0]:XS1_PORT_1E",
                                "tile[0]:XS1_PORT_16B")
 
@@ -34,21 +31,19 @@ def do_test(capfd, combined, burnt, mosi_enabled, arch, id):
                                             regexp = False,
                                             ordered = True)
     
+    simargs = "--plugin LoopbackPort.dll '-port tile[0] XS1_PORT_1A 1 0 -port tile[0] XS1_PORT_1D 1 0'".split()
+    # simargs += "--vcd-tracing '-o trace.vcd -tile tile[0] -pads -ports -functions'".split()
+
     Pyxsim.run_on_simulator_(
         binary,
-        #simargs=['--vcd-tracing', '-o ./spi_master_sync_multi_device/trace.vcd -tile tile[0] -pads -functions'],
+        simargs=simargs,
         do_xe_prebuild = False,
         simthreads = [checker],
-        capfd=capfd)
+        capfd=capfd,
+        timeout=60) # In case of lock-up
 
-    out, err = capfd.readouterr()
-    output = out.split('\n')[:-1]
-
-    with capfd.disabled():
-        print(f"expected: {expected}")
-        print(f"Actual output: {output}")
-
-    assert tester.run(output)
+    output = print_expected_vs_output(expected, capfd)
+    assert tester.run(output), output
 
 
 @pytest.mark.parametrize("params", generate_tests_from_json(test_params_file)[0], ids=generate_tests_from_json(test_params_file)[1])

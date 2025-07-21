@@ -401,6 +401,11 @@ void spi_master_async(server interface spi_master_async_if i[num_clients],
                 break;
             }
 
+            case i[int x].set_ss_port_bit(unsigned port_bit):{
+                // Do nothing this is invalid since this component sets all port bits high/low during select
+                break;
+            }
+
             case i[int x].shutdown(void):
                 move(buffer_rx);
                 move(buffer_tx);

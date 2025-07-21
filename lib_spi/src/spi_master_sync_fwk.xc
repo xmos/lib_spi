@@ -13,41 +13,10 @@
 extern "C"{
     #include "spi_fwk.h"
 }
+#include "spi_master_shared_fwk.h"
 
 #define SPI_MAX_DEVICES 32 //Used to size the array of which bit in the SS port maps to which device
 
-// Optional function to determine the actual set speed for particular clock settings.
-unsigned spi_master_get_actual_clock_rate(spi_master_source_clock_t source_clock, unsigned divider){
-    unsigned actual_speed_khz = ((source_clock == spi_master_source_clock_ref) ? PLATFORM_REFERENCE_MHZ : PLATFORM_NODE_0_SYSTEM_FREQUENCY_MHZ) * 1000 
-                                / 2
-                                / (divider == 0 ? 1 : ((divider) * 2));
-
-    return actual_speed_khz;
-}
-
-
-// Find the best clock divider and source to hit the target rate. Note this will always round down to the next slowest available rate
-// effectively using a ceil type function
-void spi_master_determine_clock_settings(spi_master_source_clock_t *source_clock, unsigned *divider, unsigned speed_in_khz){
-    // Clock blocks divide at / (2 * div) for div > 0 or / 1 where div == 0. Maximum clock block division is 255 * 2 = 510
-    // Due to SPI needing to output each bit twice (to allow control over clock edges) the overal SPI clock rate is / 2 further
-    // to the divider.
-    // Steps get very granular as div -> 1 so use ref clock below 2MHz and core clock above 2MHz
-    // The minimum SPI clock speed is therefore 100e6 / (255 * 2 * 2) = 98kHz on the ref clock
-    // The minimum SPI clock speed at 800MHz core clock (typical highest) is 800e6 / (255 * 2 * 2) = 784kHz
-    if(speed_in_khz > 2000){
-        *source_clock = spi_master_source_clock_xcore;
-        *divider = (PLATFORM_NODE_0_SYSTEM_FREQUENCY_MHZ * 1000 + 4 * speed_in_khz - 1)/(4 * speed_in_khz);
-    } else {
-        *source_clock = spi_master_source_clock_ref;
-        *divider = (PLATFORM_REFERENCE_MHZ * 1000 + 4 * speed_in_khz - 1)/(4 * speed_in_khz);
-    }
-
-    // Avoid overflow of the 8b divider reg.
-    if(*divider > 255){
-        *divider = 255;
-    }
-}
 
 #pragma unsafe arrays
 [[distributable]]
@@ -62,7 +31,7 @@ void spi_master_fwk(server interface spi_master_if i[num_clients],
 
     if(isnull(cb)){
         printstrln("Must supply clockblock to this version of SPI");
-        // We will hit an exception shortly after this if NULL
+        // We will hit an exception shortly after this if cb is NULL
     }
 
     spi_master_t spi_master;
@@ -83,7 +52,6 @@ void spi_master_fwk(server interface spi_master_if i[num_clients],
         select {
             case accepting_new_transactions => i[int x].begin_transaction(unsigned device_index,
                 unsigned speed_in_khz, spi_mode_t mode):{
-                // printf("begin_transaction: client %d\n", x);
                 accepting_new_transactions = 0;
 
                 spi_master_source_clock_t source_clock;
@@ -91,7 +59,7 @@ void spi_master_fwk(server interface spi_master_if i[num_clients],
                 spi_master_determine_clock_settings(&source_clock, &divider, speed_in_khz);
 
                 // unsigned actual_speed_khz = spi_master_get_actual_clock_rate(source_clock, divider);
-                // printf("Actual speed_in_khz: %u div(%u) clock: %s (%u)MHz\n",
+                // printf("Actual speed_in_khz: %u div(%u) clock: (%s) %uMHz\n",
                 //     actual_speed_khz,
                 //     divider,
                 //     ((source_clock == spi_master_source_clock_ref) ? "ref" : "core"),
@@ -127,6 +95,8 @@ void spi_master_fwk(server interface spi_master_if i[num_clients],
 
             case i[int x].transfer32(uint32_t data) -> uint32_t r:{
                 uint32_t read_val;
+                // For 32b words, we need to swap to big endian (standard for SPI) from little endian (XMOS)
+                // This means we transmit the MSByte first
                 data = byterev(data);
                 spi_master_transfer(&spi_dev, (uint8_t *)&data, (uint8_t *)&read_val, 4);
                 r = byterev(read_val);
@@ -142,8 +112,18 @@ void spi_master_fwk(server interface spi_master_if i[num_clients],
             }
 
             case i[int x].shutdown(void):{
-                spi_master_deinit(&spi_master);
-                break;
+                // We don't use spi_master_deinit(&spi_master);  This completely turns off resources.
+                p_ss <: 0xffffffff;
+
+                // If using XC, then we need to enable/init which is how XC does it
+                if (!isnull(mosi)) {
+                    set_port_use_on(mosi);
+                }
+                set_port_use_on(miso);
+                set_port_use_on(sclk);
+                set_clock_on(cb);
+                
+                return;
             }
         }
     }

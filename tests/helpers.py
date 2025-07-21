@@ -10,6 +10,7 @@ import csv
 import threading
 import itertools
 from filelock import FileLock
+from itertools import zip_longest
 
 # Thread safe create a folder
 def create_if_needed(folder):
@@ -113,3 +114,18 @@ def sort_csv_table(file_path):
 
         except FileNotFoundError:
             assert 0, f"No CSV table {file_path} to sort"
+
+
+# Print the comparison in human friendly format
+def print_expected_vs_output(expected, capfd):
+    out, err = capfd.readouterr()
+    output = out.split('\n')[:-1] # Need to trim last line
+
+    with capfd.disabled():
+        if err:
+            print(f"Exceptions encountered: {err}") # Show any exceptions
+        print(f"\n{'***EXPECTED***':<40}***ACTUAL***")
+        for e, o in zip_longest(expected, output, fillvalue = ''):
+            print(f"{str(e):<40}{str(o)}")
+
+    return output

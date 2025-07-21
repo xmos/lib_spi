@@ -4,6 +4,7 @@ from pathlib import Path
 import Pyxsim
 import pytest
 from spi_master_checker import SPIMasterChecker
+from helpers import print_expected_vs_output
 
 
 appname = "spi_master_sync_clock_port_sharing"
@@ -35,14 +36,8 @@ def do_test(capfd, combined, id):
         simthreads = [checker],
         capfd=capfd)
 
-    out, err = capfd.readouterr()
-    output = out.split('\n')[:-1]
-
-    with capfd.disabled():
-        print(f"expected: {expected}")
-        print(f"Actual output: {output}")
-
-    assert tester.run(output)
+    output = print_expected_vs_output(expected, capfd)
+    assert tester.run(output), output
 
 
 @pytest.mark.parametrize("combined", ["COMBINED", "NOT_COMBINED"], ids=["COMBINED=1", "COMBINED=0"])
