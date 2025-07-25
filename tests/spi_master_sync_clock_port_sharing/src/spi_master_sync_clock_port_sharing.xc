@@ -79,7 +79,7 @@ int main(){
 #endif
             par {
                 app(i[0], 1, 1);
-                spi_master_fwk(i, 1, p_sclk, p_mosi, p_miso, p_ss, 1, cb);
+                spi_master(i, 1, p_sclk, p_mosi, p_miso, p_ss, 1, cb);
             }
         }
     }

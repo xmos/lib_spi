@@ -7,11 +7,19 @@ from spi_master_checker import SPIMasterChecker
 from helpers import generate_tests_from_json, create_if_needed, print_expected_vs_output
 
 appname = "spi_master_sync_shutdown"
+test_params_file = Path(__file__).parent / f"{appname}/test_params.json"
 
-def do_test(capfd):
+def do_test(distributed, cb_enabled, arch, capfd):
     filepath = Path(__file__).resolve().parent
-    binary = filepath/f"{appname}/bin/{appname}.xe"
+    id_string = f"{distributed}_{cb_enabled}_{arch}"
+    app_build = "distributed" if distributed else "own_thread"
+    binary = filepath/f"{appname}/bin/{id_string}/{appname}_{id_string}.xe"
     assert binary.exists()
+
+    # Known issue when clock block is NULL and SPI master sync is distributed - compiler bug on task cleanup
+    # http://bugzilla.xmos.local/show_bug.cgi?id=19049
+    if distributed == 1 and cb_enabled == 0:
+        pytest.xfail()
 
     checker = SPIMasterChecker("tile[0]:XS1_PORT_1C",
                                "tile[0]:XS1_PORT_1D",
@@ -37,5 +45,7 @@ def do_test(capfd):
     output = print_expected_vs_output(expected, capfd)
     assert tester.run(output), output
 
-def test_master_sync_rx_tx(capfd, request):
-    do_test(capfd)
+
+@pytest.mark.parametrize("params", generate_tests_from_json(test_params_file)[0], ids=generate_tests_from_json(test_params_file)[1])
+def test_master_sync_shutdown(capfd, params, request):
+    do_test(*params, capfd)

@@ -7,24 +7,32 @@
 #include "spi.h"
 #include "spi_sync_tester.h"
 
-in buffered port:32   p_miso  = XS1_PORT_1A;
-out port              p_ss    = XS1_PORT_1B;
-out buffered port:32  p_sclk  = XS1_PORT_1C;
-out buffered port:32  p_mosi  = XS1_PORT_1D;
-clock                 cb      = XS1_CLKBLK_1;
 
-out port setup_strobe_port = XS1_PORT_1E;
-out port setup_data_port = XS1_PORT_16B;
+in buffered port:32   p_miso  = on tile[0]: XS1_PORT_1A;
+out port              p_ss    = on tile[0]: XS1_PORT_1B;
+out buffered port:32  p_sclk  = on tile[0]: XS1_PORT_1C;
+out buffered port:32  p_mosi  = on tile[0]: XS1_PORT_1D;
+clock                 cb      = on tile[0]: XS1_CLKBLK_1;
+
+out port setup_strobe_port = on tile[0]: XS1_PORT_1E;
+out port setup_data_port = on tile[0]: XS1_PORT_16B;
 
 #define SPI_MODE SPI_MODE_0
-#define SPI_KBPS 10000
+#define SPI_KBPS 1000
+
+
+// We can only distribute if the main par is a flat list of tasks, not a loop
+// However a clean exit should result in no exception
+#if DISTRIBUTED
+#define LOOPS   1
+#else
+#define LOOPS   5
+#endif
 
 void app(client interface spi_master_if i, int mosi_enabled, int miso_enabled, int spi_mode){
-    for(int loop = 0; loop < 10; loop++){
+    for(int loop = 0; loop < LOOPS; loop++){
         test_transfer8(i, setup_strobe_port, setup_data_port, 0, 100,
                 spi_mode, SPI_KBPS, mosi_enabled, miso_enabled);
-
-        i.shutdown();
 
         test_transfer32(i, setup_strobe_port, setup_data_port, 0, 100,
                 spi_mode, SPI_KBPS, mosi_enabled, miso_enabled);
@@ -33,19 +41,38 @@ void app(client interface spi_master_if i, int mosi_enabled, int miso_enabled, i
     }
 
     printf("Transfers complete\n");
-    _Exit(0);
-}
 
+    // Should exit normally, no need for forced exit
+}
 
 int main(){
     interface spi_master_if i[1];
     par {
+#if DISTRIBUTED
+        par 
         {
-            while(1){
-                spi_master_fwk(i, 1, p_sclk, p_mosi, p_miso, p_ss, 1, cb);
-            }
+    #if CB_ENABLED
+            [[distribute]]
+            spi_master(i, 1, p_sclk, p_mosi, p_miso, p_ss, 1, cb);
+    #else
+            [[distribute]]
+            spi_master(i, 1, p_sclk, p_mosi, p_miso, p_ss, 1, null);
+    #endif
+            app(i[0], 1, 1, SPI_MODE);
         }
-        app(i[0], 1, 1, SPI_MODE);
+#else // NOT distributed - uses own thread
+        par 
+        {
+            on tile[0]: {
+    #if CB_ENABLED
+                for(int loop = 0; loop < LOOPS; loop++){spi_master(i, 1, p_sclk, p_mosi, p_miso, p_ss, 1, cb);}
+    #else
+                for(int loop = 0; loop < LOOPS; loop++){spi_master(i, 1, p_sclk, p_mosi, p_miso, p_ss, 1, null);}
+    #endif
+            }
+            on tile[0]: app(i[0], 1, 1, SPI_MODE);
+        }
+#endif // NOT distributed
     }
     return 0;
 }

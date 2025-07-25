@@ -76,7 +76,7 @@ static void load(static const unsigned num_threads){
 int main(){
     interface spi_master_if i[1];
     par {
-        spi_master_fwk(i, 1, p_sclk, MOSI, MISO, p_ss, NUM_SS, cb);
+        spi_master(i, 1, p_sclk, MOSI, MISO, p_ss, NUM_SS, cb);
         app(i[0], NUM_SS,  MOSI_ENABLED, MISO_ENABLED);
         load(BURNT_THREADS);
     }

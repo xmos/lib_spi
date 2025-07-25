@@ -77,9 +77,9 @@ class SPIMasterChecker(px.SimThread):
             while not all_ss_deserted:
                 self.wait_for_port_pins_change([self._ss_port])
                 all_ss_deserted = True if xsi.sample_port_pins(self._ss_port) == ss_deaserted_value else False
+            # print("ALL HIGH", ss_deaserted_value)
 
             error = False
-
 
             # Wait for any SS to assert
             active_slave = -1 # no active slaves
@@ -126,7 +126,7 @@ class SPIMasterChecker(px.SimThread):
                 for i in range(self._ss_port_width):
                     if not ss_port_val & (1 << i) and i != active_slave:
                         error = True
-                        print(f"Second slave selected during first transaction, SS port val: 0x{ss_port_val:x} at time: {xsi.get_time() / nanosecond_ticks}ns")
+                        print(f"Error: Second slave selected during first transaction, SS port val: 0x{ss_port_val:x} at time: {xsi.get_time() / nanosecond_ticks}ns")
 
                 if (ss_value == ((xsi.sample_port_pins(self._ss_port) >> active_slave) & 1) and (sck_value == xsi.sample_port_pins(self._sck_port))):
                     continue
@@ -145,7 +145,7 @@ class SPIMasterChecker(px.SimThread):
                 #check that the clock edges never go faster than the expected clock rate
                 if ss_value == 0:
                     clock_edge_number += 1
-                    #print clock_edge_number
+                    # print(f"MISO clock_edge_number: {clock_edge_number}")
                     #the the clock must have transitioned
                     if sck_value == (expected_cpha ^ expected_cpol):
                         if expected_miso_enabled == 1:
@@ -171,7 +171,7 @@ class SPIMasterChecker(px.SimThread):
                                 if expected_rx_byte != rx_byte:
                                     print(f"ERROR: slave received incorrect data Got:{rx_byte:02x} Expected:{expected_rx_byte:02x} at time: {xsi.get_time() / nanosecond_ticks}ns")
                                     error = True
-                                # print(f"Checker got byte: {rx_byte:02x} at time {xsi.get_time() / nanosecond_ticks}ns")
+                                # print(f"Checker correctly got byte: {rx_byte:02x} at time {xsi.get_time() / nanosecond_ticks}ns")
                                 rx_byte = 0
                 else:
                     if clock_edge_number != expected_num_bytes*2*8:

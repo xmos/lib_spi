@@ -1,11 +1,12 @@
 // Copyright 2015-2025 XMOS LIMITED.
 // This Software is subject to the terms of the XMOS Public Licence: Version 1.
 #include <xs1.h>
-#include <spi.h>
 #include <stdint.h>
 #include <timer.h>
 #include <print.h>
 #include <platform.h>
+
+#include "spi.h"
 
 /* These ports are used for the SPI slave task */
 in port                 p_sclk = on tile[0]: XS1_PORT_1E;
@@ -17,7 +18,7 @@ clock                   cb     = on tile[0]: XS1_CLKBLK_1;
 /* These ports are used for the SPI master task which is
    used to test the SPI slave (via simulator loopback). */
 out buffered port:32   p_test_sclk  = on tile[0]: XS1_PORT_1I;
-out port               p_test_ss[1] = on tile[0]: {XS1_PORT_1J};
+out port               p_test_ss    = on tile[0]: XS1_PORT_1J;
 in buffered port:32    p_test_miso  = on tile[0]: XS1_PORT_1K;
 out buffered port:32   p_test_mosi  = on tile[0]: XS1_PORT_1L;
 

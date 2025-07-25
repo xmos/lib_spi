@@ -209,7 +209,7 @@ void spi_master_transfer(
  * \param dev         The active SPI device.
  * \param delay_ticks The number of reference clock ticks to delay.
  */
-inline void spi_master_delay_before_next_transfer(
+static inline void spi_master_delay_before_next_transfer(
         spi_master_device_t *dev,
         uint32_t delay_ticks)
 {

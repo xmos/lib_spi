@@ -4,11 +4,6 @@
 #include <xclib.h>
 #include <stdlib.h>
 
-//TODO DEL these
-#include <stdio.h>
-#include <print.h>
-#include <platform.h>
-
 #include "spi.h"
 extern "C"{
     #include "spi_fwk.h"
@@ -16,7 +11,7 @@ extern "C"{
 
 // Clockblock-less SPI transfer functions. These are slow (max around 1 Mbps) but are suitable for control transfer
 // When clockblock resources are scarce
-int8_t transfer8_sync_zero_clkblk(
+uint8_t transfer8_sync_zero_clkblk(
         out buffered port:32 sclk,
         out buffered port:32 ?mosi,
         in buffered port:32 ?miso,

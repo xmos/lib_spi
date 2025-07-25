@@ -83,7 +83,7 @@ int main(){
     chan c[3];
     interface spi_master_if i[3];
     par {
-        spi_master_fwk(i, 3, p_sclk, MOSI, MISO, p_ss, 1, cb);
+        spi_master(i, 3, p_sclk, MOSI, MISO, p_ss, 1, cb);
         app(i[0], MOSI_ENABLED, MISO_ENABLED, c[0]);
         app(i[1], MOSI_ENABLED, MISO_ENABLED, c[1]);
         app(i[2], MOSI_ENABLED, MISO_ENABLED, c[2]);

@@ -15,36 +15,44 @@ extern "C"{
 }
 #include "spi_master_shared.h"
 
-#define SPI_MAX_DEVICES 32 //Used to size the array of which bit in the SS port maps to which device
-
 
 #pragma unsafe arrays
 [[distributable]]
-void spi_master_fwk(server interface spi_master_if i[num_clients],
+void spi_master(server interface spi_master_if i[num_clients],
         static const size_t num_clients,
         out buffered port:32 sclk,
         out buffered port:32 ?mosi,
         in buffered port:32 ?miso,
-        out port p_ss, // Note only one SS port supported - individual bits in port may be used however
+        out port p_ss, // Note only one SS port supported - individual bits in port may be used for different devices however
         static const size_t num_slaves,
         clock ?cb){
 
-    if(isnull(cb)){
-        printstrln("Must supply clockblock to this version of SPI");
-        // We will hit an exception shortly after this if cb is NULL
-    }
-
+    // For clock-block based fast SPI
     spi_master_t spi_master;
     spi_master_device_t spi_dev;
-    unsafe{
-        spi_master_init(&spi_master, cb, (port)p_ss, (port)sclk, (port)mosi, (port)miso);
+
+    // For clock-blockless slow SPI
+    unsigned clkblkless_period_ticks;
+
+    // For all SPI types
+    unsigned cpol = 0;
+    unsigned cpha = 0;
+
+    if(!isnull(cb)){
+        unsafe{
+            spi_master_init(&spi_master, cb, (port)p_ss, (port)sclk, (port)mosi, (port)miso);
+        }
+    } else {
+        // Initial SS bit pattern - deselected
+        p_ss <: 0xffffffff;
+        sync(p_ss);
     }
 
     int accepting_new_transactions = 1;
 
     // By default use the port bit which is the number of the client (client 0 uses port bit 0 etc.)
-    uint8_t ss_port_bit[SPI_MAX_DEVICES];
-    for(int i = 0; i < SPI_MAX_DEVICES; i++){
+    uint8_t ss_port_bit[num_slaves];
+    for(int i = 0; i < num_slaves; i++){
         ss_port_bit[i] = i;
     }
 
@@ -54,75 +62,111 @@ void spi_master_fwk(server interface spi_master_if i[num_clients],
                 unsigned speed_in_khz, spi_mode_t mode):{
                 accepting_new_transactions = 0;
 
+                // Grab mode bits
+                cpol = mode >> 1;
+                cpha = mode & 0x1;
+
+                // Fast SPI state
                 spi_master_source_clock_t source_clock;
                 unsigned divider;
-                spi_master_determine_clock_settings(&source_clock, &divider, speed_in_khz);
 
-                // unsigned actual_speed_khz = spi_master_get_actual_clock_rate(source_clock, divider);
-                // printf("Actual speed_in_khz: %u div(%u) clock: (%s) %uMHz\n",
-                //     actual_speed_khz,
-                //     divider,
-                //     ((source_clock == spi_master_source_clock_ref) ? "ref" : "core"),
-                //     ((source_clock == spi_master_source_clock_ref) ? PLATFORM_REFERENCE_MHZ : PLATFORM_NODE_0_SYSTEM_FREQUENCY_MHZ));
+                if(isnull(cb)){
+                    // Set the expected clock idle state on the clock port
+                    partout(sclk, 1, cpol);
+                    sync(sclk);
 
-                unsigned cpol = mode >> 1;
-                unsigned cpha = mode & 0x1;
-                spi_master_device_init(&spi_dev, &spi_master,
-                    ss_port_bit[device_index],
-                    cpol, cpha,
-                    source_clock,
-                    divider,
-                    spi_master_sample_delay_0,
-                    0, 0 ,0 ,0 );
+                    unsigned ss_port_val = ~(1 << ss_port_bit[device_index]);
+                    p_ss <: ss_port_val;
+                    clkblkless_period_ticks = (XS1_TIMER_KHZ + speed_in_khz - 1)/speed_in_khz;// round up
+                } else {
+                    spi_master_determine_clock_settings(&source_clock, &divider, speed_in_khz);
 
-                spi_master.current_device = 0xffffffff; // This is needed to force mode and speed in spi_master_start_transaction()
-                                                        // Otherwise fwk_spi sees the next transaction on the existing device as the same settings as last on the same client
-                spi_master_start_transaction(&spi_dev);
+                    // unsigned actual_speed_khz = spi_master_get_actual_clock_rate(source_clock, divider);
+                    // printf("Actual speed_in_khz: %u div(%u) clock: (%s) %uMHz\n",
+                    //     actual_speed_khz,
+                    //     divider,
+                    //     ((source_clock == spi_master_source_clock_ref) ? "ref" : "core"),
+                    //     ((source_clock == spi_master_source_clock_ref) ? PLATFORM_REFERENCE_MHZ : PLATFORM_NODE_0_SYSTEM_FREQUENCY_MHZ));
+
+                    spi_master_device_init(&spi_dev, &spi_master,
+                        ss_port_bit[device_index],
+                        cpol, cpha,
+                        source_clock,
+                        divider,
+                        spi_master_sample_delay_0,
+                        0, 0 ,0 ,0 );
+
+                    spi_master.current_device = 0xffffffff; // This is needed to force mode and speed in spi_master_start_transaction()
+                                                            // Otherwise fwk_spi sees the next transaction on the existing device as the same settings as last on the same client
+                    spi_master_start_transaction(&spi_dev);
+                }
+
                 break;
             }
 
             case i[int x].end_transaction(unsigned ss_deassert_time):{
-                spi_master_end_transaction(&spi_dev);
+
+                // NEED TO WAIT -> Deassert time
+                if(isnull(cb)){
+                    p_ss <: 0xffffffff;
+                } else {
+                    spi_master_end_transaction(&spi_dev);
+                }
+
                 // Unlock the transaction
                 accepting_new_transactions = 1;
+
                 break;
             }
 
             case i[int x].transfer8(uint8_t data)-> uint8_t r :{
-                spi_master_transfer(&spi_dev, (uint8_t *)&data, &r, 1);
+                if(isnull(cb)){
+                    r = transfer8_sync_zero_clkblk(sclk, mosi, miso, data, clkblkless_period_ticks, cpol, cpha);
+                } else {
+                    spi_master_transfer(&spi_dev, (uint8_t *)&data, &r, 1);
+                }
+
                 break;
             }
 
             case i[int x].transfer32(uint32_t data) -> uint32_t r:{
-                uint32_t read_val;
-                // For 32b words, we need to swap to big endian (standard for SPI) from little endian (XMOS)
-                // This means we transmit the MSByte first
-                data = byterev(data);
-                spi_master_transfer(&spi_dev, (uint8_t *)&data, (uint8_t *)&read_val, 4);
-                r = byterev(read_val);
+                if(isnull(cb)){
+                    r = transfer32_sync_zero_clkblk(sclk, mosi, miso, data, clkblkless_period_ticks, cpol, cpha);
+                } else {
+                    // For 32b words, we need to swap to big endian (standard for SPI) from little endian (XMOS)
+                    // This means we transmit the MSByte first
+                    data = byterev(data);
+                    uint32_t read_val;                
+                    spi_master_transfer(&spi_dev, (uint8_t *)&data, (uint8_t *)&read_val, 4);
+                    r = byterev(read_val);
+                }
+
                 break;
             }
 
             case i[int x].set_ss_port_bit(unsigned port_bit):{
-                if(port_bit > SPI_MAX_DEVICES){
-                    printstrln("Invalid port bit - must be less than SPI_MAX_DEVICES");
+                if(port_bit > num_slaves){
+                    printstrln("Invalid port bit - must be less than num_slaves");
                 }
                 ss_port_bit[x] = port_bit;
+
                 break;
             }
 
             case i[int x].shutdown(void):{
-                // We don't use spi_master_deinit(&spi_master);  This completely turns off resources.
                 p_ss <: 0xffffffff;
-
                 // If using XC, then we need to enable/init which is how XC does it
                 if (!isnull(mosi)) {
                     set_port_use_on(mosi);
                 }
-                set_port_use_on(miso);
+                if (!isnull(miso)) {
+                    set_port_use_on(miso);
+                }
                 set_port_use_on(sclk);
-                set_clock_on(cb);
-                
+                if(!isnull(cb)){
+                    set_clock_on(cb);
+                }
+
                 return;
             }
         }

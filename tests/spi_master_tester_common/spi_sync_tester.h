@@ -29,14 +29,14 @@ int test_transfer8(client interface spi_master_if i,
         if(miso_enabled){
             if(rx != rx_data[j]) error = 1;
             if(VERBOSE && (rx != rx_data[j]))
-                printf("Got: %02x Expected: %02x\n", rx, rx_data[j]);
+                printf("Device Got: %02x Expected: %02x from MISO\n", rx, rx_data[j]);
         }
     }
 
     i.end_transaction(inter_frame_gap);
 
     if(error)
-        printf("ERROR: master got the wrong data\n");
+        printf("ERROR: master got the wrong data from device over MISO\n");
 
     return error;
 }

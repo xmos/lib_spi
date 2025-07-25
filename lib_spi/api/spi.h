@@ -96,7 +96,7 @@ typedef interface spi_master_if {
 
 
   /** Sets the bit of port which is used for slave select (> 1b port type only)
-   *  and only for spi_master_fwk. spi_master sets all bits in each port high/low
+   *  and only for spi_master. spi_master sets all bits in each port high/low
    *
    *  The default value (if this is not called) is the bit number is equal to 
    *  the device_index (0->0, 1->1 etc.). 
@@ -117,7 +117,7 @@ typedef interface spi_master_if {
 
 
 [[distributable]]
-void spi_master_fwk(
+void spi_master(
         SERVER_INTERFACE(spi_master_if, i[num_clients]),
         static_const_size_t num_clients,
         out_buffered_port_32_t sclk,
@@ -152,16 +152,6 @@ void spi_master_fwk(
     \param num_slaves    The number of slave devices on the bus.
     \param clk           a clock for the component to use.
 */
-[[distributable]]
-void spi_master(
-        SERVER_INTERFACE(spi_master_if, i[num_clients]),
-        static_const_size_t num_clients,
-        out_buffered_port_32_t sclk,
-        NULLABLE_RESOURCE(out_buffered_port_32_t, mosi),
-        NULLABLE_RESOURCE(in_buffered_port_32_t, miso),
-        out_port p_ss[num_slaves],
-        static_const_size_t num_slaves,
-        NULLABLE_RESOURCE(clock, clk));
 
 /**
  * \addtogroup spi_master_async_if
@@ -282,7 +272,7 @@ typedef interface spi_master_async_if  {
 
 
   /** Sets the bit of port which is used for slave select (> 1b port type only)
-   *  and only for spi_master_fwk. spi_master sets all bits in each port high/low
+   *  and only for spi_master. spi_master sets all bits in each port high/low
    *
    *  The default value (if this is not called) is the bit number is equal to 
    *  the device_index (0->0, 1->1 etc.). 
