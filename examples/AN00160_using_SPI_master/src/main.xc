@@ -13,8 +13,7 @@ in buffered port:32    p_miso         = WIFI_MISO;
 out buffered port:32   p_mosi         = WIFI_MOSI;
 out port               p_rstn         = WIFI_WUP_RST_N;
 
-clock clk0 = on tile[0]: XS1_CLKBLK_1;
-clock clk1 = on tile[0]: XS1_CLKBLK_2;
+clock clk = on tile[0]: XS1_CLKBLK_1;
 
 /* This application function sends some traffic as SPI master using
  * the synchronous interface. It reads the config register (address 0)
@@ -116,8 +115,7 @@ int main(void) {
       par {
         async_app(i_spi_async[0]);
         spi_master_async(i_spi_async, 1,
-                         p_sclk, p_mosi, p_miso, p_ss, 1,
-                         clk0, clk1);
+                         p_sclk, p_mosi, p_miso, p_ss, 1, clk);
       }
     }
   }

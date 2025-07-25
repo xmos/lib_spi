@@ -313,11 +313,9 @@ typedef interface spi_master_async_if  {
  *  \param sclk          the SPI clock port.
  *  \param mosi          the SPI MOSI (master out, slave in) port.
  *  \param miso          the SPI MISO (master in, slave out) port.
- *  \param p_ss          an array of ports connected to the slave select signals
- *                       of the slave.
+ *  \param p_ss          a port of any width which outputs the slave select signals
  *  \param num_slaves    The number of slave devices on the bus.
- *  \param clk0           a clock for the component to use.
- *  \param clk1           a clock for the component to use.
+ *  \param clk           a clock block for the component to use.
  */
 [[combinable]]
 void spi_master_async(
@@ -326,22 +324,9 @@ void spi_master_async(
         out_buffered_port_32_t sclk,
         NULLABLE_RESOURCE(out_buffered_port_32_t, mosi),
         in_buffered_port_32_t miso,
-        out_port p_ss[num_slaves],
-        static_const_size_t num_slaves,
-        clock clk0,
-        clock clk1);
-
-[[combinable]]
-void spi_master_async_fwk(
-        SERVER_INTERFACE(spi_master_async_if, i[num_clients]),
-        static_const_size_t num_clients,
-        out_buffered_port_32_t sclk,
-        NULLABLE_RESOURCE(out_buffered_port_32_t, mosi),
-        in_buffered_port_32_t miso,
         out_port p_ss,
         static_const_size_t num_slaves,
-        clock clk0,
-        clock clk1);
+        clock clk);
 
 /**** SLAVE ****/
 

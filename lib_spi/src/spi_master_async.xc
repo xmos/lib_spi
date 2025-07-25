@@ -10,7 +10,7 @@
 extern "C"{
 #include "spi_fwk.h"
 }
-#include "spi_master_shared_fwk.h"
+#include "spi_master_shared.h"
 
 #define SPI_MAX_DEVICES 32 //Used to size the array of which bit in the SS port maps to which device
 
@@ -29,15 +29,14 @@ typedef struct {
 
 
 [[combinable]]
-void spi_master_async_fwk(server interface spi_master_async_if i[num_clients],
+void spi_master_async(server interface spi_master_async_if i[num_clients],
         static const size_t num_clients,
         out buffered port:32 sclk,
         out buffered port:32 ?mosi,
         in buffered port:32 miso,
         out port p_ss,
         static const size_t num_slaves,
-        clock cb0,
-        clock cb1){
+        clock cb){
 
     //These buffer are for the transaction requests
     transaction_request tr_buffer[num_clients]; ///FIXME num_clients
@@ -61,7 +60,7 @@ void spi_master_async_fwk(server interface spi_master_async_if i[num_clients],
     spi_master_t spi_master;
     spi_master_device_t spi_dev;
     unsafe{
-        spi_master_init(&spi_master, cb0, (port)p_ss, (port)sclk, (port)mosi, (port)miso);
+        spi_master_init(&spi_master, cb, (port)p_ss, (port)sclk, (port)mosi, (port)miso);
     }
 
     // By default use the port bit which is the number of the client (client 0 uses port bit 0 etc.)
@@ -339,7 +338,7 @@ void spi_master_async_fwk(server interface spi_master_async_if i[num_clients],
                 }
                 set_port_use_on(miso);
                 set_port_use_on(sclk);
-                set_clock_on(cb0);
+                set_clock_on(cb);
                 return;
         }
     }

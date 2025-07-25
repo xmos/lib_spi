@@ -15,6 +15,82 @@ extern "C"{
 }
 
 
+#pragma unsafe arrays
+uint8_t transfer8_sync_zero_clkblk(
+        out buffered port:32 sclk,
+        out buffered port:32 ?mosi,
+        in buffered port:32 ?miso,
+        uint8_t data, const unsigned period,
+        unsigned cpol, unsigned cpha){
+    unsigned time, d, c = 0xaaaa>>(cpol ^ cpha);
+    time = partout_timestamped(sclk, 1, cpol);
+    time += 40;
+
+    for(unsigned i=0;i<8;i++){
+        partout_timed(sclk, 1, c, time);
+        c>>=1;
+        //sclk @ time <:>> c;
+
+        if(!isnull(mosi)){
+            partout_timed(mosi, 1, data>>7, time);
+            data<<=1;
+        }
+        time += period / 2;
+
+        partout_timed(sclk, 1, c, time);
+        c>>=1;
+        if(!isnull(miso)){
+            unsigned t;
+            miso @ time - 1 :> t;
+            d = (d<<1) + (t&1);
+        }
+        time += (period + 1)/2;
+    }
+    partout_timed(sclk, 1, cpol, time);
+    sync(sclk);
+    return d;
+}
+
+#pragma unsafe arrays
+uint32_t transfer32_sync_zero_clkblk(
+        out buffered port:32 sclk,
+        out buffered port:32 ?mosi,
+        in buffered port:32 ?miso,
+        uint32_t data, const unsigned period,
+        const unsigned cpol, const unsigned cpha){
+    unsigned time;
+    uint32_t d;
+    time = partout_timestamped(sclk, 1, cpol);
+    time += 100;
+
+    //bitrev the data
+    for(unsigned j=0;j<2;j++){
+        unsigned c = 0xaaaaaaaa>>(cpol ^ cpha);
+        for(unsigned i=0;i<16;i++){
+          partout_timed(sclk, 1, c, time);
+          if(!isnull(mosi)){
+              partout_timed(mosi, 1, data>>31, time);
+              data<<=1;
+          }
+          c>>=1;
+          time += period / 2;
+          partout_timed(sclk, 1, c, time);
+          c>>=1;
+          if(!isnull(miso)){
+              unsigned t;
+              miso @ time - 1 :> t;
+              d = (d<<1) + (t&1);
+          }
+          time += (period + 1)/2;
+        }
+        time += 80;
+    }
+    partout_timed(sclk, 1, cpol, time);
+    sync(sclk);
+    return d;
+}
+
+
 // Optional function to determine the actual set speed for particular clock settings.
 unsigned spi_master_get_actual_clock_rate(spi_master_source_clock_t source_clock, unsigned divider){
     unsigned actual_speed_khz = ((source_clock == spi_master_source_clock_ref) ? PLATFORM_REFERENCE_MHZ : PLATFORM_NODE_0_SYSTEM_FREQUENCY_MHZ) * 1000 

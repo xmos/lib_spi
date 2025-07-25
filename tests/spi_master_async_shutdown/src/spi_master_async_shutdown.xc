@@ -11,8 +11,7 @@ in buffered port:32   p_miso  = XS1_PORT_1A;
 out port              p_ss    = XS1_PORT_1B;
 out buffered port:32  p_sclk  = XS1_PORT_1C;
 out buffered port:32  p_mosi  = XS1_PORT_1D;
-clock                 cb0     = XS1_CLKBLK_1;
-clock                 cb1     = XS1_CLKBLK_2;
+clock                 cb      = XS1_CLKBLK_1;
 
 out port setup_strobe_port = XS1_PORT_1E;
 out port setup_data_port = XS1_PORT_16B;
@@ -174,7 +173,7 @@ int main(){
     interface spi_master_async_if i[1];
     par {
         while(1){
-            spi_master_async_fwk(i, 1, p_sclk, p_mosi, p_miso, p_ss, 1, cb0, cb1);
+            spi_master_async(i, 1, p_sclk, p_mosi, p_miso, p_ss, 1, cb);
             // printf("restarting spi\n");
         }
         app(i[0]);

@@ -13,7 +13,7 @@
 extern "C"{
     #include "spi_fwk.h"
 }
-#include "spi_master_shared_fwk.h"
+#include "spi_master_shared.h"
 
 #define SPI_MAX_DEVICES 32 //Used to size the array of which bit in the SS port maps to which device
 
@@ -129,4 +129,3 @@ void spi_master_fwk(server interface spi_master_if i[num_clients],
     }
 
 }
-

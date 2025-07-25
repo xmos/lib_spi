@@ -11,8 +11,7 @@ in buffered port:32    p_miso   = XS1_PORT_1A;
 out port               p_ss     = XS1_PORT_1B;
 out buffered port:32   p_sclk   = XS1_PORT_1C;
 out buffered port:32   p_mosi   = XS1_PORT_1D;
-clock                  cb0      = XS1_CLKBLK_1;
-clock                  cb1      = XS1_CLKBLK_2;
+clock                  cb       = XS1_CLKBLK_1;
 
 out port setup_strobe_port = XS1_PORT_1E;
 out port setup_data_port = XS1_PORT_16B;
@@ -186,12 +185,12 @@ int main(){
 #if COMBINED == 1
         [[combine]]
         par {
-            spi_master_async_fwk(i, 1, p_sclk, MOSI, p_miso, p_ss, 1, cb0, cb1);
+            spi_master_async(i, 1, p_sclk, MOSI, p_miso, p_ss, 1, cb);
             app(i[0], MOSI_ENABLED, 1);
         }
         load(BURNT_THREADS);
 #else
-        spi_master_async_fwk(i, 1, p_sclk, MOSI, p_miso, p_ss, 1, cb0, cb1);
+        spi_master_async(i, 1, p_sclk, MOSI, p_miso, p_ss, 1, cb);
         app(i[0], MOSI_ENABLED, 1);
         load(BURNT_THREADS);
 #endif

@@ -1,6 +1,14 @@
 lib_spi change log
 ==================
 
+4.0.0
+-----
+
+  * CHANGED: SPI master async reduced clock blocks from two to one
+  * CHANGED: SPI master sync increased max speed to 25+ Mbps
+  * RESOLVED: SPI master (all) swapping of SPI modes 0 and 1
+  * RESOLVED: Non-funcional tests
+
 3.4.0
 -----
 

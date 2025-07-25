@@ -14,6 +14,21 @@ extern "C"{
     #include "spi_fwk.h"
 }
 
+// Clockblock-less SPI transfer functions. These are slow (max around 1 Mbps) but are suitable for control transfer
+// When clockblock resources are scarce
+int8_t transfer8_sync_zero_clkblk(
+        out buffered port:32 sclk,
+        out buffered port:32 ?mosi,
+        in buffered port:32 ?miso,
+        uint8_t data, const unsigned period,
+        unsigned cpol, unsigned cpha);
+
+uint32_t transfer32_sync_zero_clkblk(
+        out buffered port:32 sclk,
+        out buffered port:32 ?mosi,
+        in buffered port:32 ?miso,
+        uint32_t data, const unsigned period,
+        const unsigned cpol, const unsigned cpha);
 
 // Optional function to determine the actual set speed for particular clock settings.
 unsigned spi_master_get_actual_clock_rate(spi_master_source_clock_t source_clock, unsigned divider);
