@@ -10,9 +10,6 @@
 #include <platform.h>
 
 #include "spi.h"
-extern "C"{
-    #include "spi_fwk.h"
-}
 #include "spi_master_shared.h"
 
 
@@ -30,6 +27,8 @@ void spi_master(server interface spi_master_if i[num_clients],
     // For clock-block based fast SPI
     spi_master_t spi_master;
     spi_master_device_t spi_dev[num_slaves];
+    spi_master_ss_clock_timing_t device_ss_clock_timing[num_slaves];                // Initialised below 
+    spi_master_miso_capture_timing_t device_miso_capture_timing[num_slaves] = {{0}};
     unsigned current_device;
 
     // For clock-blockless slow SPI
@@ -42,6 +41,14 @@ void spi_master(server interface spi_master_if i[num_clients],
     if(!isnull(cb)){
         unsafe{
             spi_master_init(&spi_master, cb, (port)p_ss, (port)sclk, (port)mosi, (port)miso);
+            // Set default timings
+            for(int i = 0; i < num_slaves; i++){
+                device_ss_clock_timing[i].cs_to_clk_delay_ticks = SPI_MASTER_DEFAULT_SS_CLOCK_DELAY_TICKS;
+                device_ss_clock_timing[i].clk_to_cs_delay_ticks = SPI_MASTER_DEFAULT_SS_CLOCK_DELAY_TICKS;
+                device_miso_capture_timing[i].miso_pad_delay = spi_master_sample_delay_1_2; // Half a SPI clock
+                device_miso_capture_timing[i].miso_sample_delay = 0;                        // Default no delay
+                spi_dev[i].cs_to_cs_delay_ticks = SPI_MASTER_DEFAULT_SS_CLOCK_DELAY_TICKS;
+            }
         }
     } else {
         // Initial SS bit pattern - deselected
@@ -92,12 +99,15 @@ void spi_master(server interface spi_master_if i[num_clients],
                     //     ((source_clock == spi_master_source_clock_ref) ? PLATFORM_REFERENCE_MHZ : PLATFORM_NODE_0_SYSTEM_FREQUENCY_MHZ));
 
                     spi_master_device_init(&spi_dev[current_device], &spi_master,
-                        ss_port_bit[device_index],
+                        ss_port_bit[current_device],
                         cpol, cpha,
                         source_clock,
                         divider,
-                        spi_master_sample_delay_0,
-                        0, 0 ,0 ,0 );
+                        device_miso_capture_timing[current_device].miso_sample_delay,
+                        device_miso_capture_timing[current_device].miso_pad_delay,
+                        device_ss_clock_timing[current_device].clk_to_cs_delay_ticks,
+                        device_ss_clock_timing[current_device].cs_to_clk_delay_ticks,
+                        spi_dev[current_device].cs_to_cs_delay_ticks); // Write same value back
 
                     spi_master_start_transaction(&spi_dev[current_device]);
                 }

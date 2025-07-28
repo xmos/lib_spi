@@ -6,7 +6,9 @@
 #include <stdint.h>
 #include <stddef.h>
 #include <xccompat.h>
-
+extern "C" {
+#include "../src/spi_fwk.h"
+}
 // These are needed for DOXYGEN to render properly
 #ifndef __DOXYGEN__
 #define static_const_unsigned static const unsigned
@@ -25,13 +27,38 @@
 #define uint8_t_movable_ptr_t uint8_t * movable
 #endif
 
-/** This type indicates what mode an SPI component should use */
+/** This type indicates what clocking mode a SPI component should use */
 typedef enum spi_mode_t {
   SPI_MODE_0 = 0, /**< SPI Mode 0 - Polarity = 0, Sampling clock Edge = 1 */
   SPI_MODE_1 = 1, /**< SPI Mode 1 - Polarity = 0, Sampling clock Edge = 0 */
   SPI_MODE_2 = 2, /**< SPI Mode 2 - Polarity = 1, Sampling Clock Edge = 0 */
   SPI_MODE_3 = 3, /**< SPI Mode 3 - Polarity = 1, Sampling Clock Edge = 1 */
 } spi_mode_t;
+
+
+/** This type contains timing settings for SS assert to clock delay and last 
+ *  clock to SS de-assert delay. The unit is reference timer ticks which is 
+ *  nominally 10 ns. The maximum setting is 65534 which equates to 655 us 
+ *  over which the setting will overflow back to zero */
+typedef struct spi_master_ss_clock_timing_t {
+  uint32_t cs_to_clk_delay_ticks;
+  uint32_t clk_to_cs_delay_ticks;
+} spi_master_ss_clock_timing_t;
+
+
+/** This type contains timing settings for capturing the MISO pin.
+ *  When the SPI clock is above 20MHz it is usually necessary to delay the
+ *  sampling of the MISO pin. These settings can be coarse grained using
+ *  miso_sample_delay setting which increments in SPI half clocks or
+ *  fine grained in units of core clock (eg. 600MHz) using the
+ *  miso_pad_delay setting.
+ *  
+ *  See the following document for details on xcore.ai port timing:
+ *  https://www.xmos.com/documentation/XM-014231-AN/html/rst/index.html */
+typedef struct spi_master_miso_capture_timing_t {
+  spi_master_sample_delay_t miso_sample_delay;
+  uint32_t miso_pad_delay;
+} spi_master_miso_capture_timing_t;
 
 
 /** This interface allows clients to interact with SPI master task. */

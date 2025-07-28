@@ -12,6 +12,9 @@
  */
 #define SPI_MASTER_MINIMUM_DELAY 10
 
+/* Default delay from clock to SS, SS de-assert to SS assert and SS to clock */
+#define SPI_MASTER_DEFAULT_SS_CLOCK_DELAY_TICKS  15 // 150 nanoseconds
+
 #include <stdlib.h> /* for size_t */
 #include <stdint.h>
 #include <xclib.h> /* for byterev() */
@@ -24,7 +27,6 @@
 #else
 #define xclock_t clock
 #define port_t port
-#define thread_mode_t int
 #endif
 
 /* The SETC constant for pad delay is missing from xs2a_user.h */
@@ -58,11 +60,11 @@ inline void spi_io_port_outpw(
  * for the SPI master sample delay.
  */
 typedef enum {
-    spi_master_sample_delay_0 = 0, /**< Samples 1/2 clock cycle after output from device */
-    spi_master_sample_delay_1 = 1, /**< Samples 3/4 clock cycle after output from device */
-    spi_master_sample_delay_2 = 2, /**< Samples 1 clock cycle after output from device */
-    spi_master_sample_delay_3 = 3, /**< Samples 1 and 1/4 clock cycle after output from device */
-    spi_master_sample_delay_4 = 4, /**< Samples 1 and 1/2 clock cycle after output from device */
+    spi_master_sample_delay_1_2 = 0, /**< Samples 1/2 clock cycle after output from device */
+    spi_master_sample_delay_3_4 = 1, /**< Samples 3/4 clock cycle after output from device */
+    spi_master_sample_delay_1_0 = 2, /**< Samples 1 clock cycle after output from device */
+    spi_master_sample_delay_5_4 = 3, /**< Samples 1 and 1/4 clock cycle after output from device */
+    spi_master_sample_delay_3_2 = 4, /**< Samples 1 and 1/2 clock cycle after output from device */
 } spi_master_sample_delay_t;
 
 /**
@@ -107,7 +109,6 @@ typedef struct {
     uint32_t cs_to_clk_delay_ticks;
     uint32_t clk_to_cs_delay_ticks;
     uint32_t cs_to_cs_delay_ticks;
-    thread_mode_t thread_mode;
 } spi_master_device_t;
 
 /**

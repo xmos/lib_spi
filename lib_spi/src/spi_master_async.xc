@@ -7,9 +7,6 @@
 
 #include <print.h>
 #include "spi.h"
-extern "C"{
-#include "spi_fwk.h"
-}
 #include "spi_master_shared.h"
 
 #define SPI_MAX_DEVICES 32 //Used to size the array of which bit in the SS port maps to which device
@@ -59,8 +56,16 @@ void spi_master_async(server interface spi_master_async_if i[num_clients],
     //Setup fwk SPI master and device instance
     spi_master_t spi_master;
     spi_master_device_t spi_dev[num_slaves];
+    spi_master_ss_clock_timing_t device_ss_clock_timing[num_slaves];                // Initialised below 
+    spi_master_miso_capture_timing_t device_miso_capture_timing[num_slaves] = {{0}};// Default no delay
+    
     unsafe{
         spi_master_init(&spi_master, cb, (port)p_ss, (port)sclk, (port)mosi, (port)miso);
+        for(int i = 0; i < num_slaves; i++){
+            device_ss_clock_timing[i].cs_to_clk_delay_ticks = SPI_MASTER_DEFAULT_SS_CLOCK_DELAY_TICKS;
+            device_ss_clock_timing[i].clk_to_cs_delay_ticks = SPI_MASTER_DEFAULT_SS_CLOCK_DELAY_TICKS;
+            spi_dev[i].cs_to_cs_delay_ticks = SPI_MASTER_DEFAULT_SS_CLOCK_DELAY_TICKS;
+        }
     }
 
     // By default use the port bit which is the number of the client (client 0 uses port bit 0 etc.)
@@ -110,15 +115,18 @@ void spi_master_async(server interface spi_master_async_if i[num_clients],
                 unsigned cpol = mode >> 1;
                 unsigned cpha = mode & 0x1;
 
-                spi_master_device_init(&spi_dev[device_index], &spi_master,
-                    ss_port_bit[device_index],
-                    cpol, cpha,
-                    source_clock,
-                    divider,
-                    spi_master_sample_delay_0,
-                    0, 0 ,0 ,0 );
+                spi_master_device_init(&spi_dev[active_device], &spi_master,
+                        ss_port_bit[active_device],
+                        cpol, cpha,
+                        source_clock,
+                        divider,
+                        device_miso_capture_timing[active_device].miso_sample_delay,
+                        device_miso_capture_timing[active_device].miso_pad_delay,
+                        device_ss_clock_timing[active_device].clk_to_cs_delay_ticks,
+                        device_ss_clock_timing[active_device].cs_to_clk_delay_ticks,
+                        spi_dev[active_device].cs_to_cs_delay_ticks); // Write same value back
 
-                spi_master_start_transaction(&spi_dev[device_index]);
+                spi_master_start_transaction(&spi_dev[active_device]);
     
                 buffer_current_index = 0;
                 currently_performing_a_transaction = 1;  
@@ -271,8 +279,11 @@ void spi_master_async(server interface spi_master_async_if i[num_clients],
                         cpol, cpha,
                         source_clock,
                         divider,
-                        spi_master_sample_delay_0,
-                        0, 0 ,0 ,0 );
+                        device_miso_capture_timing[new_device_index].miso_sample_delay,
+                        device_miso_capture_timing[new_device_index].miso_pad_delay,
+                        device_ss_clock_timing[new_device_index].clk_to_cs_delay_ticks,
+                        device_ss_clock_timing[new_device_index].cs_to_clk_delay_ticks,
+                        spi_dev[new_device_index].cs_to_cs_delay_ticks); // Write same value back
 
                     spi_master_start_transaction(&spi_dev[new_device_index]);
 
