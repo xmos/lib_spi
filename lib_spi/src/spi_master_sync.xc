@@ -110,7 +110,9 @@ void spi_master(server interface spi_master_if i[num_clients],
                 // NEED TO WAIT -> Deassert time
                 if(isnull(cb)){
                     p_ss <: 0xffffffff;
+                    delay_ticks(ss_deassert_time);
                 } else {
+                    spi_dev[current_device].cs_to_cs_delay_ticks = ss_deassert_time;
                     spi_master_end_transaction(&spi_dev[current_device]);
                 }
 

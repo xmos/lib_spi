@@ -243,6 +243,7 @@ void spi_master_async(server interface spi_master_async_if i[num_clients],
                 //An end_transaction can only be completed after all transfers
                 //have been completed
 
+                spi_dev[active_device].cs_to_cs_delay_ticks = ss_deassert_time;
                 spi_master_end_transaction(&spi_dev[active_device]);
 
                 if(tr_fill > 0){
