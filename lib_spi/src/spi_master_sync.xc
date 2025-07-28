@@ -29,7 +29,8 @@ void spi_master(server interface spi_master_if i[num_clients],
 
     // For clock-block based fast SPI
     spi_master_t spi_master;
-    spi_master_device_t spi_dev;
+    spi_master_device_t spi_dev[num_slaves];
+    unsigned current_device;
 
     // For clock-blockless slow SPI
     unsigned clkblkless_period_ticks;
@@ -56,11 +57,13 @@ void spi_master(server interface spi_master_if i[num_clients],
         ss_port_bit[i] = i;
     }
 
+
     while(1){
         select {
             case accepting_new_transactions => i[int x].begin_transaction(unsigned device_index,
                 unsigned speed_in_khz, spi_mode_t mode):{
                 accepting_new_transactions = 0;
+                current_device = device_index;
 
                 // Grab mode bits
                 cpol = mode >> 1;
@@ -88,7 +91,7 @@ void spi_master(server interface spi_master_if i[num_clients],
                     //     ((source_clock == spi_master_source_clock_ref) ? "ref" : "core"),
                     //     ((source_clock == spi_master_source_clock_ref) ? PLATFORM_REFERENCE_MHZ : PLATFORM_NODE_0_SYSTEM_FREQUENCY_MHZ));
 
-                    spi_master_device_init(&spi_dev, &spi_master,
+                    spi_master_device_init(&spi_dev[current_device], &spi_master,
                         ss_port_bit[device_index],
                         cpol, cpha,
                         source_clock,
@@ -96,9 +99,7 @@ void spi_master(server interface spi_master_if i[num_clients],
                         spi_master_sample_delay_0,
                         0, 0 ,0 ,0 );
 
-                    spi_master.current_device = 0xffffffff; // This is needed to force mode and speed in spi_master_start_transaction()
-                                                            // Otherwise fwk_spi sees the next transaction on the existing device as the same settings as last on the same client
-                    spi_master_start_transaction(&spi_dev);
+                    spi_master_start_transaction(&spi_dev[current_device]);
                 }
 
                 break;
@@ -110,7 +111,7 @@ void spi_master(server interface spi_master_if i[num_clients],
                 if(isnull(cb)){
                     p_ss <: 0xffffffff;
                 } else {
-                    spi_master_end_transaction(&spi_dev);
+                    spi_master_end_transaction(&spi_dev[current_device]);
                 }
 
                 // Unlock the transaction
@@ -123,7 +124,7 @@ void spi_master(server interface spi_master_if i[num_clients],
                 if(isnull(cb)){
                     r = transfer8_sync_zero_clkblk(sclk, mosi, miso, data, clkblkless_period_ticks, cpol, cpha);
                 } else {
-                    spi_master_transfer(&spi_dev, (uint8_t *)&data, &r, 1);
+                    spi_master_transfer(&spi_dev[current_device], (uint8_t *)&data, &r, 1);
                 }
 
                 break;
@@ -137,18 +138,18 @@ void spi_master(server interface spi_master_if i[num_clients],
                     // This means we transmit the MSByte first
                     data = byterev(data);
                     uint32_t read_val;                
-                    spi_master_transfer(&spi_dev, (uint8_t *)&data, (uint8_t *)&read_val, 4);
+                    spi_master_transfer(&spi_dev[current_device], (uint8_t *)&data, (uint8_t *)&read_val, 4);
                     r = byterev(read_val);
                 }
 
                 break;
             }
 
-            case i[int x].set_ss_port_bit(unsigned port_bit):{
-                if(port_bit > num_slaves){
+            case i[int x].set_ss_port_bit(unsigned device_index, unsigned port_bit):{
+                if(device_index > num_slaves){
                     printstrln("Invalid port bit - must be less than num_slaves");
                 }
-                ss_port_bit[x] = port_bit;
+                ss_port_bit[device_index] = port_bit;
 
                 break;
             }

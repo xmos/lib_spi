@@ -58,7 +58,7 @@ void spi_master_async(server interface spi_master_async_if i[num_clients],
 
     //Setup fwk SPI master and device instance
     spi_master_t spi_master;
-    spi_master_device_t spi_dev;
+    spi_master_device_t spi_dev[num_slaves];
     unsafe{
         spi_master_init(&spi_master, cb, (port)p_ss, (port)sclk, (port)mosi, (port)miso);
     }
@@ -110,7 +110,7 @@ void spi_master_async(server interface spi_master_async_if i[num_clients],
                 unsigned cpol = mode >> 1;
                 unsigned cpha = mode & 0x1;
 
-                spi_master_device_init(&spi_dev, &spi_master,
+                spi_master_device_init(&spi_dev[device_index], &spi_master,
                     ss_port_bit[device_index],
                     cpol, cpha,
                     source_clock,
@@ -118,9 +118,7 @@ void spi_master_async(server interface spi_master_async_if i[num_clients],
                     spi_master_sample_delay_0,
                     0, 0 ,0 ,0 );
 
-                spi_master.current_device = 0xffffffff; // This is needed to force mode and speed in spi_master_start_transaction()
-                                                        // Otherwise fwk_spi sees the next transaction on the existing device as the same settings as last on the same client
-                spi_master_start_transaction(&spi_dev);
+                spi_master_start_transaction(&spi_dev[device_index]);
     
                 buffer_current_index = 0;
                 currently_performing_a_transaction = 1;  
@@ -158,7 +156,7 @@ void spi_master_async(server interface spi_master_async_if i[num_clients],
                         i[x].transfer_complete();
                     } else {
                         buffer_transfer_width = 8;
-                        spi_master_transfer(&spi_dev, (uint8_t*movable)&buffer_tx[0], &r8, 1);
+                        spi_master_transfer(&spi_dev[active_device], (uint8_t*movable)&buffer_tx[0], &r8, 1);
                         tmr :> default_case_time;
                         default_case_enabled = 1;   
                     }
@@ -196,7 +194,7 @@ void spi_master_async(server interface spi_master_async_if i[num_clients],
                         buffer_transfer_width = 32;
                         uint32_t data = byterev(buffer_tx[0]);
                         // uint32_t data = buffer_tx[0];
-                        spi_master_transfer(&spi_dev, (uint8_t *)&data, (uint8_t*)&r32, 4);
+                        spi_master_transfer(&spi_dev[active_device], (uint8_t *)&data, (uint8_t*)&r32, 4);
                         tmr :> default_case_time;
                         default_case_enabled = 1;
                     }
@@ -216,7 +214,7 @@ void spi_master_async(server interface spi_master_async_if i[num_clients],
                         buffer_current_index = 0;
                         i[active_client].transfer_complete();
                     } else {
-                        spi_master_transfer(&spi_dev, &((uint8_t*movable)buffer_tx)[buffer_current_index], &r8, 1);
+                        spi_master_transfer(&spi_dev[active_device], &((uint8_t*movable)buffer_tx)[buffer_current_index], &r8, 1);
                         tmr :> default_case_time;
                         default_case_enabled = 1;
                     }
@@ -230,7 +228,7 @@ void spi_master_async(server interface spi_master_async_if i[num_clients],
                         i[active_client].transfer_complete();
                     } else {
                         uint32_t data = byterev(buffer_tx[buffer_current_index]);
-                        spi_master_transfer(&spi_dev, (uint8_t *)&data, (uint8_t*)&r32, 4);
+                        spi_master_transfer(&spi_dev[active_device], (uint8_t *)&data, (uint8_t*)&r32, 4);
                         tmr :> default_case_time;
                         default_case_enabled = 1;
                     }
@@ -245,7 +243,7 @@ void spi_master_async(server interface spi_master_async_if i[num_clients],
                 //An end_transaction can only be completed after all transfers
                 //have been completed
 
-                spi_master_end_transaction(&spi_dev);
+                spi_master_end_transaction(&spi_dev[active_device]);
 
                 if(tr_fill > 0){
                     //begin a new transaction - the tail of the list is the next one to go
@@ -267,7 +265,7 @@ void spi_master_async(server interface spi_master_async_if i[num_clients],
                     unsigned cpol = mode >> 1;
                     unsigned cpha = mode & 0x1;
 
-                    spi_master_device_init(&spi_dev, &spi_master,
+                    spi_master_device_init(&spi_dev[new_device_index], &spi_master,
                         ss_port_bit[new_device_index],
                         cpol, cpha,
                         source_clock,
@@ -275,9 +273,7 @@ void spi_master_async(server interface spi_master_async_if i[num_clients],
                         spi_master_sample_delay_0,
                         0, 0 ,0 ,0 );
 
-                    spi_master.current_device = 0xffffffff; // This is needed to force mode and speed in spi_master_start_transaction()
-                                                            // Otherwise fwk_spi sees the next transaction on the existing device as the same settings as last on the same client
-                    spi_master_start_transaction(&spi_dev);
+                    spi_master_start_transaction(&spi_dev[new_device_index]);
 
                     active_device = new_device_index;
                     active_mode = mode;
@@ -289,13 +285,13 @@ void spi_master_async(server interface spi_master_async_if i[num_clients],
                         buffer_rx = move(tr_buffer[index].buffer_rx);
                         buffer_transfer_width = tr_buffer[index].buffer_transfer_width;
                         if(buffer_transfer_width == 8){
-                            spi_master_transfer(&spi_dev, (uint8_t*movable)&buffer_tx[0], &r8, 1);
+                            spi_master_transfer(&spi_dev[active_device], (uint8_t*movable)&buffer_tx[0], &r8, 1);
                             tmr :> default_case_time;
                             default_case_enabled = 1;
                         } else {
                             uint32_t data = byterev(buffer_tx[0]);
                             // uint32_t data = buffer_tx[0];
-                            spi_master_transfer(&spi_dev, (uint8_t *)&data, (uint8_t*)&r32, 4);
+                            spi_master_transfer(&spi_dev[active_device], (uint8_t *)&data, (uint8_t*)&r32, 4);
                             tmr :> default_case_time;
                             default_case_enabled = 1;
                         }
@@ -319,11 +315,12 @@ void spi_master_async(server interface spi_master_async_if i[num_clients],
                 break;
             }
 
-            case i[int x].set_ss_port_bit(unsigned port_bit):{
-                if(port_bit > SPI_MAX_DEVICES){
-                    printstrln("Invalid port bit - must be less than SPI_MAX_DEVICES");
+            case i[int x].set_ss_port_bit(unsigned device_index, unsigned port_bit):{
+                if(device_index > num_slaves){
+                    printstrln("Invalid port bit - must be less than num_slaves");
                 }
-                ss_port_bit[x] = port_bit;
+                ss_port_bit[device_index] = port_bit;
+
                 break;
             }
 

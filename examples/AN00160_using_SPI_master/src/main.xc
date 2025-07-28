@@ -25,7 +25,7 @@ void app(client spi_master_if spi)
     
     p_rstn <: 0x2; //Take out of reset and wait
     delay_microseconds(1000);
-    spi.set_ss_port_bit(1); // We are using bit 1 in WIFI_CS_N
+    spi.set_ss_port_bit(0, 1); // We are using bit 1 in WIFI_CS_N for device 0
 
 
     spi.begin_transaction(0, 1000, SPI_MODE_0);
@@ -51,13 +51,11 @@ void app(client spi_master_if spi)
 void async_app(client spi_master_async_if spi)
 {
 
-  spi.set_ss_port_bit(1);
-
   printstrln("Sending aynch SPI traffic");
   
   p_rstn <: 0x2; //Take out of reset and wait
   delay_microseconds(1000);
-  spi.set_ss_port_bit(1); // We are using bit 1 in WIFI_CS_N
+  spi.set_ss_port_bit(0, 1); // We are using bit 1 in WIFI_CS_N for device 0
 
   spi.begin_transaction(0, 1000, SPI_MODE_0);
 

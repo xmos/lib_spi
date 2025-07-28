@@ -32,7 +32,7 @@ def do_test(capfd, burnt, cb_enabled, miso_mosi_enabled, arch, id):
     
     Pyxsim.run_on_simulator_(
         binary,
-        # simargs=['--vcd-tracing', '-o ./spi_master_sync_multi_device/trace.vcd -tile tile[0] -pads -functions'],
+        # simargs=['--vcd-tracing', '-o ./trace.vcd -tile tile[0] -ports -ports-detailed -pads -functions'],
         do_xe_prebuild = False,
         simthreads = [checker],
         capfd=capfd,
@@ -43,5 +43,5 @@ def do_test(capfd, burnt, cb_enabled, miso_mosi_enabled, arch, id):
 
 
 @pytest.mark.parametrize("params", generate_tests_from_json(test_params_file)[0], ids=generate_tests_from_json(test_params_file)[1])
-def test_master_sync_rx_tx(capfd, params, request):
+def test_master_sync_multi_client(capfd, params, request):
     do_test(capfd, *params, request.node.callspec.id)

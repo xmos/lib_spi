@@ -29,7 +29,7 @@ def do_test(capfd):
     
     Pyxsim.run_on_simulator_(
         binary,
-        # simargs=['--vcd-tracing', '-o ./trace.vcd -tile tile[0] -ports -ports-detailed -pads -functions'],
+        # simargs=['--vcd-tracing', '-o ./trace.vcd -tile tile[0] -ports -ports-detailed -functions'],
         do_xe_prebuild = False,
         simthreads = [checker],
         capfd=capfd)
@@ -37,5 +37,5 @@ def do_test(capfd):
     output = print_expected_vs_output(expected, capfd)
     assert tester.run(output), output
 
-def test_master_sync_rx_tx(capfd, request):
+def test_master_async_shutdown(capfd, request):
     do_test(capfd)

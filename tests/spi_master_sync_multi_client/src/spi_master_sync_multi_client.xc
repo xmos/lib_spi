@@ -14,6 +14,7 @@ out buffered port:32  p_sclk  = XS1_PORT_1C;
 out buffered port:32  p_mosi  = XS1_PORT_1D;
 clock                 cb      = XS1_CLKBLK_1;
 
+#define SPEED_KBPS  10000
 
 out port setup_strobe_port = XS1_PORT_1E;
 out port setup_data_port = XS1_PORT_16B;
@@ -21,10 +22,10 @@ out port setup_data_port = XS1_PORT_16B;
 void app(client interface spi_master_if i, int mosi_enabled, int miso_enabled, chanend c){
     set_core_fast_mode_on();
     while(1){
-        i.begin_transaction(0, 736, SPI_MODE_3);
+        i.begin_transaction(0, SPEED_KBPS, SPI_MODE_3);
         i.transfer8(0xff);
         i.end_transaction(100);
-        delay_microseconds(1);
+        delay_microseconds(10); // Allow other clients to access SPI and avoid hogging by one
         c <: 1;
     }
 }

@@ -101,9 +101,10 @@ typedef interface spi_master_if {
    *  The default value (if this is not called) is the bit number is equal to 
    *  the device_index (0->0, 1->1 etc.). 
    *
+   *  \param device_index  The index of the device for which the port bit is to be set.
    *  \param ss_port_bit   Which bit number in the port to use for slave select.
    */
-  void set_ss_port_bit(unsigned ss_port_bit);
+  void set_ss_port_bit(unsigned device_index, unsigned ss_port_bit);
 
   /** Shut down the interface server.
    */
@@ -277,9 +278,10 @@ typedef interface spi_master_async_if  {
    *  The default value (if this is not called) is the bit number is equal to 
    *  the device_index (0->0, 1->1 etc.). 
    *
+   *  \param device_index  The index of the device for which the port bit is to be set.
    *  \param ss_port_bit   Which bit number in the port to use for slave select.
    */
-  void set_ss_port_bit(unsigned ss_port_bit);
+  void set_ss_port_bit(unsigned device_index, unsigned ss_port_bit);
 
 
   /** Shut down the interface server.
