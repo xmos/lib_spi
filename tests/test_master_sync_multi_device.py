@@ -31,7 +31,7 @@ def do_test(capfd, burnt, cb_enabled, miso_mosi_enabled, arch, id):
                                             regexp = False,
                                             ordered = True)
     
-    simargs = ['--vcd-tracing', '-o trace.vcd -tile tile[0] -pads -ports -functions']
+    simargs = ['--vcd-tracing', '-o trace.vcd -tile tile[0] -pads -ports -ports-detailed -functions -instructions -cycles -cores']
     simargs = [] # Disable VCD tracing
 
     Pyxsim.run_on_simulator_(

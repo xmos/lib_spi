@@ -58,7 +58,7 @@ void spi_master(server interface spi_master_if i[num_clients],
 
     int accepting_new_transactions = 1;
 
-    // By default use the port bit which is the number of the client (client 0 uses port bit 0 etc.)
+    // By default use the port bit which is the number of the slave (slave 0 uses port bit 0 etc.)
     uint8_t ss_port_bit[num_slaves];
     for(int i = 0; i < num_slaves; i++){
         ss_port_bit[i] = i;
@@ -85,9 +85,9 @@ void spi_master(server interface spi_master_if i[num_clients],
                     partout(sclk, 1, cpol);
                     sync(sclk);
 
-                    unsigned ss_port_val = ~(1 << ss_port_bit[device_index]);
+                    unsigned ss_port_val = ~(1 << ss_port_bit[current_device]);
                     p_ss <: ss_port_val;
-                    clkblkless_period_ticks = (XS1_TIMER_KHZ + speed_in_khz - 1)/speed_in_khz;// round up
+                    clkblkless_period_ticks = (XS1_TIMER_KHZ + speed_in_khz - 1) / speed_in_khz;// round up (rounds speed down)
                 } else {
                     spi_master_determine_clock_settings(&source_clock, &divider, speed_in_khz);
 
@@ -116,8 +116,6 @@ void spi_master(server interface spi_master_if i[num_clients],
             }
 
             case i[int x].end_transaction(unsigned ss_deassert_time):{
-
-                // NEED TO WAIT -> Deassert time
                 if(isnull(cb)){
                     p_ss <: 0xffffffff;
                     delay_ticks(ss_deassert_time);

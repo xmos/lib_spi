@@ -114,19 +114,19 @@ class SPIMasterChecker(px.SimThread):
                 tx_bit_counter += 1
                 tx_byte = tx_byte << 1
 
-            ss_value = ((xsi.sample_port_pins(self._ss_port) >> active_slave) & 1)
+            ss_value = ((xsi.sample_port_pins(self._ss_port) >> active_slave) & 1) # Select of interest
             sck_value = xsi.sample_port_pins(self._sck_port)
 
             while ss_value == 0:
                 self.wait_for_port_pins_change([self._ss_port] + [self._sck_port])
-
+                
                 # check no other SS asserted
                 ss_port_val = xsi.sample_port_pins(self._ss_port) & ss_deaserted_value
                 # print(f"{self._ss_port}, 0x{ss_port_val:x}, 0x{ss_deaserted_value:x}, {active_slave}, {(ss_deaserted_value & ~(1 << active_slave)):x}")
                 for i in range(self._ss_port_width):
-                    if not ss_port_val & (1 << i) and i != active_slave:
+                    if (ss_port_val & (1 << i) == 0) and (i != active_slave):
                         error = True
-                        print(f"Error: Second slave selected during first transaction, SS port val: 0x{ss_port_val:x} at time: {xsi.get_time() / nanosecond_ticks}ns")
+                        print(f"Error: Additional slave selected during first transaction, SS port val:0x{ss_port_val:x} (active slave:{active_slave} mask 0x{ss_deaserted_value:x}) at time: {xsi.get_time() / nanosecond_ticks}ns")
 
                 if (ss_value == ((xsi.sample_port_pins(self._ss_port) >> active_slave) & 1) and (sck_value == xsi.sample_port_pins(self._sck_port))):
                     continue

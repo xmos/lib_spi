@@ -3,6 +3,8 @@
 #include <stdint.h>
 #include <print.h>
 #include "spi_fwk.h"
+#include <xcore/hwtimer.h>
+
 
 void spi_master_start_transaction(
         spi_master_device_t *dev)
@@ -189,7 +191,10 @@ void spi_master_transfer(
      * is allowed to deassert.
      */
     if (dev->clk_to_cs_delay_ticks >= SPI_MASTER_MINIMUM_DELAY) {
+        // Use port time
         port_out_at_time(spi->cs_port, port_get_trigger_time(spi->cs_port) + dev->clk_to_cs_delay_ticks, dev->cs_assert_val);
+    } else {
+        blocking_wait_ticks(dev->clk_to_cs_delay_ticks);
     }
 }
 
@@ -212,6 +217,8 @@ void spi_master_end_transaction(
      */
     if (dev->cs_to_cs_delay_ticks >= SPI_MASTER_MINIMUM_DELAY) {
         port_out_at_time(spi->cs_port, port_get_trigger_time(spi->cs_port) + dev->cs_to_cs_delay_ticks, cs_deassert_val);
+    } else {
+        blocking_wait_ticks(dev->clk_to_cs_delay_ticks);
     }
 }
 

@@ -68,7 +68,7 @@ void spi_master_async(server interface spi_master_async_if i[num_clients],
         }
     }
 
-    // By default use the port bit which is the number of the client (client 0 uses port bit 0 etc.)
+    // By default use the port bit which is the number of the slave (slave 0 uses port bit 0 etc.)
     uint8_t ss_port_bit[SPI_MAX_DEVICES];
     for(int i = 0; i < SPI_MAX_DEVICES; i++){
         ss_port_bit[i] = i;

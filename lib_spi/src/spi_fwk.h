@@ -7,23 +7,41 @@
  */
 
 /**
- * The minimum number of clock ticks that should
- * be specified for any SPI master delay value.
- */
-#define SPI_MASTER_MINIMUM_DELAY 10
+ * The minimum number of reference clock ticks that should
+ * be specified for any SPI master delay value. This value
+ * is carefully tuned so that the SETPT can be followed by 
+ * the OUT in time so that we avoid this from the XS3 architecture manual:
+ * 
+ * For a transfer initiated by a SETPT instruction, the direction will be input
+ * unless an output is executed before the time specified by the SETPT instruction.
+ * This means the SS port may go high impedance briefly which is undesirable. */
+#define SPI_MASTER_MINIMUM_DELAY (PLATFORM_REFERENCE_MHZ * 80 / PLATFORM_NODE_0_SYSTEM_FREQUENCY_MHZ)
 
 /* Default delay from clock to SS, SS de-assert to SS assert and SS to clock */
-#define SPI_MASTER_DEFAULT_SS_CLOCK_DELAY_TICKS  15 // 150 nanoseconds
+#define SPI_MASTER_DEFAULT_SS_CLOCK_DELAY_TICKS  20 // 200 nanoseconds
+
 
 #include <stdlib.h> /* for size_t */
 #include <stdint.h>
 #include <xclib.h> /* for byterev() */
 #include <xccompat.h>
+#include <platform.h>
 #ifndef __XC__
 #include <xcore/assert.h>
 #include <xcore/port.h>
 #include <xcore/clock.h>
 #include <xcore/thread.h>
+#include <xcore/hwtimer.h>
+// Copy from xs1.h because this doesn't get included for non __XC__ files
+/**
+ * Tests whether a time input from a timer is considered to come after
+ * another time input from a timer. The comparison is the same as that
+ * performed by the function timerafter().
+ * \param A The first time to compare.
+ * \param B The second time to compare.
+ * \return Whether the first time is after the second.
+ */
+#define timeafter(A, B) ((int)((B) - (A)) < 0)
 #else
 #define xclock_t clock
 #define port_t port
@@ -202,6 +220,18 @@ void spi_master_transfer(
         size_t len);
 
 #ifndef __XC__
+
+/**
+ * Implements a blocking (busy wait) delay for a number of ref ticks
+ *
+ * \param delay_ticks The number of reference clock ticks to delay.
+ */
+static inline void blocking_wait_ticks(uint32_t delay_ticks){
+    uint32_t wait_time = get_reference_time();
+    wait_time += delay_ticks;
+    while(!timeafter(get_reference_time(), wait_time));
+}
+
 /**
  * Enforces a minimum delay between the time this is called and
  * the next transfer. It must be called during a transaction.
@@ -230,6 +260,8 @@ static inline void spi_master_delay_before_next_transfer(
      */
     if (delay_ticks >= SPI_MASTER_MINIMUM_DELAY) {
         port_out_at_time(spi->cs_port, port_get_trigger_time(spi->cs_port) + delay_ticks, dev->cs_assert_val);
+    } else {
+        blocking_wait_ticks(dev->clk_to_cs_delay_ticks);
     }
 }
 #endif
