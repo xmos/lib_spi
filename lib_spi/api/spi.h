@@ -38,7 +38,7 @@ typedef enum spi_mode_t {
 
 /** This type contains timing settings for SS assert to clock delay and last 
  *  clock to SS de-assert delay. The unit is reference timer ticks which is 
- *  nominally 10 ns. The maximum setting is 65534 which equates to 655 us 
+ *  nominally 10 ns. The maximum setting is 65535 which equates to 655 us 
  *  over which the setting will overflow back to zero */
 typedef struct spi_master_ss_clock_timing_t {
   uint32_t cs_to_clk_delay_ticks;
@@ -121,19 +121,44 @@ typedef interface spi_master_if {
    */
   uint32_t transfer32(uint32_t data);
 
-
   /** Sets the bit of port which is used for slave select (> 1b port type only)
    *  and only for spi_master. spi_master sets all bits in each port high/low
    *
    *  The default value (if this is not called) is the bit number is equal to 
-   *  the device_index (0->0, 1->1 etc.). 
+   *  the device_index (device 0-> bit 0, device 1-> bit 1 etc.). 
    *
    *  \param device_index  The index of the device for which the port bit is to be set.
    *  \param ss_port_bit   Which bit number in the port to use for slave select.
    */
   void set_ss_port_bit(unsigned device_index, unsigned ss_port_bit);
 
-  /** Shut down the interface server.
+  /** Configures the timing parameters for MISO capture. At frequencies above 20 MHz
+   *  it is likely that some capture delays will need to be introduced to ensure
+   *  setup and hold times are met.
+   *  These settings only affect the fast SPI master which uses a clock block. 
+   * 
+   *  See the following document for details on xcore.ai port timing:
+   *  https://www.xmos.com/documentation/XM-014231-AN/html/rst/index.html
+   *
+   *  \param device_index         The index of the device for which the MISO timing is to be set.
+   *  \param miso_capture_timing  A structure of type spi_master_miso_capture_timing_t with
+   *                              the desired settings.
+   */
+  void set_miso_capture_timing(unsigned device_index, spi_master_miso_capture_timing_t miso_capture_timing);
+
+  /** Configures the timing settings for SS assert to clock delay, and last 
+   *  clock to SS de-assert delay. The unit is reference timer ticks which is 
+   *  nominally 10 ns. The maximum setting is 65535 which equates to 655 us 
+   *  over which the setting will overflow back to zero.
+   *  These settings only affect the fast SPI master which uses a clock block.
+   * 
+   *  \param device_index     The index of the device for which the SS timing is to be set.
+   *  \param ss_clock_timing  A structure of type spi_master_ss_clock_timing_t with
+   *                          the desired settings.
+   */
+  void set_ss_clock_timing(unsigned device_index, spi_master_ss_clock_timing_t ss_clock_timing);
+
+  /** Shut down the interface server. See known issues in README.rst.
    */
   void shutdown(void);
 
@@ -259,7 +284,6 @@ typedef interface spi_master_async_if  {
                               uint32_t_movable_ptr_t outbuf,
                               size_t nwords);
 
-
   /** Transfer completed notification.
    *
    *  This notification occurs when a transfer is completed.
@@ -298,7 +322,6 @@ typedef interface spi_master_async_if  {
   void retrieve_transfer_buffers_32(REFERENCE_PARAM(uint32_t_movable_ptr_t, inbuf),
                                     REFERENCE_PARAM(uint32_t_movable_ptr_t, outbuf));
 
-
   /** Sets the bit of port which is used for slave select (> 1b port type only)
    *  and only for spi_master. spi_master sets all bits in each port high/low
    *
@@ -310,6 +333,29 @@ typedef interface spi_master_async_if  {
    */
   void set_ss_port_bit(unsigned device_index, unsigned ss_port_bit);
 
+   /** Configures the timing parameters for MISO capture. At frequencies above 20 MHz
+   *  it is likely that some capture delays will need to be introduced to ensure
+   *  setup and hold times are met.
+   * 
+   *  See the following document for details on xcore.ai port timing:
+   *  https://www.xmos.com/documentation/XM-014231-AN/html/rst/index.html
+   *
+   *  \param device_index         The index of the device for which the MISO timing is to be set.
+   *  \param miso_capture_timing  A structure of type spi_master_miso_capture_timing_t with
+   *                              the desired settings.
+   */
+  void set_miso_capture_timing(unsigned device_index, spi_master_miso_capture_timing_t miso_capture_timing);
+
+  /** Configures the timing settings for SS assert to clock delay, and last 
+   *  clock to SS de-assert delay. The unit is reference timer ticks which is 
+   *  nominally 10 ns. The maximum setting is 65535 which equates to 655 us 
+   *  over which the setting will overflow back to zero.
+   * 
+   *  \param device_index     The index of the device for which the SS timing is to be set.
+   *  \param ss_clock_timing  A structure of type spi_master_ss_clock_timing_t with
+   *                          the desired settings.
+   */
+  void set_ss_clock_timing(unsigned device_index, spi_master_ss_clock_timing_t ss_clock_timing);
 
   /** Shut down the interface server.
    */

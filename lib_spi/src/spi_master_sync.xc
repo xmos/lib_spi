@@ -45,9 +45,9 @@ void spi_master(server interface spi_master_if i[num_clients],
             for(int i = 0; i < num_slaves; i++){
                 device_ss_clock_timing[i].cs_to_clk_delay_ticks = SPI_MASTER_DEFAULT_SS_CLOCK_DELAY_TICKS;
                 device_ss_clock_timing[i].clk_to_cs_delay_ticks = SPI_MASTER_DEFAULT_SS_CLOCK_DELAY_TICKS;
+                spi_dev[i].cs_to_cs_delay_ticks = SPI_MASTER_DEFAULT_SS_CLOCK_DELAY_TICKS;
                 device_miso_capture_timing[i].miso_pad_delay = spi_master_sample_delay_1_2; // Half a SPI clock
                 device_miso_capture_timing[i].miso_sample_delay = 0;                        // Default no delay
-                spi_dev[i].cs_to_cs_delay_ticks = SPI_MASTER_DEFAULT_SS_CLOCK_DELAY_TICKS;
             }
         }
     } else {
@@ -161,6 +161,16 @@ void spi_master(server interface spi_master_if i[num_clients],
                 }
                 ss_port_bit[device_index] = port_bit;
 
+                break;
+            }
+
+            case i[int x].set_miso_capture_timing(unsigned device_index, spi_master_miso_capture_timing_t miso_capture_timing):{
+                device_miso_capture_timing[x] = miso_capture_timing;
+                break;
+            }
+
+            case i[int x].set_ss_clock_timing(unsigned device_index, spi_master_ss_clock_timing_t ss_clock_timing):{
+                device_ss_clock_timing[x] = ss_clock_timing;
                 break;
             }
 
