@@ -25,17 +25,46 @@ clock                 cb      = XS1_CLKBLK_1;
 out port setup_strobe_port = XS1_PORT_1E;
 out port setup_data_port = XS1_PORT_16B;
 
+#if CB_ENABLED
+    #define MAX_TEST_SPEED 150000
+    #define MIN_TEST_SPEED 10000
+#else
+    #if BURNT_THREADS > 3
+        #define MAX_TEST_SPEED 3000
+    #else
+        #define MAX_TEST_SPEED 4000 // Above this speed SPI synch tends to fail badly so limit upper
+    #endif
+    #define MIN_TEST_SPEED 1000
+#endif
 
 static unsigned get_max_speed(unsigned transfer_width, client interface spi_master_if i){
-    unsigned min_test_speed = 1000, max_test_speed = 150000;//kbps
+    unsigned min_test_speed = MIN_TEST_SPEED, max_test_speed = MAX_TEST_SPEED;//kbps
     unsigned iteration = 0;
     unsigned test_speed = min_test_speed;
     while(1){
         // Make sure we set the actual speed attainable
+#if CB_ENABLED
         spi_master_source_clock_t source_clock;
         unsigned divider;
         spi_master_determine_clock_settings(&source_clock, &divider, test_speed);
         unsigned actual_test_speed = spi_master_get_actual_clock_rate(source_clock, divider);
+
+        // Improve MISO timing
+        if(MISO_ENABLED){
+            spi_master_miso_capture_timing_t miso_capture_timing = {0};
+            if(actual_test_speed > 50000){
+                miso_capture_timing.miso_sample_delay = (actual_test_speed - 50000) / 18000;
+                printf("MISO delay setting: %d\n", miso_capture_timing.miso_sample_delay);
+            } else {
+                miso_capture_timing.miso_sample_delay = spi_master_sample_delay_1_2;
+            }
+            miso_capture_timing.miso_pad_delay = 0;
+            i.set_miso_capture_timing(0, miso_capture_timing);
+        }
+#else
+        unsigned clkblkless_period_ticks = (XS1_TIMER_KHZ + test_speed - 1) / test_speed;
+        unsigned actual_test_speed = XS1_TIMER_KHZ / clkblkless_period_ticks;
+#endif
 
         printf("testing:%u:%u:", transfer_width, actual_test_speed);
         int error = 0;
@@ -57,7 +86,7 @@ static unsigned get_max_speed(unsigned transfer_width, client interface spi_mast
             printf("PASS\n");
             test_speed = (test_speed + max_test_speed) / 2;
         }
-        if(iteration++ == 7) return 0; // 7 always gets us there
+        if(iteration++ == 5) return 0; // This always gets us there
     }
     return 0;
 }
@@ -89,10 +118,16 @@ static void load(static const unsigned num_threads){
 #define MISO null
 #endif
 
+#if CB_ENABLED
+#define CB cb
+#else
+#define CB null
+#endif
+
 int main(){
     interface spi_master_if i[1];
     par {
-        spi_master(i, 1, p_sclk, MOSI, MISO, p_ss, 1, cb);
+        spi_master(i, 1, p_sclk, MOSI, MISO, p_ss, 1, CB);
         app(i[0], MOSI_ENABLED, MISO_ENABLED);
         load(BURNT_THREADS);
     }

@@ -16,8 +16,14 @@ clock                 cb      = XS1_CLKBLK_1;
 out port setup_strobe_port = XS1_PORT_1E;
 out port setup_data_port = XS1_PORT_16B;
 
-void app(client interface spi_master_if i, int mosi_enabled, int miso_enabled, int spi_mode){
+#if CB_ENABLED
 #define SPEED_TESTS 3
+#else
+#define SPEED_TESTS 1
+#endif
+
+
+void app(client interface spi_master_if i, int mosi_enabled, int miso_enabled, int spi_mode){
     unsigned speed_lut[SPEED_TESTS] = {1000, 10000, 33000}; // Speed in kHz
 
     // printf("Device 8 SPI_MODE: %d\n", spi_mode);
@@ -56,11 +62,16 @@ static void load(static const unsigned num_threads){
 #define MISO null
 #endif
 
+#if CB_ENABLED
+#define CB cb
+#else
+#define CB null
+#endif
 
 int main(){
     interface spi_master_if i[1];
     par {
-        spi_master(i, 1, p_sclk, MOSI, MISO, p_ss, 1, cb);
+        spi_master(i, 1, p_sclk, MOSI, MISO, p_ss, 1, CB);
         app(i[0], MOSI_ENABLED, MISO_ENABLED, SPI_MODE);
         load(BURNT_THREADS);
     }

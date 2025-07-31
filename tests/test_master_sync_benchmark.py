@@ -18,7 +18,7 @@ class Resultlogger(Pyxsim.testers.ComparisonTester):
         self.result = dict(item.split('=') for item in id.split(', '))
 
     def run(self, output):
-        ignore_list = ["SPI Master checker"]
+        ignore_list = ["SPI Master checker", "MISO delay setting"]
         result_8b = None
         result_32b = None
         for line in output: print(line)
@@ -48,8 +48,8 @@ def remove_test_results():
     # Post test cleanup
     sort_csv_table(test_results_file)
 
-def do_benchmark_sync(capfd, burnt, spi_mode, miso_mosi_enabled, arch, id):
-    id_string = f"{burnt}_{spi_mode}_{miso_mosi_enabled}_{arch}"
+def do_benchmark_sync(capfd, burnt, spi_mode, miso_mosi_enabled, cb_enabled, arch, id):
+    id_string = f"{burnt}_{spi_mode}_{miso_mosi_enabled}_{cb_enabled}_{arch}"
     filepath = Path(__file__).resolve().parent
     binary = filepath/f"{appname}/bin/{id_string}/{appname}_{id_string}.xe"
     assert binary.exists(), f"Binary file {binary} not present - please pre-build"
@@ -68,7 +68,7 @@ def do_benchmark_sync(capfd, burnt, spi_mode, miso_mosi_enabled, arch, id):
         tester = tester,
         do_xe_prebuild = False,
         simthreads = [checker],
-        simargs=['--vcd-tracing', '-o ./trace.vcd -tile tile[0] -clock-blocks -ports -ports-detailed -pads -functions'],
+        # simargs=['--vcd-tracing', '-o ./trace.vcd -tile tile[0] -clock-blocks -ports -ports-detailed -pads -functions'],
         capfd=capfd)
 
 

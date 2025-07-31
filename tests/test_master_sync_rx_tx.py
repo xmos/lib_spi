@@ -10,8 +10,8 @@ from itertools import zip_longest
 appname = "spi_master_sync_rx_tx"
 test_params_file = Path(__file__).parent / f"{appname}/test_params.json"
 
-def do_test(capfd, burnt, spi_mode, miso_mosi_enabled, arch, id):
-    id_string = f"{burnt}_{spi_mode}_{miso_mosi_enabled}_{arch}"
+def do_test(capfd, burnt, spi_mode, miso_mosi_enabled, cb_enabled, arch, id):
+    id_string = f"{burnt}_{spi_mode}_{miso_mosi_enabled}_{cb_enabled}_{arch}"
     filepath = Path(__file__).resolve().parent
     binary = filepath/f"{appname}/bin/{id_string}/{appname}_{id_string}.xe"
     assert binary.exists()

@@ -64,7 +64,7 @@ int test_transfer32(client interface spi_master_if i,
         if(miso_enabled){
             if(rx != (rx_data, unsigned[])[j]) error = 1;
             if(VERBOSE && (rx != (rx_data, unsigned[])[j]))
-               printf("%08x %08x\n", rx ,(rx_data, unsigned[])[j]);
+               printf("Device Got: %08x Expected: %08x from MISO\n", rx ,(rx_data, unsigned[])[j]);
         }
     }
     i.end_transaction(inter_frame_gap);

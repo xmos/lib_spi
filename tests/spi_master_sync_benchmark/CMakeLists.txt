@@ -9,11 +9,13 @@ string(JSON arch_list GET ${params_json} arch)
 string(JSON burnt_threads_list GET ${params_json} BURNT_THREADS)
 string(JSON spi_mode_list GET ${params_json} SPI_MODE)
 string(JSON miso_mosi_enabled_list GET ${params_json} MISO_MOSI_ENABLED)
+string(JSON cb_enabled_list GET ${params_json} CB_ENABLED)
 
 string(JSON arch_list_len LENGTH ${arch_list})
 string(JSON burnt_threads_list_len LENGTH ${burnt_threads_list})
 string(JSON spi_mode_list_len LENGTH ${spi_mode_list})
 string(JSON miso_mosi_enabled_list_len LENGTH ${miso_mosi_enabled_list})
+string(JSON cb_enabled_list_len LENGTH ${cb_enabled_list})
 
 
 # Subtract one off each of the lengths because RANGE includes last element
@@ -21,6 +23,7 @@ math(EXPR arch_list_len "${arch_list_len} - 1")
 math(EXPR burnt_threads_list_len "${burnt_threads_list_len} - 1")
 math(EXPR spi_mode_list_len "${spi_mode_list_len} - 1")
 math(EXPR miso_mosi_enabled_list_len "${miso_mosi_enabled_list_len} - 1")
+math(EXPR cb_enabled_list_len "${cb_enabled_list_len} - 1")
 
 
 set(APP_PCA_ENABLE ON)
@@ -44,41 +47,46 @@ foreach(i RANGE 0 ${arch_list_len})
             foreach(l RANGE 0 ${miso_mosi_enabled_list_len})
                 string(JSON miso_mosi_enabled GET ${miso_mosi_enabled_list} ${l})
 
-                set(config ${burnt_threads}_${SPI_MODE}_${miso_mosi_enabled}_${arch})
-                message(STATUS "building config ${config}")
+                foreach(m RANGE 0 ${cb_enabled_list_len})
+                    string(JSON cb_enabled GET ${cb_enabled_list} ${m})
 
-                project(spi_master_sync_benchmark)
-                set(APP_HW_TARGET   ${target})
+                    set(config ${burnt_threads}_${SPI_MODE}_${miso_mosi_enabled}_${cb_enabled}_${arch})
+                    message(STATUS "building config ${config}")
 
-                string(FIND "${config}" "mosi" pos)
-                if(NOT pos EQUAL -1)
-                    list(APPEND CONFIG_COMPILER_FLAGS "-DMOSI_ENABLED=1")
-                else()
-                    list(APPEND CONFIG_COMPILER_FLAGS "-DMOSI_ENABLED=0")
-                endif()
+                    project(spi_master_sync_benchmark)
+                    set(APP_HW_TARGET   ${target})
 
-                string(FIND "${config}" "miso" pos)
-                if(NOT pos EQUAL -1)
-                    list(APPEND CONFIG_COMPILER_FLAGS "-DMISO_ENABLED=1")
-                else()
-                    list(APPEND CONFIG_COMPILER_FLAGS "-DMISO_ENABLED=0")
-                endif()
+                    string(FIND "${config}" "mosi" pos)
+                    if(NOT pos EQUAL -1)
+                        list(APPEND CONFIG_COMPILER_FLAGS "-DMOSI_ENABLED=1")
+                    else()
+                        list(APPEND CONFIG_COMPILER_FLAGS "-DMOSI_ENABLED=0")
+                    endif()
 
-                set(APP_INCLUDES src ../spi_master_tester_common)
+                    string(FIND "${config}" "miso" pos)
+                    if(NOT pos EQUAL -1)
+                        list(APPEND CONFIG_COMPILER_FLAGS "-DMISO_ENABLED=1")
+                    else()
+                        list(APPEND CONFIG_COMPILER_FLAGS "-DMISO_ENABLED=0")
+                    endif()
 
-                set(APP_COMPILER_FLAGS_${config}    ${CONFIG_COMPILER_FLAGS} 
-                                                    -DBURNT_THREADS=${burnt_threads} 
-                                                    -DSPI_MODE=${SPI_MODE}
-                                                    -O2 
-                                                    -g 
-                                                    -Wno-reinterpret-alignment)
+                    set(APP_INCLUDES src ../spi_master_tester_common)
+
+                    set(APP_COMPILER_FLAGS_${config}    ${CONFIG_COMPILER_FLAGS} 
+                                                        -DBURNT_THREADS=${burnt_threads} 
+                                                        -DSPI_MODE=${SPI_MODE}
+                                                        -DCB_ENABLED=${cb_enabled}
+                                                        -O2 
+                                                        -g 
+                                                        -Wno-reinterpret-alignment)
 
 
-                XMOS_REGISTER_APP()
-                message(STATUS "****${APP_COMPILER_FLAGS_${config}} ")
+                    XMOS_REGISTER_APP()
+                    message(STATUS "****${APP_COMPILER_FLAGS_${config}} ")
 
-                unset(APP_COMPILER_FLAGS_${config})
-                unset(CONFIG_COMPILER_FLAGS)
+                    unset(APP_COMPILER_FLAGS_${config})
+                    unset(CONFIG_COMPILER_FLAGS)
+                endforeach()
             endforeach()
         endforeach()
     endforeach()
