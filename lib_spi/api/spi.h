@@ -29,10 +29,10 @@ extern "C" {
 
 /** This type indicates what clocking mode a SPI component should use */
 typedef enum spi_mode_t {
-  SPI_MODE_0 = 0, /**< SPI Mode 0 - Polarity = 0, Sampling clock Edge = 1 */
-  SPI_MODE_1 = 1, /**< SPI Mode 1 - Polarity = 0, Sampling clock Edge = 0 */
-  SPI_MODE_2 = 2, /**< SPI Mode 2 - Polarity = 1, Sampling Clock Edge = 0 */
-  SPI_MODE_3 = 3, /**< SPI Mode 3 - Polarity = 1, Sampling Clock Edge = 1 */
+  SPI_MODE_0 = 0, /**< SPI Mode 0 - Polarity = 0, Phase = 0 */
+  SPI_MODE_1 = 1, /**< SPI Mode 1 - Polarity = 0, Phase = 1 */
+  SPI_MODE_2 = 2, /**< SPI Mode 2 - Polarity = 1, Phase = 0 */
+  SPI_MODE_3 = 3, /**< SPI Mode 3 - Polarity = 1, Phase = 1 */
 } spi_mode_t;
 
 

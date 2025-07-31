@@ -68,7 +68,7 @@ relative to the clock. The timings are given by:
 The setup and hold timings are inherited from the underlying xCORE
 device. For details on these timing please refer to the device datasheet.
 
-Mode 0 - CPOL: 0 CPHA 1
+Mode 0 - CPOL: 0 CPHA 0
 =======================
 
 .. figure:: ../images/wavedrom_mode0.png
@@ -76,9 +76,9 @@ Mode 0 - CPOL: 0 CPHA 1
 
    Mode 0
 
-The master and slave will drive out their first data bit on the first rising edge of the clock and sample on the subsequent falling edge.
+The master and slave will drive out their first data bit before the first rising edge of the clock then drive on subsequent falling edges. They will sample on rising edges.
 
-Mode 1 - CPOL: 0 CPHA 0
+Mode 1 - CPOL: 0 CPHA 1
 =======================
 
 .. figure:: ../images/wavedrom_mode1.png
@@ -86,8 +86,7 @@ Mode 1 - CPOL: 0 CPHA 0
 
    Mode 1
 
-The master and slave will drive out their first data bit before the first rising edge of the clock then drive on subsequent falling edges. They will sample on rising edges.
-
+The master and slave will drive out their first data bit on the first rising edge of the clock and sample on the subsequent falling edge.
 
 Mode 2 - CPOL: 1 CPHA 0
 =======================
@@ -168,11 +167,27 @@ the asynchronous master can output a clock at up to 100MHz, port timing and hard
    - MOSI enabled
    - Max kbps (62.5 MHz core)
    - Max kbps (125 MHz core)
- * - 2
+ * - 1
    - x
    - x
    - 100000
    - 100000
+
+MISO port timing
+================
+
+Port timing is affected by chip pad and PCB delays. For clock, slave-select and MOSI all of the delays will be broadly matched.
+This means port timing adjustment is normally not required even up to the fastest support SPI clock rates.
+
+For MISO, there will be a 'round trip delay' starting with the clock edge and finishing at the xCORE's input port.
+Since this delay will mean the xCORE will be sampling early, it may be necessary to delay the sampling of the MISO
+pin to capture within the required window, particularly if the SPI clock is above 20 MHz.
+
+Control over the signal capture is provided for all SPI master implementations that require a clock block. Please see the
+API section which exposes the controls available for optimising setup and hold capture.
+
+For details on how to calculate and adjust round-trip port timing, please consult the `IO timings for xcore.ai <https://www.xmos.com/documentation/XM-014231-AN/html/rst/index.html>`_ document.
+
 
 |newpage|
 
@@ -183,8 +198,8 @@ Connecting to the xCORE SPI master
 
 The SPI wires need to be connected to the xCORE device as shown in
 :numref:`spi_master_xcore_connect`. The signals can be connected to any
-one bit ports on the device provide they do not overlap any other used
-ports and are all on the same tile.
+one bit ports, with the exception of slave select which may be any width 
+port. All ports must be on the same tile.
 
 .. _spi_master_xcore_connect:
 
@@ -198,8 +213,8 @@ need not be connected. However, **asynchronous mode is only supported
 if the MISO line is connected**.
 
 The master component of this library supports multiple slaves on unique
-slave select wires. This means that a single slave select assertion
-cannot be used to communicate with multiple slaves at the same time.
+slave select wires. The bit of the port used for each device is configurable
+and so multiple slaves may share the same select bit if needed.
 
 SPI slave timings
 =================
@@ -283,7 +298,7 @@ For example, the following code instantiates an SPI master component
 and connect to it::
 
   out buffered port:32 p_miso    = XS1_PORT_1A;
-  out port p_ss[1]               = {XS1_PORT_1B};
+  out port p_ss                  = XS1_PORT_1B;
   out buffered port:22 p_sclk    = XS1_PORT_1C;
   out buffered port:32 p_mosi    = XS1_PORT_1D;
   clock clk_spi                  = XS1_CLKBLK_1;
@@ -305,7 +320,7 @@ devices via different slave lines.
 The final parameter of the ``spi_master`` task is an optional clock
 block. If the clock block is supplied then the maximum transfer rate
 of the SPI bus is increased (see :numref:`spi_master_sync_timings`). If
-``null`` is supplied instead then the performance is less but no clock
+``null`` is supplied instead then the performance is lower but no clock
 block is used.
 
 The application can use the client end of the interface connection to
@@ -339,7 +354,7 @@ Synchronous master usage state machine
 
 The function calls made on the SPI master interface must follow the
 sequence shown by the state machine in :numref:`spi_master_usage_state_machine`.
-If this sequence is not followed then the behavior is undefined.
+If this sequence is not followed then the behaviour is undefined.
 
 .. _spi_master_usage_state_machine:
 
@@ -359,7 +374,7 @@ operation is complete. In cases where the application cannot afford to
 wait for this long the asynchronous API can be used.
 
 The asynchronous API offloads operations to another task. Calls are
-provide to initiate reads and writes and notifications are provided
+provided to initiate reads and writes and notifications are provided
 when the operation completes. This API requires more management in the
 application but can provide much more efficient operation.
 It is particularly suitable for applications where the SPI bus is
@@ -369,17 +384,16 @@ Setting up an asynchronous SPI master component is done in the same
 manner as the synchronous component::
 
   out buffered port:32 p_miso    = XS1_PORT_1A;
-  out port p_ss[1]               = {XS1_PORT_1B};
+  out port p_ss                  = XS1_PORT_1B;
   out buffered port:22 p_sclk    = XS1_PORT_1C;
   out buffered port:32 p_mosi    = XS1_PORT_1D;
 
-  clock cb0      = XS1_CLKBLK_1;
-  clock cb1      = XS1_CLKBLK_2;
+  clock cb      = XS1_CLKBLK_1;
 
   int main(void) {
     spi_master_async_if i_spi[1];
     par {
-      spi_master_async(i_spi, 1, p_sclk, p_mosi, p_miso, p_ss, 1, cb0, cb1);
+      spi_master_async(i_spi, 1, p_sclk, p_mosi, p_miso, p_ss, 1, cb);
       my_application(i_spi[0]);
     }
     return 0;
@@ -402,7 +416,7 @@ bytes coming back from the slave::
 
     // create and send initial data
     fill_buffer_with_data(outdata);
-    spi.begin_transaction(0, 100, SPI_MODE_0);
+    spi.begin_transaction(0, 1000, SPI_MODE_0);
     spi.init_transfer_array_8(move(buf_in), move(buf_out), 100);
     while (1) {
       select {
@@ -445,7 +459,7 @@ Asynchronous master usage state machine
 The function calls made on the SPI master asynchronous interface must follow the
 sequence shown by the state machine in
 :numref:`spi_master_usage_state_machine_async`.
-If this sequence is not followed then the behavior is undefined.
+If this sequence is not followed then the behaviour is undefined.
 
 .. _spi_master_usage_state_machine_async:
 
@@ -483,10 +497,10 @@ For example, the following code instantiates an SPI slave component
 and connect to it::
 
   out buffered port:32    p_miso = XS1_PORT_1E;
-  in port                 p_ss = XS1_PORT_1F;
+  in port                 p_ss   = XS1_PORT_1F;
   in port                 p_sclk = XS1_PORT_1G;
   in buffered port:32     p_mosi = XS1_PORT_1H;
-  clock                   cb   = XS1_CLKBLK_1;
+  clock                   cb     = XS1_CLKBLK_1;
 
   int main(void) {
     interface spi_slave_callback_if i_spi;
@@ -643,17 +657,17 @@ Each of the SPI implementations use a number of `xcore` resources which include 
    * - Master (synchronous, zero clock blocks)
      - spi_master(i, 1, p_sclk, p_mosi, p_miso, p_ss, 1, null);
      - 4
-     - 4 (1-bit)
+     - 3 * 1-bit, 1 * any-bit
      - 0
    * - Master (synchronous, one clock block)
      - spi_master(i, 1, p_sclk, p_mosi, p_miso, p_ss, 1, cb);
      - 4
-     - 4 (1-bit)
+     - 3 * 1-bit, 1 * any-bit
      - 0
    * - Master (asynchronous)
-     - spi_master_async(i, 1, p_sclk, p_mosi, p_miso, p_ss, 1, cb0, cb1);
+     - spi_master_async(i, 1, p_sclk, p_mosi, p_miso, p_ss, 1, cb);
      - 4
-     - 4 (1-bit)
+     - 3 * 1-bit, 1 * any-bit
      - 1
    * - Slave (32 bit transfer mode)
      - spi_slave(i, p_sclk, p_mosi, p_miso, p_ss, cb, SPI_MODE_0, SPI_TRANSFER_SIZE_32);
@@ -693,6 +707,10 @@ The following type is used to configure the SPI components.
 
 .. doxygenenum:: spi_mode_t
 
+.. doxygenstruct:: spi_master_ss_clock_timing_t
+
+.. doxygenstruct:: spi_master_miso_capture_timing_t
+
 |newpage|
 
 Creating an SPI master instance
@@ -700,7 +718,6 @@ Creating an SPI master instance
 
 .. doxygenfunction:: spi_master
 
-|newpage|
 
 .. doxygenfunction:: spi_master_async
 

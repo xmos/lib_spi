@@ -87,7 +87,7 @@ void spi_master(server interface spi_master_if i[num_clients],
 
                     unsigned ss_port_val = ~(1 << ss_port_bit[current_device]);
                     p_ss <: ss_port_val;
-                    clkblkless_period_ticks = (XS1_TIMER_KHZ + speed_in_khz - 1) / speed_in_khz;// round up (rounds speed down)
+                    clkblkless_period_ticks = (XS1_TIMER_KHZ + speed_in_khz - 1) / speed_in_khz; // round up (rounds speed down)
                 } else {
                     spi_master_determine_clock_settings(&source_clock, &divider, speed_in_khz);
 

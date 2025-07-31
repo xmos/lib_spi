@@ -7,6 +7,7 @@ lib_spi change log
   * CHANGED: SPI master async reduced clock blocks from two to one
   * CHANGED: SPI master sync increased max speed to 25+ Mbps
   * ADDED: Shutdown method for SPI sync
+  * ADDED: SPI master optional MISO and SS timing adjustments
   * RESOLVED: SPI master (all) swapping of SPI modes 0 and 1
   * RESOLVED: Non-funcional tests
 
