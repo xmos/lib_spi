@@ -33,8 +33,7 @@
 #include <xcore/thread.h>
 #include <xcore/hwtimer.h>
 // Copy from xs1.h because this doesn't get included for non __XC__ files
-/**
- * Tests whether a time input from a timer is considered to come after
+/**Tests whether a time input from a timer is considered to come after
  * another time input from a timer. The comparison is the same as that
  * performed by the function timerafter().
  * \param A The first time to compare.
@@ -42,9 +41,10 @@
  * \return Whether the first time is after the second.
  */
 #define timeafter(A, B) ((int)((B) - (A)) < 0)
-#else
-#define xclock_t clock
-#define port_t port
+#else /* __XC__ defined */
+/* When using XC, ensure we don't define as resource types to avoid issues with automatics */
+#define xclock_t unsigned 
+#define port_t unsigned
 #endif
 
 /* The SETC constant for pad delay is missing from xs2a_user.h */

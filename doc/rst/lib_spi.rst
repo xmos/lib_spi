@@ -126,30 +126,30 @@ timings can be seen in :numref:`spi_master_sync_timings`.
  :header-rows: 1
 
  * - Clock blocks
-   - MISO enabled
    - MOSI enabled
+   - MISO enabled
    - Max kbps (62.5 MHz core)
    - Max kbps (125 MHz core)
  * - 0
    - 1
    - 0
-   - 2497
-   - 3366
+   - 2500
+   - 3500
  * - 0
    - 1
    - 1
-   - 1765
-   - 3366
+   - 1200
+   - 1300
  * - 1
    - 1
    - 0
-   - 2149
-   - 2149
+   - 62500
+   - 75000
  * - 1
    - 1
    - 1
-   - 2149
-   - 2149
+   - 62500
+   - 75000
 
 
 Asynchronous SPI master clock speeds
@@ -170,8 +170,8 @@ the asynchronous master can output a clock at up to 100MHz, port timing and hard
  * - 1
    - x
    - x
-   - 100000
-   - 100000
+   - 62500
+   - 75000
 
 MISO port timing
 ================

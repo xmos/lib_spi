@@ -40,7 +40,7 @@ void spi_master(server interface spi_master_if i[num_clients],
 
     if(!isnull(cb)){
         unsafe{
-            spi_master_init(&spi_master, cb, (port)p_ss, (port)sclk, (port)mosi, (port)miso);
+            spi_master_init(&spi_master, (xclock_t)cb, (port_t)p_ss, (port_t)sclk, (port_t)mosi, (port_t)miso);
             // Set default timings
             for(int i = 0; i < num_slaves; i++){
                 device_ss_clock_timing[i].cs_to_clk_delay_ticks = SPI_MASTER_DEFAULT_SS_CLOCK_DELAY_TICKS;

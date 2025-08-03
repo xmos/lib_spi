@@ -16,11 +16,6 @@ def do_test(distributed, cb_enabled, arch, capfd):
     binary = filepath/f"{appname}/bin/{id_string}/{appname}_{id_string}.xe"
     assert binary.exists()
 
-    # Known issue when clock block is NULL and SPI master sync is distributed - compiler bug on task cleanup
-    # http://bugzilla.xmos.local/show_bug.cgi?id=19049
-    if distributed == 1 and cb_enabled == 0:
-        pytest.xfail()
-
     checker = SPIMasterChecker("tile[0]:XS1_PORT_1C",
                                "tile[0]:XS1_PORT_1D",
                                "tile[0]:XS1_PORT_1A",

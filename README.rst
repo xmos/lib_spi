@@ -33,8 +33,7 @@ Features
 Known issues
 ************
 
-* SPI sync (clockblock-less version only) exit task causes exception on exit when distributed. 
-  This is caused by a know XC compiler bug. Please providea clock block if the shutdown method is used.
+* None
 
 ****************
 Development repo
