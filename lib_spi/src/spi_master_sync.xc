@@ -3,11 +3,9 @@
 #include <xs1.h>
 #include <xclib.h>
 #include <stdlib.h>
-
-//TODO DEL these
-#include <stdio.h>
 #include <print.h>
 #include <platform.h>
+#include <string.h>
 
 #include "spi.h"
 #include "spi_master_shared.h"
@@ -150,6 +148,37 @@ void spi_master(server interface spi_master_if i[num_clients],
                     uint32_t read_val;                
                     spi_master_transfer(&spi_dev[current_device], (uint8_t *)&data, (uint8_t *)&read_val, 4);
                     r = byterev(read_val);
+                }
+
+                break;
+            }
+
+            case i[int x].transfer_array(NULLABLE_ARRAY_OF(const uint8_t, data_out), NULLABLE_ARRAY_OF(uint8_t, data_in), static const size_t num_bytes):{
+                if(isnull(cb)){
+                    for(int n = 0; n < num_bytes; n++){
+                        uint8_t send;
+                        if(!isnull(mosi)){
+                            send = data_out[n];
+                        }
+                        uint8_t recv = transfer8_sync_zero_clkblk(sclk, mosi, miso, send, clkblkless_period_ticks, cpol, cpha);
+                        if(!isnull(miso)){
+                            data_in[n] = recv;
+                        }
+                    }
+                } else {
+                    // Remote references not allowed in XC so need to memcpy
+                    uint8_t data[num_bytes];
+                    if(!isnull(data_out)){
+                        memcpy(data, data_out, num_bytes);
+                    }
+                    unsafe{
+                        // Do in-place transfer
+                        uint8_t * unsafe data_alias = data;
+                        spi_master_transfer(&spi_dev[current_device], data, data_alias, num_bytes);
+                    }
+                    if(!isnull(data_in)){
+                        memcpy(data_in, data, num_bytes);
+                    }
                 }
 
                 break;

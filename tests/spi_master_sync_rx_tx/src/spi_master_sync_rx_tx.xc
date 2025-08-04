@@ -36,6 +36,12 @@ void app(client interface spi_master_if i, int mosi_enabled, int miso_enabled, i
         test_transfer32(i, setup_strobe_port, setup_data_port, 0, 100,
                 spi_mode, speed_lut[speed_index], mosi_enabled, miso_enabled);
     }
+    // printf("Device array SPI_MODE: %d\n", spi_mode);
+    for(unsigned speed_index = 0; speed_index < SPEED_TESTS; speed_index++){
+        test_transfer32(i, setup_strobe_port, setup_data_port, 0, 100,
+                spi_mode, speed_lut[speed_index], mosi_enabled, miso_enabled);
+    }
+
     printf("Transfers complete\n");
     _Exit(0);
 }

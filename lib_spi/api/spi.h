@@ -80,7 +80,8 @@ typedef interface spi_master_if {
    *
    *  \param device_index  the index of the slave device to interact with.
    *  \param speed_in_khz  The speed that the SPI bus should run at during
-   *                       the transaction (in kHZ).
+   *                       the transaction (in kHZ). When using the version
+   *                       with clockblock, the minimum speed is 100 kHz.
    *  \param mode          The mode of spi transfers during this transaction.
    */
   [[guarded]]
@@ -113,13 +114,28 @@ typedef interface spi_master_if {
   /** Transfer a 32-bit word over the spi bus.
    *
    *  This function will transmit and receive 32 bits of data over the SPI
-   *  bus. The data will be transmitted least-significant bit first.
+   *  bus. The data will be transmitted least-significant bit first and 
+   *  most significant byte first (big endian)
    *
    *  \param data    the data to transmit the MOSI port.
    *
    *  \returns       the data read in from the MISO port.
    */
   uint32_t transfer32(uint32_t data);
+
+  /** Transfer an array of byes over the spi bus.
+   *
+   *  This function will transmit and receive 32 bits of data over the SPI
+   *  bus. The data will be transmitted least-significant bit first in byte
+   *  order in memory. Note that XMOS uses little endian and so 32b data etc.
+   *  may need byteswap() first.
+   *
+   *  \param data_out    Reference to data to transmit the MOSI port.
+   *  \param data_in     Reference to data to receive from the MISO port.
+   *  \param num_bytes   Constant value to size the array to be transferred.
+   *
+   */
+  void transfer_array(NULLABLE_ARRAY_OF(const uint8_t, data_out), NULLABLE_ARRAY_OF(uint8_t, data_in), static const size_t num_bytes);
 
   /** Sets the bit of port which is used for slave select (> 1b port type only)
    *  and only for spi_master. spi_master sets all bits in each port high/low
@@ -228,7 +244,7 @@ typedef interface spi_master_async_if  {
    *
    *  \param device_index  the index of the slave device to interact with.
    *  \param speed_in_khz  The speed that the SPI bus should run at during
-   *                       the transaction (in kHZ)
+   *                       the transaction (in kHZ). The minimum speed is 100 kHz.
    *  \param mode          The mode of spi transfers during this transaction
    */
   void begin_transaction(unsigned device_index,
