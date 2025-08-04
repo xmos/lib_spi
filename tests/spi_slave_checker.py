@@ -141,4 +141,5 @@ class SPISlaveChecker(px.SimThread):
             xsi.drive_port_pins(self._sck_port, expected_cpol)
             xsi.drive_port_pins(self._ss_port, 1)
             xsi.drive_port_pins(self._setup_resp_port, error)
+
             self.wait_for_port_pins_change([self._setup_strobe_port])

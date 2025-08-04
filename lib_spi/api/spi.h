@@ -158,7 +158,7 @@ typedef interface spi_master_if {
    */
   void set_ss_clock_timing(unsigned device_index, spi_master_ss_clock_timing_t ss_clock_timing);
 
-  /** Shut down the interface server. See known issues in README.rst.
+  /** Shut down the SPI master interface server.
    */
   void shutdown(void);
 
@@ -357,7 +357,7 @@ typedef interface spi_master_async_if  {
    */
   void set_ss_clock_timing(unsigned device_index, spi_master_ss_clock_timing_t ss_clock_timing);
 
-  /** Shut down the interface server.
+  /** Shut down the SPI master interface server.
    */
   void shutdown(void);
 
@@ -435,6 +435,18 @@ typedef interface spi_slave_callback_if {
    *  \param valid_bits the number of valid bits of data received from the master.
    */
   void master_supplied_data(uint32_t datum, uint32_t valid_bits);
+
+  /** Request shut down the SPI slave interface client.
+   */
+  [[notification]]
+  slave void request_shutdown(void);
+
+  /** Acknowledgment that the SPI slave task has been shutdown.
+   */
+  [[clears_notification]]
+  [[guarded]]
+  void shutdown_complete(void);
+
 #ifndef __DOXYGEN__
 } spi_slave_callback_if;
 #endif
