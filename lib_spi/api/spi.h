@@ -20,6 +20,7 @@ extern "C" {
 #define async_master_read read
 #define async_master_write write
 #define slave_void  slave void
+#define static_const_size_t static const size_t
 #define static_const_spi_mode_t static const spi_mode_t
 #define static_const_spi_transfer_type_t static const spi_transfer_type_t
 #define static_const_spi_transfer_type_t static const spi_transfer_type_t
@@ -105,7 +106,7 @@ typedef interface spi_master_if {
    *  This function will transmit and receive 8 bits of data over the SPI
    *  bus. The data will be transmitted least-significant bit first.
    *
-   *  \param data          the data to transmit the MOSI port.
+   *  \param data    the data to transmit the MOSI port.
    *
    *  \returns       the data read in from the MISO port.
    */
@@ -123,19 +124,21 @@ typedef interface spi_master_if {
    */
   uint32_t transfer32(uint32_t data);
 
-  /** Transfer an array of byes over the spi bus.
+  /** Transfer an array of bytes over the SPI interface.
    *
    *  This function will transmit and receive 32 bits of data over the SPI
    *  bus. The data will be transmitted least-significant bit first in byte
    *  order in memory. Note that XMOS uses little endian and so 32b data etc.
    *  may need byteswap() first.
    *
-   *  \param data_out    Reference to data to transmit the MOSI port.
-   *  \param data_in     Reference to data to receive from the MISO port.
-   *  \param num_bytes   Constant value to size the array to be transferred.
+   *  \param data_out    Reference to data to transmit the MOSI port. May be null
+   *                     if only a read is needed.
+   *  \param data_in     Reference to data to receive from the MISO port. May be 
+   *                     null if only a write is needed.
+   *  \param num_bytes   Constant value of the size of the array to be transferred.
    *
    */
-  void transfer_array(NULLABLE_ARRAY_OF(const uint8_t, data_out), NULLABLE_ARRAY_OF(uint8_t, data_in), static const size_t num_bytes);
+  void transfer_array(NULLABLE_ARRAY_OF(const uint8_t, data_out), NULLABLE_ARRAY_OF(uint8_t, data_in), static_const_size_t num_bytes);
 
   /** Sets the bit of port which is used for slave select (> 1b port type only)
    *  and only for spi_master. spi_master sets all bits in each port high/low

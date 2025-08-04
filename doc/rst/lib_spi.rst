@@ -68,6 +68,8 @@ relative to the clock. The timings are given by:
 The setup and hold timings are inherited from the underlying xCORE
 device. For details on these timing please refer to the device datasheet.
 
+When operating above 20 Mbps please also see :ref:`MISO port timing`
+
 Mode 0 - CPOL: 0 CPHA 0
 =======================
 
@@ -186,7 +188,7 @@ pin to capture within the required window, particularly if the SPI clock is abov
 Control over the signal capture is provided for all SPI master implementations that require a clock block. Please see the
 API section which exposes the controls available for optimising setup and hold capture.
 
-For details on how to calculate and adjust round-trip port timing, please consult the `IO timings for xcore.ai <https://www.xmos.com/documentation/XM-014231-AN/html/rst/index.html>`_ document.
+For details on how to calculate and adjust round-trip port timing, please consult the `IO timings for xcore.ai <https://www.xmos.com/documentation/XM-014231-AN/html/rst/index.html>`_ or `IO timings for xCORE200 <https://www.xmos.com/file/io-timings-for-xcore200>`_ document.
 
 
 |newpage|

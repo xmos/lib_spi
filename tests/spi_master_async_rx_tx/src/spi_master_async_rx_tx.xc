@@ -115,7 +115,7 @@ void app(client interface spi_master_async_if spi_i, int mosi_enabled, int miso_
                             uint8_t rx = rx_ptr8[j];
                             if(rx != rx_data[j]) {
                                 printf("Error, incorrect 8b data at idx %u received: 0x%x expecting(0x%x)\n", j, rx, rx_data[j]);
-                                printf("Speed: %, mode: %u, count: %u\n", speed_in_kbps, mode, count);
+                                printf("Speed: %u, mode: %u, count: %u\n", speed_in_kbps, mode, count);
                                 flush_print();
                                 _Exit(1);
                             }

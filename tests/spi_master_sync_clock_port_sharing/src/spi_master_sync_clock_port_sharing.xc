@@ -48,11 +48,11 @@ void app(client interface spi_master_if spi_i, int mosi_enabled, int miso_enable
                 }
 
                 count++;
-                if (count == 8)
-                    printf("Transfers complete\n"); // This first one is missed. Can't work out why!
-                    printf("Transfers complete\n");
+                if (count == 8){
+                    printf("Transfers complete\n"); 
                     delay_microseconds(100); // Flush
                     _Exit(0);
+                }
 
                 break;
         }

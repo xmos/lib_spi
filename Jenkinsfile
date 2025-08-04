@@ -1,6 +1,6 @@
 // This file relates to internal XMOS infrastructure and should be ignored by external users
 
-@Library('xmos_jenkins_shared_library@v0.39.0') _
+@Library('xmos_jenkins_shared_library@v0.42.0') _
 
 def clone_test_deps() {
   dir("${WORKSPACE}") {
@@ -36,7 +36,7 @@ pipeline {
     )
     string(
       name: 'INFR_APPS_VERSION',
-      defaultValue: 'v2.1.0',
+      defaultValue: 'v3.1.1',
       description: 'The infr_apps version'
     )
   }

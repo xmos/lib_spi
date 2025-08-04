@@ -25,7 +25,7 @@ Features
 ********
 
 * SPI master and SPI slave modes.
-* Supports speed of up to 100 Mbit.
+* Supports speed of up to 75 Mbit.
 * Multiple slave device support
 * All clock polarity and phase configurations supported.
 

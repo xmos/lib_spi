@@ -3,6 +3,7 @@
 #include <xs1.h>
 #include <xclib.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <print.h>
 #include <platform.h>
 #include <string.h>
