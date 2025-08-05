@@ -33,11 +33,11 @@ void spi_slave(client spi_slave_callback_if spi_i,
     start_clock(clk);
 
     switch(mode){
-        case SPI_MODE_0:
+        case SPI_MODE_1:
         case SPI_MODE_2:
             set_port_inv(sclk);
             break;
-        case SPI_MODE_1:
+        case SPI_MODE_0:
         case SPI_MODE_3:
             set_port_no_inv(sclk);
             break;
@@ -82,7 +82,8 @@ void spi_slave(client spi_slave_callback_if spi_i,
 
                     if(transfer_type == SPI_TRANSFER_SIZE_8){
                         data = (bitrev(data)>>24);
-                        if((mode == SPI_MODE_1) || (mode == SPI_MODE_2)){
+                        // Send data before clock
+                        if((mode == SPI_MODE_0) || (mode == SPI_MODE_2)){
                             asm volatile ("setclk res[%0], %1"::"r"(miso), "r"(XS1_CLKBLK_REF));
                             partout(miso, 1, data);
                             asm volatile ("setclk res[%0], %1"::"r"(miso), "r"(clk));
@@ -93,7 +94,8 @@ void spi_slave(client spi_slave_callback_if spi_i,
                         }
                      } else {
                         data = bitrev(data);
-                        if((mode == SPI_MODE_1) || (mode == SPI_MODE_2)){
+                        // Send data before clock
+                        if((mode == SPI_MODE_0) || (mode == SPI_MODE_2)){
                             asm volatile ("setclk res[%0], %1"::"r"(miso), "r"(XS1_CLKBLK_REF));
                             partout(miso, 1, data);
                             asm volatile ("setclk res[%0], %1"::"r"(miso), "r"(clk));

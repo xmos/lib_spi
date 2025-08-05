@@ -11,6 +11,7 @@ lib_spi change log
   * ADDED: SPI master optional MISO and SS timing adjustments
   * ADDED: Array transfer method for SPI sync
   * RESOLVED: SPI master (all) swapping of SPI modes 0 and 1
+  * RESOLVED: SPI slave swapping of SPI modes 0 and 1
   * RESOLVED: Non-funcional tests
   * REMOVED: Support for XS1 devices
 
