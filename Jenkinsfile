@@ -36,7 +36,7 @@ pipeline {
     )
     string(
       name: 'INFR_APPS_VERSION',
-      defaultValue: 'v2.1.0',
+      defaultValue: 'v3.1.1',
       description: 'The infr_apps version'
     )
   }
@@ -67,7 +67,7 @@ pipeline {
       steps {
         warnError("Library checks failed")
         {
-          runLibraryChecks("${WORKSPACE}/${REPO_NAME}", "${params.INFR_APPS_VERSION}")
+          runRepoChecks("${WORKSPACE}/${REPO_NAME}")
         }
       }
     }

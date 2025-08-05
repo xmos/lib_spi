@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "spi.h"
+#include "common.h"
 
 out buffered port:32    p_miso = XS1_PORT_1A;
 in port                 p_ss   = XS1_PORT_1B;
@@ -26,68 +27,13 @@ in port setup_resp_port = XS1_PORT_1F;
 #endif
 
 
-static void set_mode_bits(spi_mode_t mode, unsigned &cpol, unsigned &cpha){
-    switch(mode){
-        case SPI_MODE_0:cpol = 0; cpha= 1; break;
-        case SPI_MODE_1:cpol = 0; cpha= 0; break;
-        case SPI_MODE_2:cpol = 1; cpha= 0; break;
-        case SPI_MODE_3:cpol = 1; cpha= 1; break;
-    }
-}
-
-static void send_data_to_tester(
-        out port setup_strobe_port,
-        out port setup_data_port,
-        unsigned data){
-    setup_data_port <: data;
-    sync(setup_data_port);
-    setup_strobe_port <: 1; // Dp each twice so checker doesn't miss at higher clock frequencies of xcore.ai
-    setup_strobe_port <: 1;
-    setup_strobe_port <: 0;
-    setup_strobe_port <: 0;
-}
-
-static void broadcast_settings(
-        out port setup_strobe_port,
-        out port setup_data_port,
-        spi_mode_t mode,
-        int mosi_enabled,
-        int miso_enabled,
-        unsigned num_bits,
-        unsigned kbps,
-        unsigned initial_clock_delay // in ns
-){
-    unsigned cpha, cpol;
-
-    set_mode_bits(mode, cpol, cpha);
-
-    // printf("Testing: %d %d\n", kbps, initial_clock_delay);
-
-    setup_strobe_port <: 0;
-
-    send_data_to_tester(setup_strobe_port, setup_data_port, cpol);
-    send_data_to_tester(setup_strobe_port, setup_data_port, cpha);
-    send_data_to_tester(setup_strobe_port, setup_data_port, miso_enabled);
-    send_data_to_tester(setup_strobe_port, setup_data_port, num_bits);
-    send_data_to_tester(setup_strobe_port, setup_data_port, kbps);
-    send_data_to_tester(setup_strobe_port, setup_data_port, initial_clock_delay);
-}
-
-static int request_response(
-        out port setup_strobe_port,
-        in port setup_resp_port
-){
-    int r;
-    setup_strobe_port <: 1;
-    setup_strobe_port <: 0;
-    setup_resp_port :> r;
-    return r;
-
-}
 
 [[combinable]]
 void app(server interface spi_slave_callback_if spi_i,
         int mosi_enabled, int miso_enabled){
+
+    (const void*)tx_data; // Remove warning of unused var
+    (const void*)rx_data; // Remove warning of unused var
 
     unsigned bpt = 0;
     spi_transfer_type_t tt = TRANSFER_SIZE;

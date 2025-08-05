@@ -26,9 +26,19 @@ void spi_slave(client spi_slave_callback_if spi_i,
     stop_clock(clk);
     set_clock_src(clk, sclk);
 
-    if(!isnull(miso))
-        configure_out_port_strobed_slave(miso, ss, clk, 0);
     configure_in_port_strobed_slave(mosi, ss, clk);
+    if(!isnull(miso)){
+        configure_out_port_strobed_slave(miso, ss, clk, 0);
+    }
+    
+    // note do NOT configure MISO yet. We will leave this as an input so Hi-Z
+    // TODO
+    if(transfer_type ==  SPI_TRANSFER_SIZE_8){
+        asm volatile ("settw res[%0], %1"::"r"(mosi), "r"(8));
+        if(!isnull(miso)){
+            asm volatile ("settw res[%0], %1"::"r"(miso), "r"(8)); // Transfer width
+        }
+    }
 
     start_clock(clk);
 
@@ -46,12 +56,6 @@ void spi_slave(client spi_slave_callback_if spi_i,
 
     int ss_val;
 
-    //set the transfer width
-    if(transfer_type == SPI_TRANSFER_SIZE_8){
-        if(!isnull(miso))
-            asm volatile ("settw res[%0], %1"::"r"(miso), "r"(8));
-        asm volatile ("settw res[%0], %1"::"r"(mosi), "r"(8));
-    }
 
     uint32_t buffer;
 
@@ -59,12 +63,18 @@ void spi_slave(client spi_slave_callback_if spi_i,
     while(1){
         select {
             case ss when pinsneq(ss_val) :> ss_val:{
-                if(!isnull(miso))
+                if(!isnull(miso)){
                     clearbuf(miso);
+                }
 
                 if(ss_val != ASSERTED){
                     unsigned remaining_bits = endin(mosi);
                     uint32_t data;
+                    // Make MISO go Hi-Z if SS not asserted. It will switch
+                    // to output again on the next out or partout
+                    if(!isnull(miso)){
+                        // TODO
+                    }
                     mosi :> data;
                     if(remaining_bits){ //FIXME can this be more then tw?
                         data = bitrev(data);
@@ -76,13 +86,17 @@ void spi_slave(client spi_slave_callback_if spi_i,
                     spi_i.master_ends_transaction();
                 break;
                 }
-                
+
+                // ss_val == ASSERTED
                 if(!isnull(miso)){
                     uint32_t data = spi_i.master_requires_data();
 
+                    // Enable MISO and set transfer width if SPI_TRANSFER_SIZE_8
+                    // TODO
+
                     if(transfer_type == SPI_TRANSFER_SIZE_8){
                         data = (bitrev(data)>>24);
-                        // Send data before clock
+                        // Send data before clock. Use ref clock to allow port to output in absence of SPI clock
                         if((mode == SPI_MODE_0) || (mode == SPI_MODE_2)){
                             asm volatile ("setclk res[%0], %1"::"r"(miso), "r"(XS1_CLKBLK_REF));
                             partout(miso, 1, data);
@@ -94,7 +108,7 @@ void spi_slave(client spi_slave_callback_if spi_i,
                         }
                      } else {
                         data = bitrev(data);
-                        // Send data before clock
+                        // Send data before clock. Use ref clock to allow port to output in absence of SPI clock
                         if((mode == SPI_MODE_0) || (mode == SPI_MODE_2)){
                             asm volatile ("setclk res[%0], %1"::"r"(miso), "r"(XS1_CLKBLK_REF));
                             partout(miso, 1, data);
