@@ -119,7 +119,7 @@ class SPISlaveChecker(px.SimThread):
                     if expected_miso_enabled:
                         if rx_byte != rx_data[byte_count]:
                             error = 1
-                            print(f"frx got:{rx_byte:02x} expected:{rx_data[byte_count]:02x}  {byte_count}")
+                            print(f"tester rx got:{rx_byte:02x} expected:{rx_data[byte_count]:02x}  {byte_count}")
                     rx_byte = 0
                     byte_count = byte_count + 1
                     if byte_count*8 < expected_num_bits:

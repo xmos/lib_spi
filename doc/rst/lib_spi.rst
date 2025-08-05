@@ -26,8 +26,11 @@ and either one or two data wires.
 .. _spi_wire_table:
 
 .. list-table:: SPI data wires
+     :header-rows: 1
      :class: vertical-borders horizontal-borders
 
+     * - Signal
+       - Description
      * - *SCLK*
        - Clock line, driven by the master
      * - *MOSI*
@@ -56,8 +59,11 @@ is used to shift the sampling phase. The following for sections illustrate the M
 relative to the clock. The timings are given by:
 
 .. list-table:: SPI timings
+     :header-rows: 1
      :class: vertical-borders horizontal-borders
 
+     * - Parameter
+       - Description
      * - *t1*
        - The minimum time from the start of the transaction to data being valid on the data pins.
      * - *t2*
@@ -68,7 +74,7 @@ relative to the clock. The timings are given by:
 The setup and hold timings are inherited from the underlying xCORE
 device. For details on these timing please refer to the device datasheet.
 
-When operating above 20 Mbps please also see :ref:`MISO port timing`
+When operating above 20 Mbps please also see the :ref:`MISO port timing<miso_port_timing>` section.
 
 Mode 0 - CPOL: 0 CPHA 0
 =======================
@@ -174,6 +180,8 @@ the asynchronous master can output a clock at up to 100MHz, port timing and hard
    - x
    - 62500
    - 75000
+
+.. _miso_port_timing:
 
 MISO port timing
 ================

@@ -2,6 +2,7 @@
 
 **CHANGELOG*
 **LICENSE*
+**.pytest_cache/*
 #TODO remove these
 **index*
 **resource_usage_summary*

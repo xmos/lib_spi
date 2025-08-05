@@ -68,6 +68,7 @@ foreach(i RANGE 0 ${arch_list_len})
                                                         -g 
                                                         -Wno-reinterpret-alignment)
 
+                    set(APP_INCLUDES src ../spi_slave_tester_common)
 
                     XMOS_REGISTER_APP()
                     message(STATUS "****${APP_COMPILER_FLAGS_${config}} ")

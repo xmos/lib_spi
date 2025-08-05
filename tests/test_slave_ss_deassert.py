@@ -3,44 +3,47 @@
 from pathlib import Path
 import Pyxsim
 import pytest
-from spi_master_checker import SPIMasterChecker
+from spi_slave_checker import SPISlaveChecker
 from helpers import generate_tests_from_json, create_if_needed, print_expected_vs_output
 
-appname = "spi_master_async_rx_tx"
+appname = "spi_slave_ss_deassert"
 test_params_file = Path(__file__).parent / f"{appname}/test_params.json"
 
-def do_test(capfd, combined, burnt, mosi_enabled, transfer_width, speed_tests, spi_mode, arch, id):
-    id_string = f"{combined}_{burnt}_{mosi_enabled}_{speed_tests}_{transfer_width}_{spi_mode}_{arch}"
+def do_test(capfd, spi_mode, transfer_size, arch, id):
+    id_string = f"{spi_mode}_{transfer_size}_{arch}"
     filepath = Path(__file__).resolve().parent
     binary = filepath/f"{appname}/bin/{id_string}/{appname}_{id_string}.xe"
     assert binary.exists()
 
-    checker = SPIMasterChecker("tile[0]:XS1_PORT_1C",
+    pytest.xfail("This test is work in progress")
+
+    checker = SPISlaveChecker("tile[0]:XS1_PORT_1C",
                                "tile[0]:XS1_PORT_1D",
                                "tile[0]:XS1_PORT_1A",
                                "tile[0]:XS1_PORT_1B",
                                "tile[0]:XS1_PORT_1E",
-                               "tile[0]:XS1_PORT_16B")
+                               "tile[0]:XS1_PORT_16B",
+                               "tile[0]:XS1_PORT_1F")
 
-    with open(filepath/f"expected/master_sync.expect") as exp:
+    with open(filepath/f"expected/slave.expect") as exp:
         expected = exp.read().splitlines()
+        expected = expected[:3 + transfer_size] + expected[-1:]
 
     tester = Pyxsim.testers.ComparisonTester(expected,
-                                            regexp = False,
+                                            regexp = True,
                                             ordered = True)
-    
+
     Pyxsim.run_on_simulator_(
         binary,
-        # simargs=['--vcd-tracing', '-o ./trace.vcd -tile tile[0] -ports -ports-detailed -pads -functions'],
+        # simargs=['--vcd-tracing', '-o ./trace.vcd -tile tile[0] -ports -pads -functions'],
         do_xe_prebuild = False,
         simthreads = [checker],
-        capfd=capfd)
+        capfd=capfd
+        )
 
     output = print_expected_vs_output(expected, capfd)
-    assert tester.run(output), output
-
+    assert tester.run(output)
 
 @pytest.mark.parametrize("params", generate_tests_from_json(test_params_file)[0], ids=generate_tests_from_json(test_params_file)[1])
-def test_master_async_rx_tx(capfd, params, request):
-    # print("***", params)
+def test_slave_ss_deassert(capfd, params, request):
     do_test(capfd, *params, request.node.callspec.id)

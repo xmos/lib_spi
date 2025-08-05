@@ -42,7 +42,7 @@ foreach(i RANGE 0 ${arch_list_len})
                                             -O2 
                                             -g 
                                             -Wno-reinterpret-alignment)
-        set(APP_INCLUDES src ../spi_master_tester_common)
+        set(APP_INCLUDES src ../spi_slave_tester_common)
 
         XMOS_REGISTER_APP()
 

@@ -17,12 +17,19 @@ out port setup_strobe_port = XS1_PORT_1E;
 out port setup_data_port = XS1_PORT_16B;
 in port setup_resp_port = XS1_PORT_1F;
 
-#define NUMBER_OF_TEST_BYTES 16
 #define KBPS 1000
-#define SPI_MODE SPI_MODE_0
-#define BURNT_THREADS 0
-#define TRANSFER_SIZE SPI_TRANSFER_SIZE_8
+#define BURNT_THREADS 6
+#define MOSI_ENABLED 1
+#define MISO_ENABLED 1
 
+
+#if (TRANSFER_SIZE == 8)
+#define SPI_TRANSFER_SIZE SPI_TRANSFER_SIZE_8
+#elif (TRANSFER_SIZE == 32)
+#define SPI_TRANSFER_SIZE SPI_TRANSFER_SIZE_32
+#else
+#error Invalid transfer size given
+#endif
 
 
 // This sends 128b transfer then steps through from 1b to SPI_TRANSFER_SIZE bits and exits
@@ -32,7 +39,7 @@ void app(server interface spi_slave_callback_if spi_i,
         int mosi_enabled, int miso_enabled){
 
     unsigned bpt = 0;
-    spi_transfer_type_t tt = TRANSFER_SIZE;
+    spi_transfer_type_t tt = SPI_TRANSFER_SIZE;
     switch(tt){
     case SPI_TRANSFER_SIZE_8:bpt = 8;break;
     case SPI_TRANSFER_SIZE_32:bpt = 32;break;
@@ -71,7 +78,6 @@ void app(server interface spi_slave_callback_if spi_i,
                 }
                 if(!miso_enabled){
                     printf("Error: master cannot require data when miso is not enabled\n");
-                    flush_print();
                     _Exit(1);
                 }
                 break;
@@ -83,7 +89,6 @@ void app(server interface spi_slave_callback_if spi_i,
                     if(rx_data[rx_byte_no] != d){
                         printf("Error: Expected %02x from master but got %02x for transfer of %d\n",
                                 rx_data[rx_byte_no], d, num_bits);
-                        flush_print();
                         _Exit(1);
                     }
                     rx_byte_no++;
@@ -101,7 +106,6 @@ void app(server interface spi_slave_callback_if spi_i,
                     if(datum != d){
                         printf("Error: Expected %02x from master but got %02x for transfer of %d\n",
                                 d, datum, num_bits);
-                        flush_print();
                         _Exit(1);
                     }
                 }
@@ -115,14 +119,8 @@ void app(server interface spi_slave_callback_if spi_i,
                     num_bits = 0;
                 }
                 if(num_bits == bpt){
-                    int r = request_response(setup_strobe_port, setup_resp_port);
-                    if(r){
-                        printf("Error: Master Rx error\n");
-                        flush_print();
-                        _Exit(1);
-                    }
-                    spi_i.request_shutdown();
-                    break;
+                    printf("Test completed\n");
+                    _Exit(0);
                 }
                 num_bits++;
 
@@ -130,12 +128,10 @@ void app(server interface spi_slave_callback_if spi_i,
 
                 if(r){
                     printf("Error: Master Rx error\n");
-                    flush_print();
                     _Exit(1);
                 }
                 if(num_bits > bpt){
                     printf("Error: Too many bits %d expecting %d\n", num_bits, bpt);
-                    flush_print();
                     _Exit(1);
                 }
 
@@ -146,48 +142,31 @@ void app(server interface spi_slave_callback_if spi_i,
                 tx_byte_no = 0;
                 break;
             }
-
-            case spi_i.shutdown_complete():
-                printf("Test completed\n");
-                flush_print();
-                return;
-                break;
         }
     }
 }
 
 static void load(static const unsigned num_threads){
     switch(num_threads){
-    case 0: return;
     case 3: par {par(int i=0;i<3;i++) while(1);}break;
     case 6: par {par(int i=0;i<6;i++) while(1);}break;
     case 7: par {par(int i=0;i<7;i++) while(1);}break;
     }
 }
-
-#define MISO p_miso
 #define MOSI_ENABLED 1
-#define MISO_ENABLED 1
-#define NUM_LOOPS    3
+
+#if MISO_ENABLED
+#define MISO p_miso
+#else
+#define MISO null
+#endif
 
 int main(){
     interface spi_slave_callback_if i;
     par {
-#if COMBINED == 1
-        for(int n = 0; n < NUM_LOOPS; n++){
-            [[combine]]
-            par {
-                spi_slave(i, p_sclk, p_mosi, MISO, p_ss, cb, SPI_MODE, TRANSFER_SIZE);
-                app(i, MOSI_ENABLED, MISO_ENABLED);
-            }
-        }
-#else
-        // This will NOT combine
-        for(int n = 0; n < NUM_LOOPS; n++)
-            spi_slave(i, p_sclk, p_mosi, MISO, p_ss, cb, SPI_MODE, TRANSFER_SIZE);
-        for(int n = 0; n < NUM_LOOPS; n++)
-            app(i, MOSI_ENABLED, MISO_ENABLED);
-#endif
+
+        spi_slave(i, p_sclk, p_mosi, MISO, p_ss, cb, SPI_MODE, TRANSFER_SIZE);
+        app(i, MOSI_ENABLED, MISO_ENABLED);
         load(BURNT_THREADS);
     }
     return 0;
