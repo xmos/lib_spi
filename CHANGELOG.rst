@@ -10,6 +10,8 @@ lib_spi change log
   * ADDED: Shutdown method for SPI slave
   * ADDED: SPI master optional MISO and SS timing adjustments
   * ADDED: Array transfer method for SPI master sync
+  * ADDED: SPI slave MISO goes Hi-Z when SS is deasserted supporting
+    multiple slaves on a single external master    
   * RESOLVED: SPI master (all) swapping of SPI modes 0 and 1
   * RESOLVED: SPI slave swapping of SPI modes 0 and 1
   * RESOLVED: Non-funcional tests

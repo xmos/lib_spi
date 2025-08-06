@@ -55,6 +55,8 @@ static int request_response(
         in port setup_resp_port
 ){
     int r;
+    setup_resp_port when pinseq(1) :> r; // Wait for ACK from tester first
+
     setup_strobe_port <: 1; // Twice to make sure we are not too fast
     setup_strobe_port <: 1;
     setup_strobe_port <: 0;

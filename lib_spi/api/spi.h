@@ -7,7 +7,7 @@
 #include <stddef.h>
 #include <xccompat.h>
 extern "C" {
-#include "../src/spi_fwk.h"
+  #include "../src/spi_fwk.h"
 }
 // These are needed for DOXYGEN to render properly
 #ifndef __DOXYGEN__
@@ -187,18 +187,6 @@ typedef interface spi_master_if {
 
 /**@}*/ // END: addtogroup spi_master_if
 
-
-[[distributable]]
-void spi_master(
-        SERVER_INTERFACE(spi_master_if, i[num_clients]),
-        static_const_size_t num_clients,
-        out_buffered_port_32_t sclk,
-        NULLABLE_RESOURCE(out_buffered_port_32_t, mosi),
-        NULLABLE_RESOURCE(in_buffered_port_32_t, miso),
-        out_port p_ss,
-        static_const_size_t num_slaves,
-        NULLABLE_RESOURCE(clock, clk));
-
 /** Task that implements the SPI proctocol in master mode that is
     connected to a multiple slaves on the bus.
 
@@ -220,10 +208,22 @@ void spi_master(
                          of the slave. Multiple slaves may be supported
                          by specifying, for example, a 4-bit port.
                          Please specify mapping of bits to slaves using
-                         i.set_ss_port_bit()
+                         i.set_ss_port_bit().
     \param num_slaves    The number of slave devices on the bus.
-    \param clk           a clock for the component to use.
+    \param clk           A clock for the component to use. May be set
+                         to null if low speed operation is acceptable.
 */
+[[distributable]]
+void spi_master(
+        SERVER_INTERFACE(spi_master_if, i[num_clients]),
+        static_const_size_t num_clients,
+        out_buffered_port_32_t sclk,
+        NULLABLE_RESOURCE(out_buffered_port_32_t, mosi),
+        NULLABLE_RESOURCE(in_buffered_port_32_t, miso),
+        out_port p_ss,
+        static_const_size_t num_slaves,
+        NULLABLE_RESOURCE(clock, clk));
+
 
 /**
  * \addtogroup spi_master_async_if
@@ -433,14 +433,13 @@ typedef interface spi_slave_callback_if {
 
   /** This callback will get called when the master initiates a bus transfer
    *  or when more data is required during a transaction.
-   *  The application must supply the data to transmit to the master. If
-   *  the spi slave component is set to ``SPI_TRANSFER_SIZE_32`` mode then
-   *  this callback will not be called and master_requires_data32() will
-   *  be called instead. Data is transmitted for the least significant bit
-   *  first.  If the master completes the transaction before 8 bits are
-   *  transferred the remaining bits are discarded.
+   *  The application must supply the data to transmit to the master. 
+   *  Data is transmitted with the least significant bit
+   *  first.  If the master completes the transaction before 8/32 bits (
+   *  depending on SPI_TRANSFER_SIZE_8 or SPI_TRANSFER_SIZE_32) are
+   *  transferred and the remaining bits are discarded.
    *
-   *  \returns the 8-bit value to transmit.
+   *  \returns the 8-bit or 32-bit value to transmit.
    */
   uint32_t master_requires_data(void);
 
@@ -470,7 +469,7 @@ typedef interface spi_slave_callback_if {
 } spi_slave_callback_if;
 #endif
 
-  /**@}*/ // END: addtogroup spi_slave_callback_if
+/**@}*/ // END: addtogroup spi_slave_callback_if
 
 
 /** This type specifies the transfer size from the SPI slave component

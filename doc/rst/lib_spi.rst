@@ -55,7 +55,7 @@ SPI Modes
 
 The data sample points for SPI are defined by the clock polarity (CPOL) and clock phase (CPHA)
 parameters. SPI clock polarity may be inverted or non-inverted by the CPOL and the CPHA parameter
-is used to shift the sampling phase. The following for sections illustrate the MISO and MOSI data lines
+is used to shift the sampling phase. The following four sections illustrate the MISO and MOSI data lines
 relative to the clock. The timings are given by:
 
 .. list-table:: SPI timings
@@ -137,7 +137,7 @@ timings can be seen in :numref:`spi_master_sync_timings`.
    - MOSI enabled
    - MISO enabled
    - Max kbps (62.5 MHz core)
-   - Max kbps (125 MHz core)
+   - Max kbps (100 MHz core)
  * - 0
    - 1
    - 0
@@ -755,7 +755,7 @@ All SPI slave functions can be accessed via the ``spi.h`` header::
   #include <spi.h>
 
 You will also have to add ``lib_spi`` to the
-``USED_MODULES`` field of your application Makefile.
+``LIB_DEPENDENT_MODULES`` field of your application CMakefile.
 
 Creating an SPI slave instance
 ..............................

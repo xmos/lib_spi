@@ -1,5 +1,0 @@
-{
-    "SPI_MODE": [0, 1, 2, 3],
-    "TRANSFER_SIZE": [8, 32],
-    "arch": ["xs2", "xs3"]
-}
