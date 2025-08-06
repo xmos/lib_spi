@@ -35,7 +35,7 @@ void spi_slave(client spi_slave_callback_if spi_i,
     // note do NOT configure MISO yet. We will leave this as an input so Hi-Z
     // TODO
     if(transfer_type ==  SPI_TRANSFER_SIZE_8){
-        asm volatile ("settw res[%0], %1"::"r"(mosi), "r"(8));
+        // asm volatile ("settw res[%0], %1"::"r"(mosi), "r"(8));
         // Note no MISO setup because we want it to be Hi-Z
         // It will get configured at SS event when we start to tx data from slave
     }
@@ -68,6 +68,8 @@ void spi_slave(client spi_slave_callback_if spi_i,
                 }
 
                 if(ss_val != ASSERTED){
+                    // Make MISO go Hi-Z if SS not asserted. It will switch
+                    // to output again on the next out or partout
                     if(!isnull(miso)){
                         set_port_use_on(miso); // Set to Hi-Z and reset
                         asm volatile ("setc res[%0], %1"::"r"(miso), "r"(XS1_SETC_BUF_BUFFERS)); // Switch to buffered mode
@@ -97,7 +99,6 @@ void spi_slave(client spi_slave_callback_if spi_i,
                         data = (bitrev(data)>>24);
                         // Send data before clock. Use ref clock to allow port to output in absence of SPI clock
                         if((mode == SPI_MODE_0) || (mode == SPI_MODE_2)){
-                            asm volatile ("settw res[%0], %1"::"r"(miso), "r"(8)); // Transfer width
                             asm volatile ("setclk res[%0], %1"::"r"(miso), "r"(XS1_CLKBLK_REF));
                             partout(miso, 1, data);
                             asm volatile ("setclk res[%0], %1"::"r"(miso), "r"(clk));
@@ -128,8 +129,11 @@ void spi_slave(client spi_slave_callback_if spi_i,
                     } else {
                         buffer = bitrev(buffer);
                     }
-                }
+                } // !isnull(miso)
                 clearbuf(mosi);
+                if(transfer_type == SPI_TRANSFER_SIZE_8){
+                    asm volatile ("settw res[%0], %1"::"r"(mosi), "r"(8)); // Transfer width
+                }
                 break;
             } // case ss
 

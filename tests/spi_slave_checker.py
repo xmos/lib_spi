@@ -63,9 +63,9 @@ class SPISlaveChecker(px.SimThread):
             expected_miso_enabled = self.get_setup_data(xsi, self._setup_strobe_port, self._setup_data_port)
             expected_num_bits = self.get_setup_data(xsi, self._setup_strobe_port, self._setup_data_port)
             kbps = self.get_setup_data(xsi, self._setup_strobe_port, self._setup_data_port)
-            initial_clock_delay = int(self.get_setup_data(xsi, self._setup_strobe_port, self._setup_data_port) * nanosecond_ticks)
+            initial_clock_delay = int(self.get_setup_data(xsi, self._setup_strobe_port, self._setup_data_port))
             print(f"Got Settings:cpol {expected_cpol} cpha {expected_cpha} miso {expected_miso_enabled} num_bits {expected_num_bits} kbps {kbps} init delay {initial_clock_delay} ")
-
+            initial_clock_delay = initial_clock_delay * nanosecond_ticks
 
             # drive initial values while slave starts up for the first time
             xsi.drive_port_pins(self._sck_port, expected_cpol)
@@ -81,7 +81,7 @@ class SPISlaveChecker(px.SimThread):
                 print(f"Error: MISO still driving before ss assert")
 
     
-            xsi.drive_port_pins(self._setup_resp_port, 0) # This port also doubles as tester ready to report            
+            xsi.drive_port_pins(self._setup_resp_port, 0) # This port also doubles as tester ready to report signal
             xsi.drive_port_pins(self._sck_port, expected_cpol)
             xsi.drive_port_pins(self._ss_port, 0)
 
@@ -126,7 +126,7 @@ class SPISlaveChecker(px.SimThread):
                     if expected_miso_enabled:
                         if rx_byte != rx_data[byte_count]:
                             error = 1
-                            print(f"Error: tester MISO got:{rx_byte:02x} expected:{rx_data[byte_count]:02x}  {byte_count} at time: {xsi.get_time() / nanosecond_ticks}ns")
+                            print(f"Error: tester MISO got:{rx_byte:02x} expected:{rx_data[byte_count]:02x} byte_count:{byte_count} at time: {xsi.get_time() / nanosecond_ticks}ns")
                     rx_byte = 0
                     byte_count = byte_count + 1
                     if byte_count*8 < expected_num_bits:
@@ -157,14 +157,21 @@ class SPISlaveChecker(px.SimThread):
                 self.wait_until(time_trigger)
                 count_nanoseconds += 1
             if miso_driving:
+                error = 1
                 print(f"Error: MISO still driving {max_nanoseconds}ns after ss deassert, at time: {xsi.get_time() / nanosecond_ticks}ns")
             # print(f"MISO deasserted at {(time_trigger - ss_deasserted_time) / nanosecond_ticks}ns after SS, at time: {xsi.get_time() / nanosecond_ticks}ns")
 
-            # Report back to DUT
-            xsi.drive_port_pins(self._setup_resp_port, 1) # Tester ready to report          
-            self.wait_for_port_pins_change([self._setup_strobe_port]) # Wait for DUT to read
-            xsi.drive_port_pins(self._sck_port, expected_cpol)
-            xsi.drive_port_pins(self._ss_port, 1)
-            xsi.drive_port_pins(self._setup_resp_port, error)
 
-            self.wait_for_port_pins_change([self._setup_strobe_port])
+            # Report back to DUT
+            if xsi.sample_port_pins(self._setup_strobe_port) != 0:
+                print("Error - setup_strobe_port not 0 at end of test")
+                error = 1
+            # setup strobe (trigger to DUT) is low so DUT not requested yet
+
+            # This section corresponds to request_response() in the DUT
+            xsi.drive_port_pins(self._setup_resp_port, 1) # Tester ready to report    
+            self.wait_for_port_pins_change([self._setup_strobe_port]) # Wait for DUT to ready read, sends 1
+            xsi.drive_port_pins(self._setup_resp_port, error)
+            self.wait_for_port_pins_change([self._setup_strobe_port]) # wait for it to go low again
+
+

@@ -3,6 +3,8 @@
 #ifndef COMMON_SLAVE_H_
 #define COMMON_SLAVE_H_
 
+#include <print.h>
+
 static void set_mode_bits(spi_mode_t mode, unsigned &cpol, unsigned &cpha){
     switch(mode){
         case SPI_MODE_0:cpol = 0; cpha= 0; break;
@@ -57,11 +59,17 @@ static int request_response(
     int r;
     setup_resp_port when pinseq(1) :> r; // Wait for ACK from tester first
 
-    setup_strobe_port <: 1; // Twice to make sure we are not too fast
+    setup_strobe_port <: 1; // Repeat to make sure we are not too fast
+    setup_strobe_port <: 1;
+    setup_strobe_port <: 1;
     setup_strobe_port <: 1;
     setup_strobe_port <: 0;
     setup_strobe_port <: 0;
+    setup_strobe_port <: 0;
+    setup_strobe_port <: 0;
+
     setup_resp_port :> r;
+
     return r;
 
 }

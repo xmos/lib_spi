@@ -63,7 +63,7 @@ foreach(i RANGE 0 ${arch_list_len})
                                                         -DBURNT_THREADS=${BURNT_THREADS}
                                                         -DMISO_ENABLED=${MISO_ENABLED}
                                                         -DSPI_MODE=${SPI_MODE}
-                                                        -DTRANSFER_SIZE=SPI_TRANSFER_SIZE_${SPI_TRANSFER_SIZE}
+                                                        -DTRANSFER_SIZE=${SPI_TRANSFER_SIZE}
                                                         -O2 
                                                         -g 
                                                         -Wno-reinterpret-alignment)

@@ -163,9 +163,8 @@ timings can be seen in :numref:`spi_master_sync_timings`.
 Asynchronous SPI master clock speeds
 ====================================
 
-The asynchronous SPI master is limited only by the clock divider on the
-clock block. This means that for the 100MHz reference clock,
-the asynchronous master can output a clock at up to 100MHz, port timing and hardware permitting.
+The asynchronous SPI master uses the same transport layer as the SPI master using a clock block
+and so achieves similar performance.
 
 .. list-table:: SPI master timings (asynchronous)
  :header-rows: 1
@@ -174,7 +173,7 @@ the asynchronous master can output a clock at up to 100MHz, port timing and hard
    - MISO enabled
    - MOSI enabled
    - Max kbps (62.5 MHz core)
-   - Max kbps (125 MHz core)
+   - Max kbps (100 MHz core)
  * - 1
    - x
    - x
@@ -186,12 +185,12 @@ the asynchronous master can output a clock at up to 100MHz, port timing and hard
 MISO port timing
 ================
 
-Port timing is affected by chip pad and PCB delays. For clock, slave-select and MOSI all of the delays will be broadly matched.
-This means port timing adjustment is normally not required even up to the fastest support SPI clock rates.
+Port timing is affected by chip pad and PCB delays. For the clock, slave-select and MOSI signals, all of the delays will be broadly matched.
+This means port timing adjustment is normally not required even up to the fastest supported SPI clock rates.
 
-For MISO, there will be a 'round trip delay' starting with the clock edge and finishing at the xCORE's input port.
-Since this delay will mean the xCORE will be sampling early, it may be necessary to delay the sampling of the MISO
-pin to capture within the required window, particularly if the SPI clock is above 20 MHz.
+For the MISO signal, there will be a 'round trip delay' starting with the clock edge output and finishing at the xCORE's input port.
+The presence of this delay will mean the xCORE may sample too early since data signal will arrive later. 
+It may be necessary to delay the sampling of the MISO pin to capture within the required window, particularly if the SPI clock is above 20 MHz.
 
 Control over the signal capture is provided for all SPI master implementations that require a clock block. Please see the
 API section which exposes the controls available for optimising setup and hold capture.

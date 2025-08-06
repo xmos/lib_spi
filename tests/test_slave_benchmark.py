@@ -29,8 +29,8 @@ class Resultlogger(Pyxsim.testers.ComparisonTester):
             if any(skip in line for skip in ignore_list):
                 continue
             if "RESULT:" in line:
-                result_clock_delay_ns = line.split(' ')[-1]
-                result_kbps = line.split(' ')[-2]
+                result_kbps = line.split(' ')[-1]
+                result_clock_delay_ns = line.split(' ')[-2]
                 self.result["CLK_DLY_NS"] = result_clock_delay_ns
                 self.result["KBPS"] = result_kbps
         

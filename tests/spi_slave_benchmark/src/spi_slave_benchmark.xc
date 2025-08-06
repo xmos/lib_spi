@@ -18,10 +18,10 @@ out port setup_data_port = XS1_PORT_16B;
 in port setup_resp_port = XS1_PORT_1F;
 
 
-#if (TRANSFER_SIZE == SPI_TRANSFER_SIZE_8)
-#define BITS_PER_TRANSFER 8
-#elif (TRANSFER_SIZE == SPI_TRANSFER_SIZE_32)
-#define BITS_PER_TRANSFER 32
+#if (TRANSFER_SIZE == 8)
+#define SPI_TRANSFER_SIZE SPI_TRANSFER_SIZE_8
+#elif (TRANSFER_SIZE == 32)
+#define SPI_TRANSFER_SIZE SPI_TRANSFER_SIZE_32
 #else
 #error Invalid transfer size given
 #endif
@@ -36,7 +36,7 @@ void app(server interface spi_slave_callback_if spi_i,
     (const void*)rx_data; // Remove warning of unused var
 
     unsigned bpt = 0;
-    spi_transfer_type_t tt = TRANSFER_SIZE;
+    spi_transfer_type_t tt = SPI_TRANSFER_SIZE;
     switch(tt){
     case SPI_TRANSFER_SIZE_8:bpt = 8;break;
     case SPI_TRANSFER_SIZE_32:bpt = 32;break;
@@ -46,11 +46,15 @@ void app(server interface spi_slave_callback_if spi_i,
     unsigned cd_max = 40000;
     unsigned cd_min = 0;
     unsigned cd = (cd_max + cd_min)/2;
+    unsigned cd_last_good = cd_max;
 
-    unsigned kbps_max = 250000;
+    // SPI speed
+    unsigned kbps_max = 100000;
     unsigned kbps_min = 0;
     unsigned kbps = (kbps_max + kbps_min)/2;
-// unsigned kbps = 7692;
+    unsigned kbps_last_good = kbps_min;
+
+    int found_solution = 0;
 
     int finding_speed = 1;
 
@@ -86,41 +90,47 @@ void app(server interface spi_slave_callback_if spi_i,
             case spi_i.master_requires_data() -> uint32_t r:{
 
                 switch(tt){
-                case SPI_TRANSFER_SIZE_8:
-                    tx_count &= 0xf;
-                    r = tx_data_8[tx_count++];
-                    break;
-                case SPI_TRANSFER_SIZE_32:
-                    tx_count &= 0x3;
-                    r = tx_data_32[tx_count++];
-                    break;
-                default:
-                    __builtin_unreachable();
-                    break;
+                    case SPI_TRANSFER_SIZE_8:
+                        tx_count &= 0xf;
+                        r = tx_data_8[tx_count++];
+                        break;
+                    case SPI_TRANSFER_SIZE_32:
+                        tx_count &= 0x3;
+                        r = tx_data_32[tx_count++];
+                        break;
+                    default:
+                        __builtin_unreachable();
+                        break;
                 }
                 break;
             }
             case spi_i.master_supplied_data(uint32_t datum, uint32_t valid_bits):{
 
                 switch(tt){
-                case SPI_TRANSFER_SIZE_8:
-                    rx_count &= 0xf;
-                    if(datum != rx_data_8[rx_count])
-                        error=1;
-                    break;
-                case SPI_TRANSFER_SIZE_32:
-                    rx_count &= 0x3;
-                    if(datum != rx_data_32[rx_count])
-                        error=1;
-                    break;
-                default:
-                    __builtin_unreachable();
-                    break;
+                    case SPI_TRANSFER_SIZE_8:
+                        rx_count &= 0xf;
+                        if(datum != rx_data_8[rx_count]){
+                            error=1;
+                            printf("Error in receiving slave 8 MOSI, expected: 0x%x got: 0x%x\n", rx_data_8[rx_count], datum);
+                        }
+                        break;
+                    case SPI_TRANSFER_SIZE_32:
+                        rx_count &= 0x3;
+                        if(datum != rx_data_32[rx_count]){
+                            error=1;
+                            printf("Error in receiving slave 32 MOSI, expected: 0x%x got: 0x%x\n", rx_data_32[rx_count], datum);
+                        }
+                        break;
+                    default:
+                        __builtin_unreachable();
+                        break;
                 }
 
                 rx_count++;
-                if(valid_bits != bpt)
+                if(valid_bits != bpt){
                     error = 1;
+                    printf("Error in receiving slave bpt expected: %d got: %d\n", bpt, valid_bits);
+                }
                 break;
             }
 
@@ -128,6 +138,13 @@ void app(server interface spi_slave_callback_if spi_i,
 
                 error |= request_response(setup_strobe_port, setup_resp_port);
 
+                if(!error){
+                    found_solution = 1;
+                    cd_last_good = cd;
+                    kbps_last_good = kbps;
+                }
+
+                // First do speed
                 if(finding_speed){
                     if(error == 1)
                         kbps_max = kbps;
@@ -137,7 +154,7 @@ void app(server interface spi_slave_callback_if spi_i,
                     unsigned next_kbps = (kbps_max + kbps_min)/2;
                     if(next_kbps == kbps){
                         rep_count++;
-                        if(rep_count == 8){
+                        if(rep_count == 4){
                             finding_speed = 0;
                             rep_count = 0;
                         }
@@ -159,9 +176,14 @@ void app(server interface spi_slave_callback_if spi_i,
                     unsigned next_cd = (cd_max + cd_min)/2;
                     if(next_cd == cd){
                         rep_count++;
-                        if(rep_count == 8){
-                            printf("RESULT: %d %d %d %d %d %d %d\n", SPI_MODE, TRANSFER_SIZE, BURNT_THREADS, miso_enabled, mosi_enabled, cd, kbps);
-                            _Exit(1);
+                        if(rep_count == 4){
+                            if(found_solution){
+                                printf("RESULT: %d %d %d %d %d %d %d\n", SPI_MODE, TRANSFER_SIZE, BURNT_THREADS, miso_enabled, mosi_enabled, cd_last_good, kbps_last_good);
+                                _Exit(0);
+                            } else {
+                                printf("ERROR! Run did not find a workable setting\n");
+                                _Exit(-1);
+                            }
                         }
 
                     } else{
@@ -176,8 +198,8 @@ void app(server interface spi_slave_callback_if spi_i,
                     }
 
                 }
-
-                // printf("broadcast_NEW settings\n");
+                // printf("error from host: %d\n", error);
+                // printf("broadcast_NEW settings mode: %d mosi_enabled %d miso_enabled %d, num_bits %d kbps %d cd: %u\n", SPI_MODE, mosi_enabled, miso_enabled, bpt*4, kbps, cd);
                 broadcast_settings(setup_strobe_port, setup_data_port,
                         SPI_MODE, mosi_enabled, miso_enabled,  bpt*4, kbps, cd);
                 error = 0;
@@ -211,11 +233,11 @@ int main(){
 #if COMBINED == 1
         [[combine]]
         par {
-            spi_slave(i, p_sclk, p_mosi, MISO, p_ss, cb, SPI_MODE, TRANSFER_SIZE);
+            spi_slave(i, p_sclk, p_mosi, MISO, p_ss, cb, SPI_MODE, SPI_TRANSFER_SIZE);
             app(i, MOSI_ENABLED, MISO_ENABLED);
         }
 #else
-        spi_slave(i, p_sclk, p_mosi, MISO, p_ss, cb, SPI_MODE, TRANSFER_SIZE);
+        spi_slave(i, p_sclk, p_mosi, MISO, p_ss, cb, SPI_MODE, SPI_TRANSFER_SIZE);
         app(i, MOSI_ENABLED, MISO_ENABLED);
 #endif
         load(BURNT_THREADS);
