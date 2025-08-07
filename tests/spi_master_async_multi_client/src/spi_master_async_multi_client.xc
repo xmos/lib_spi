@@ -17,7 +17,7 @@ clock                  cb       = XS1_CLKBLK_1;
 out port setup_strobe_port = XS1_PORT_1E;
 out port setup_data_port = XS1_PORT_16B;
 
-void flush_print(void){
+void delay_after_print(void){
     delay_microseconds(1000);
 }
 
@@ -82,7 +82,7 @@ void watcher(streaming chanend c[CLIENTS]){
 
                 if(!any_not_seen){
                     printf("Transfers complete\n");
-                    flush_print();
+                    delay_after_print();
                     _Exit(0);
                 }
                 break;

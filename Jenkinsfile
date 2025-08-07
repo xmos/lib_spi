@@ -2,14 +2,14 @@
 
 @Library('xmos_jenkins_shared_library@v0.41.0') _
 
+getApproval()
+
 def clone_test_deps() {
   dir("${WORKSPACE}") {
     sh "git clone git@github.com:xmos/test_support"
     sh "git -C test_support checkout v2.0.0"
   }
 }
-
-getApproval()
 
 pipeline {
   agent {

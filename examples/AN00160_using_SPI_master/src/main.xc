@@ -13,7 +13,11 @@ in buffered port:32    p_miso         = WIFI_MISO;
 out buffered port:32   p_mosi         = WIFI_MOSI;
 out port               p_rstn         = WIFI_WUP_RST_N;
 
-clock clk = on tile[0]: XS1_CLKBLK_1;
+clock clk                             = on tile[0]: XS1_CLKBLK_1;
+
+#define RESET_DEASSERT                0x02
+#define POST_RESET_DELAY_MICROSECONDS 1000
+#define SPI_SPEED_KBPS                1000
 
 /* This application function sends some traffic as SPI master using
  * the synchronous interface. It reads the config register (address 0)
@@ -23,12 +27,12 @@ void app(client spi_master_if spi)
     uint8_t val;
     printstrln("Sending SPI traffic");
     
-    p_rstn <: 0x2; //Take out of reset and wait
-    delay_microseconds(1000);
+    p_rstn <: RESET_DEASSERT; //Take out of reset and wait
+    delay_microseconds(POST_RESET_DELAY_MICROSECONDS);
 
     spi.set_ss_port_bit(0, 1); // We are using bit 1 in WIFI_CS_N for device 0
 
-    spi.begin_transaction(0, 1000, SPI_MODE_0);
+    spi.begin_transaction(0, SPI_SPEED_KBPS, SPI_MODE_0);
 
     uint32_t reg_addr = 0; // Read reg 0
     uint32_t read_cmd = 0x8000; // Read
@@ -53,11 +57,11 @@ void async_app(client spi_master_async_if spi)
 
   printstrln("Sending aynch SPI traffic");
   
-  p_rstn <: 0x2; //Take out of reset and wait
-  delay_microseconds(1000);
+  p_rstn <: RESET_DEASSERT; //Take out of reset and wait
+  delay_microseconds(POST_RESET_DELAY_MICROSECONDS);
   spi.set_ss_port_bit(0, 1); // We are using bit 1 in WIFI_CS_N for device 0
 
-  spi.begin_transaction(0, 1000, SPI_MODE_0);
+  spi.begin_transaction(0, SPI_SPEED_KBPS, SPI_MODE_0);
 
   // Build command
   uint32_t reg_addr = 0; // Read reg 0
@@ -94,7 +98,7 @@ void async_app(client spi_master_async_if spi)
          break;
   }
 
-  spi.begin_transaction(0, 1000, SPI_MODE_0);
+  spi.begin_transaction(0, SPI_SPEED_KBPS, SPI_MODE_0);
 
   uint32_t inbuffer32[1] = {0}; 
   uint32_t outbuffer32[1] = {0}; // Dummy for read reg

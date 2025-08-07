@@ -75,7 +75,7 @@ void app(server interface spi_slave_callback_if spi_i,
                 }
                 if(!miso_enabled){
                     printf("Error: master cannot require data when miso is not enabled\n");
-                    flush_print();
+                    delay_after_print();
                     _Exit(1);
                 }
                 break;
@@ -87,7 +87,7 @@ void app(server interface spi_slave_callback_if spi_i,
                     if(rx_data[rx_byte_no] != d){
                         printf("Error: Expected %02x from master but got %02x for transfer of %d\n",
                                 rx_data[rx_byte_no], d, num_bits);
-                        flush_print();
+                        delay_after_print();
                         _Exit(1);
                     }
                     rx_byte_no++;
@@ -105,7 +105,7 @@ void app(server interface spi_slave_callback_if spi_i,
                     if(datum != d){
                         printf("Error: Expected %02x from master but got %02x for transfer of %d\n",
                                 d, datum, num_bits);
-                        flush_print();
+                        delay_after_print();
                         _Exit(1);
                     }
                 }
@@ -120,7 +120,7 @@ void app(server interface spi_slave_callback_if spi_i,
                 }
                 if(num_bits == bpt){
                     printf("Test completed\n");
-                    flush_print();
+                    delay_after_print();
                     _Exit(0);
                 }
                 num_bits++;
@@ -129,12 +129,12 @@ void app(server interface spi_slave_callback_if spi_i,
 
                 if(r){
                     printf("Error: Master Rx error\n");
-                    flush_print();
+                    delay_after_print();
                     _Exit(1);
                 }
                 if(num_bits > bpt){
                     printf("Error: Too many bits %d expecting %d\n", num_bits, bpt);
-                    flush_print();
+                    delay_after_print();
                     _Exit(1);
                 }
 

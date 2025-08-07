@@ -21,7 +21,7 @@ typedef enum {
     SPI_TRANSFER_WIDTH_32
 } t_transfer_width;
 
-void flush_print(void){
+void delay_after_print(void){
     delay_microseconds(1000);
 }
 
@@ -33,7 +33,7 @@ static void inc_state(unsigned &count, spi_mode_t &mode,
         count = 0;
         if(++speed_index == SPEED_TESTS){
             printf("Transfers complete\n");
-            flush_print();
+            delay_after_print();
             _Exit(0);
         }
     } else {
@@ -116,7 +116,7 @@ void app(client interface spi_master_async_if spi_i, int mosi_enabled, int miso_
                             if(rx != rx_data[j]) {
                                 printf("Error, incorrect 8b data at idx %u received: 0x%x expecting(0x%x)\n", j, rx, rx_data[j]);
                                 printf("Speed: %u, mode: %u, count: %u\n", speed_in_kbps, mode, count);
-                                flush_print();
+                                delay_after_print();
                                 _Exit(1);
                             }
                         }
@@ -128,8 +128,8 @@ void app(client interface spi_master_async_if spi_i, int mosi_enabled, int miso_
                         if(miso_enabled){
                             if(rx != (rx_data, unsigned[])[j]) {
                                 printf("Error, incorrect 32b data at idx %u received: 0x%x expecting(0x%x)\n", j, rx, rx_data[j]);
-                                printf("Speed: %, mode: %u, count: %u\n", speed_in_kbps, mode, count);
-                                flush_print();
+                                printf("Speed: %u, mode: %u, count: %u\n", speed_in_kbps, mode, count);
+                                delay_after_print();
                                 _Exit(1);
                             }
                         }

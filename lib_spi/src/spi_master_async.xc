@@ -22,7 +22,8 @@ typedef struct {
     uint32_t * movable   buffer_rx;
 
 } transaction_request;
-#define NBYTES_UNASSIGNED (-1)
+
+#define NBYTES_UNASSIGNED 0xffffffff // Can be made using mkmsk quickly
 
 
 [[combinable]]
@@ -61,7 +62,7 @@ void spi_master_async(server interface spi_master_async_if i[num_clients],
     
     unsafe{
         spi_master_init(&spi_master, (xclock_t)cb, (port_t)p_ss, (port_t)sclk, (port_t)mosi, (port_t)miso);
-        for(int i = 0; i < num_slaves; i++){
+        for(size_t i = 0; i < num_slaves; i++){
             device_ss_clock_timing[i].cs_to_clk_delay_ticks = SPI_MASTER_DEFAULT_SS_CLOCK_DELAY_TICKS;
             device_ss_clock_timing[i].clk_to_cs_delay_ticks = SPI_MASTER_DEFAULT_SS_CLOCK_DELAY_TICKS;
             spi_dev[i].cs_to_cs_delay_ticks = SPI_MASTER_DEFAULT_SS_CLOCK_DELAY_TICKS;
@@ -72,7 +73,7 @@ void spi_master_async(server interface spi_master_async_if i[num_clients],
 
     // By default use the port bit which is the number of the slave (slave 0 uses port bit 0 etc.)
     uint8_t ss_port_bit[SPI_MAX_DEVICES];
-    for(int i = 0; i < SPI_MAX_DEVICES; i++){
+    for(size_t i = 0; i < SPI_MAX_DEVICES; i++){
         ss_port_bit[i] = i;
     }
 
@@ -139,11 +140,10 @@ void spi_master_async(server interface spi_master_async_if i[num_clients],
             case i[int x].init_transfer_array_8(uint8_t * movable inbuf,
                                                 uint8_t * movable outbuf,
                                                 size_t nbytes) :{
-                // if(dbg) printstr("init_transfer_array_8 "); if(dbg) printintln(nbytes);
                 if(x != active_client){
                     // Just buffer it
-                    unsigned index;
-                    for(unsigned j=0;j<num_clients;j++){
+                    size_t index;
+                    for(size_t j=0;j<num_clients;j++){
                         if(tr_buffer[j].client_id==x){
                             index = j;
                             break;
@@ -179,8 +179,8 @@ void spi_master_async(server interface spi_master_async_if i[num_clients],
                                                  size_t nwords):{
                 if(x != active_client){
                     // Just buffer it 
-                    unsigned index;
-                    for(unsigned j=0;j<num_clients;j++){
+                    size_t index;
+                    for(size_t j=0;j<num_clients;j++){
                         if(tr_buffer[j].client_id==x){
                             index = j;
                             break;
@@ -248,8 +248,6 @@ void spi_master_async(server interface spi_master_async_if i[num_clients],
 
             //Note, end transaction can only be called from the active_client
             case i[int x].end_transaction(unsigned ss_deassert_time):{
-                //xassert(x == active_client);
-
                 //An end_transaction can only be completed after all transfers
                 //have been completed
 

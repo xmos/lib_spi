@@ -129,3 +129,4 @@ def print_expected_vs_output(expected, capfd):
             print(f"{str(e):<40}{str(o)}")
 
     return output
+    

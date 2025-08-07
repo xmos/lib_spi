@@ -65,7 +65,7 @@ inline uint32_t load_data_out(
     uint32_t tmp;
     uint32_t word_out;
 
-    tmp = data_out[0] << 8;
+    tmp = (uint32_t)data_out[0] << 8;
     if (len > 1) {
         tmp |= data_out[1];
     }

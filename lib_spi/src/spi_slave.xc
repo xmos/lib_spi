@@ -33,12 +33,6 @@ void spi_slave(client spi_slave_callback_if spi_i,
     }
     
     // note do NOT configure MISO yet. We will leave this as an input so Hi-Z
-    // TODO
-    if(transfer_type ==  SPI_TRANSFER_SIZE_8){
-        // asm volatile ("settw res[%0], %1"::"r"(mosi), "r"(8));
-        // Note no MISO setup because we want it to be Hi-Z
-        // It will get configured at SS event when we start to tx data from slave
-    }
 
     start_clock(clk);
 

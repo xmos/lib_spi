@@ -74,7 +74,7 @@ static int request_response(
 
 }
 
-void flush_print(void){
+void delay_after_print(void){
     delay_microseconds(10);
 }
 

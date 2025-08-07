@@ -10,10 +10,11 @@ lib_spi change log
   * ADDED: Shutdown method for SPI slave
   * ADDED: SPI master optional MISO and SS timing adjustments
   * ADDED: Array transfer method for SPI master sync
-  * RESOLVED: SPI slave MISO now goes Hi-Z when SS is deasserted
-  * RESOLVED: SPI master (all) swapping of SPI modes 0 and 1
-  * RESOLVED: SPI slave swapping of SPI modes 0 and 1
-  * RESOLVED: Non-funcional tests
+  * FIXED: SPI slave MISO now goes Hi-Z when SS is deasserted
+  * FIXED: SPI master (all) swapping of SPI modes 0 and 1
+  * FIXED: SPI slave swapping of SPI modes 0 and 1
+  * FIXED: Non-functional tests
+  * CHANGED: State diagrams and wavedrom now rendered by xmosdoc
   * REMOVED: Support for XS1 devices
 
 3.4.0

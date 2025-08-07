@@ -117,7 +117,7 @@ typedef struct {
 typedef struct {
     spi_master_t *spi_master_ctx;
     spi_master_source_clock_t source_clock;
-    int clock_divisor;
+    uint32_t clock_divisor;
     spi_master_sample_delay_t miso_sample_delay;
     uint32_t miso_pad_delay;
     uint32_t miso_initial_trigger_delay;

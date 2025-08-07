@@ -90,12 +90,14 @@ void spi_master(server interface spi_master_if i[num_clients],
                 } else {
                     spi_master_determine_clock_settings(&source_clock, &divider, speed_in_khz);
 
-                    // unsigned actual_speed_khz = spi_master_get_actual_clock_rate(source_clock, divider);
-                    // printf("Actual speed_in_khz: %u div(%u) clock: (%s) %uMHz\n",
-                    //     actual_speed_khz,
-                    //     divider,
-                    //     ((source_clock == spi_master_source_clock_ref) ? "ref" : "core"),
-                    //     ((source_clock == spi_master_source_clock_ref) ? PLATFORM_REFERENCE_MHZ : PLATFORM_NODE_0_SYSTEM_FREQUENCY_MHZ));
+#if SPI_DEBUG_REPORT_ACTUAL_SPEED
+                    unsigned actual_speed_khz = spi_master_get_actual_clock_rate(source_clock, divider);
+                    printf("Actual speed_in_khz: %u div(%u) clock: (%s) %uMHz\n",
+                        actual_speed_khz,
+                        divider,
+                        ((source_clock == spi_master_source_clock_ref) ? "ref" : "core"),
+                        ((source_clock == spi_master_source_clock_ref) ? PLATFORM_REFERENCE_MHZ : PLATFORM_NODE_0_SYSTEM_FREQUENCY_MHZ));
+#endif
 
                     spi_master_device_init(&spi_dev[current_device], &spi_master,
                         ss_port_bit[current_device],

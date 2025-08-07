@@ -29,7 +29,9 @@ typedef interface reg_if {
   void set_reg(uint8_t regnum, uint8_t value);
 } reg_if;
 
-#define NUM_REG 5
+#define SPI_SPEED_KBPS            1000
+#define NUM_REG                   5
+#define SPI_SS_DELAY_10NS_TICKS   100 // 1 microsecond
 
 enum reg_state_t {
   WRITE_REG = 0,
@@ -144,21 +146,21 @@ void app(client reg_if reg) {
  */
 void tester(client spi_master_if spi)
 {
-    delay_microseconds(45);
+    delay_microseconds(45); // Wait for slave to init
     uint8_t val;
-    spi.begin_transaction(0, 100, SPI_MODE_0);
+    spi.begin_transaction(0, SPI_SPEED_KBPS, SPI_MODE_0);
     spi.transfer8(READ_REG); // READ command
     spi.transfer8(0); // REGISTER 0
     val = spi.transfer8(0); // DATA
-    spi.end_transaction(100);
+    spi.end_transaction(SPI_SS_DELAY_10NS_TICKS);
     printstr("SPI MASTER: Read register 0: 0x");
     printhexln(val);
 
-    spi.begin_transaction(0, 100, SPI_MODE_0);
+    spi.begin_transaction(0, SPI_SPEED_KBPS, SPI_MODE_0);
     spi.transfer8(WRITE_REG); // WRITE command
     spi.transfer8(1); // REGISTER 1
     spi.transfer8(0xac); // DATA
-    spi.end_transaction(100);
+    spi.end_transaction(SPI_SS_DELAY_10NS_TICKS);
     printstr("SPI MASTER: Set register 1 to 0xAC\n");
 }
 
