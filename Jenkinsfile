@@ -1,6 +1,6 @@
 // This file relates to internal XMOS infrastructure and should be ignored by external users
 
-@Library('xmos_jenkins_shared_library@v0.39.0') _
+@Library('xmos_jenkins_shared_library@v0.41.0') _
 
 getApproval()
 
@@ -29,7 +29,7 @@ pipeline {
     )
     string(
       name: 'INFR_APPS_VERSION',
-      defaultValue: 'v2.1.0',
+      defaultValue: 'v3.1.1',
       description: 'The infr_apps version'
     )
   }
@@ -57,12 +57,12 @@ pipeline {
     }
 
     stage('Library checks') {
-        steps {
-            warnError("Library checks failed")
-            {
-                runLibraryChecks("${WORKSPACE}/${REPO_NAME}", "${params.INFR_APPS_VERSION}")
-            }
+      steps {
+        warnError("Library checks failed")
+        {
+          runRepoChecks("${WORKSPACE}/${REPO_NAME}")
         }
+      }
     }
 
     stage('Documentation') {
@@ -74,35 +74,41 @@ pipeline {
     }
 
 
-    //stage('Tests')
-    //{
-    //  steps {
-    //      withTools(params.TOOLS_VERSION) {
-    //        dir("${REPO}/tests") {
-    //          createVenv(reqFile: "requirements.txt")
-    //          withVenv{
-    //            runPytest("--numprocesses=8 --testlevel=${params.TEST_LEVEL})
-    //          }
-    //        } // dir
-    //      } // withTools
-    //  } // steps
-    //  post
-    //  {
-    //    failure
-    //    {
-    //      //archiveArtifacts artifacts: "${REPO}/tests/logs/*.txt", fingerprint: true, allowEmptyArchive: true
-    //    }
-    //  }
-    //}
+    stage('Tests')
+    {
+      steps {
+        withTools(params.TOOLS_VERSION) {
+          dir("${REPO_NAME}/tests") {
+            createVenv(reqFile: "requirements.txt")
+            xcoreBuild()
+            withVenv{
+              runPytest("--numprocesses=auto --testlevel=${params.TEST_LEVEL}")
+            }
+          } // dir
+        } // withTools
+      } // steps
+      post
+      {
+        always{
+          archiveArtifacts artifacts: "${REPO_NAME}/tests/logs/*.txt", fingerprint: true, allowEmptyArchive: true
+        }
+      }
+    }
 
     stage("Archive")
     {
-        steps
-        {
-            archiveSandbox(REPO_NAME)
-        }
+      steps
+      {
+        archiveSandbox(REPO_NAME)
+      }
     }
-  }
+
+    stage('🚀 Release') {
+      steps {
+        triggerRelease()
+      }
+    }
+  } // stages
   post {
     cleanup {
       xcoreCleanSandbox()

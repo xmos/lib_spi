@@ -5,7 +5,7 @@ lib_spi: SPI library
 ####################
 
 :vendor: XMOS
-:version: 3.4.0
+:version: 4.0.0
 :scope: General Use
 :description: SPI Master and Slave components
 :category: General Purpose
@@ -25,7 +25,7 @@ Features
 ********
 
 * SPI master and SPI slave modes.
-* Supports speed of up to 100 Mbit.
+* Supports speed of up to 75 Mbit.
 * Multiple slave device support
 * All clock polarity and phase configurations supported.
 

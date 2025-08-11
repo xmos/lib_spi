@@ -1,0 +1,5 @@
+{
+    "DISTRIBUTED": [0, 1],
+    "CB_ENABLED": [0, 1],
+    "arch": ["xs2", "xs3"]
+}

@@ -1,0 +1,25 @@
+{
+    "THREAD_PROFILES": [
+        {
+            "COMBINED": 1,
+            "BURNT_THREADS": 3
+        },
+        {
+            "COMBINED": 1,
+            "BURNT_THREADS": 7
+        },
+        {
+            "COMBINED": 0,
+            "BURNT_THREADS": 2
+        },
+        {
+            "COMBINED": 0,
+            "BURNT_THREADS": 6
+        }
+    ],
+    "MOSI_ENABLED": [0, 1],
+    "TRANSFER_WIDTH": [8, 32],
+    "SPEED_TESTS": [1],
+    "MODE": [0, 3],
+    "arch": ["xs2", "xs3"]
+}

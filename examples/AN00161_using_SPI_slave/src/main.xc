@@ -1,11 +1,12 @@
 // Copyright 2015-2025 XMOS LIMITED.
 // This Software is subject to the terms of the XMOS Public Licence: Version 1.
 #include <xs1.h>
-#include <spi.h>
 #include <stdint.h>
 #include <timer.h>
 #include <print.h>
 #include <platform.h>
+
+#include "spi.h"
 
 /* These ports are used for the SPI slave task */
 in port                 p_sclk = on tile[0]: XS1_PORT_1E;
@@ -17,7 +18,7 @@ clock                   cb     = on tile[0]: XS1_CLKBLK_1;
 /* These ports are used for the SPI master task which is
    used to test the SPI slave (via simulator loopback). */
 out buffered port:32   p_test_sclk  = on tile[0]: XS1_PORT_1I;
-out port               p_test_ss[1] = on tile[0]: {XS1_PORT_1J};
+out port               p_test_ss    = on tile[0]: XS1_PORT_1J;
 in buffered port:32    p_test_miso  = on tile[0]: XS1_PORT_1K;
 out buffered port:32   p_test_mosi  = on tile[0]: XS1_PORT_1L;
 
@@ -28,7 +29,9 @@ typedef interface reg_if {
   void set_reg(uint8_t regnum, uint8_t value);
 } reg_if;
 
-#define NUM_REG 5
+#define SPI_SPEED_KBPS            1000
+#define NUM_REG                   5
+#define SPI_SS_DELAY_10NS_TICKS   100 // 1 microsecond
 
 enum reg_state_t {
   WRITE_REG = 0,
@@ -143,21 +146,21 @@ void app(client reg_if reg) {
  */
 void tester(client spi_master_if spi)
 {
-    delay_microseconds(45);
+    delay_microseconds(45); // Wait for slave to init
     uint8_t val;
-    spi.begin_transaction(0, 100, SPI_MODE_0);
+    spi.begin_transaction(0, SPI_SPEED_KBPS, SPI_MODE_0);
     spi.transfer8(READ_REG); // READ command
     spi.transfer8(0); // REGISTER 0
     val = spi.transfer8(0); // DATA
-    spi.end_transaction(100);
+    spi.end_transaction(SPI_SS_DELAY_10NS_TICKS);
     printstr("SPI MASTER: Read register 0: 0x");
     printhexln(val);
 
-    spi.begin_transaction(0, 100, SPI_MODE_0);
+    spi.begin_transaction(0, SPI_SPEED_KBPS, SPI_MODE_0);
     spi.transfer8(WRITE_REG); // WRITE command
     spi.transfer8(1); // REGISTER 1
     spi.transfer8(0xac); // DATA
-    spi.end_transaction(100);
+    spi.end_transaction(SPI_SS_DELAY_10NS_TICKS);
     printstr("SPI MASTER: Set register 1 to 0xAC\n");
 }
 

@@ -3,7 +3,7 @@
 lib_name: lib_spi
 project: '{{lib_name}}'
 title: '{{lib_name}}: SPI Library'
-version: 3.4.0
+version: 4.0.0
 
 documentation:
   exclude_patterns_path: doc/exclude_patterns.inc

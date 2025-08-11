@@ -1,0 +1,14 @@
+{
+    "THREAD_PROFILES": [
+        {
+            "COMBINED": 1,
+            "BURNT_THREADS": 4
+        },
+        {
+            "COMBINED": 0,
+            "BURNT_THREADS": 3
+        }
+    ],
+    "MOSI_ENABLED": [0, 1],
+    "arch": ["xs2", "xs3"]
+}

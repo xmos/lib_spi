@@ -25,6 +25,8 @@ build/
 
 # satisfy parsing in XMOS source check based on regular expressions
 # (normal parsing is based on shell wildcards)
-*/.venv*
+*.venv*
 */build/*
 __gen
+*tests/logs/*
+*.gtkw

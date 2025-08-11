@@ -1,6 +1,23 @@
 lib_spi change log
 ==================
 
+4.0.0
+-----
+
+  * CHANGED: SPI master async reduced clock blocks from two to one
+  * CHANGED: SPI master sync increased max speed to 50+ Mbps
+  * ADDED: Shutdown method for SPI sync
+  * ADDED: Shutdown method for SPI slave
+  * ADDED: SPI master optional MISO and SS timing adjustments
+  * ADDED: Array transfer method for SPI master sync
+  * FIXED: SPI slave MISO now goes Hi-Z when SS is deasserted
+  * FIXED: SPI master (all) swapping of SPI modes 0 and 1
+  * FIXED: SPI slave swapping of SPI modes 0 and 1
+  * FIXED: Passing NULL ptr to SPI asynch throws exception
+  * FIXED: Non-functional tests
+  * CHANGED: State diagrams and wavedrom now rendered by xmosdoc
+  * REMOVED: Support for XS1 devices
+
 3.4.0
 -----
 
