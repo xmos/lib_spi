@@ -137,7 +137,7 @@ void spi_master_transfer(
         data_out += 2;
     }
     if (do_input) {
-        port_set_trigger_time(spi->miso_port, start_time + (tw - 2) + dev->miso_initial_trigger_delay); /* don't ask. port timing is weird */
+        port_set_trigger_time(spi->miso_port, start_time + (tw - 2) + dev->miso_initial_trigger_delay);
     }
 
     clock_start(spi->clock_block);

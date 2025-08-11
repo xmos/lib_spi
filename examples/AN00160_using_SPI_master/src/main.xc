@@ -37,7 +37,8 @@ void app(client spi_master_if spi)
     uint32_t reg_addr = 0; // Read reg 0 CONFIG register
     uint32_t read_cmd = 0x8000; // Read
     uint32_t num_16b_words = 2; // 32b
-    uint32_t command = read_cmd | num_16b_words | (reg_addr << 12); //Do read command
+    uint32_t word_to_byte_shift = 2;
+    uint32_t command = read_cmd | num_16b_words | (reg_addr >> word_to_byte_shift); //Do read command
     val = spi.transfer8(command >> 8);// MSB first
     val = spi.transfer8(command & 0xff);
     uint32_t reg;
@@ -67,7 +68,8 @@ void async_app(client spi_master_async_if spi)
   uint32_t reg_addr = 0; // Read reg 0 CONFIG register
   uint32_t read_cmd = 0x8000;
   uint32_t num_16b_words = 2;
-  uint32_t command = read_cmd | num_16b_words | (reg_addr << 12); //Do read command
+  uint32_t word_to_byte_shift = 2;
+  uint32_t command = read_cmd | num_16b_words | (reg_addr >> word_to_byte_shift); //Do read command
 
   uint8_t outbuffer[2];
   outbuffer[0] = (command >> 8) & 0xff; // MSB first

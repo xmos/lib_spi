@@ -2,12 +2,6 @@
 // This Software is subject to the terms of the XMOS Public Licence: Version 1.
 
 
-/**
-* @defgroup spi_master_async_if
-* Methods for asynchronous SPI master interface.
-* @{
-*/
-
 /** Asynchronous interface to an SPI component.
  *
  *  This interface allows programs to offload SPI bus transfers to another
@@ -16,6 +10,13 @@
 #ifndef __DOXYGEN__
 typedef interface spi_master_async_if  {
 #endif
+  
+  /**
+  * @defgroup spi_master_async_if
+  * Methods for asynchronous SPI master interface.
+  * @{
+  */
+
   /** @fn void master_async::begin_transaction(unsigned device_index,
                               unsigned speed_in_khz, spi_mode_t mode)
    *  Begin a transaction.

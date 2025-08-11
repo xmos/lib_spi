@@ -1,12 +1,6 @@
 // Copyright 2025 XMOS LIMITED.
 // This Software is subject to the terms of the XMOS Public Licence: Version 1.
 
-/**
-* @defgroup spi_slave_callback_if
-* Methods for SPI slave interface.
-* @{
-*/
-
 
 /** This interface allows clients to interact with SPI slave tasks by
  *  completing callbacks that show how to handle data.
@@ -14,6 +8,13 @@
 #ifndef __DOXYGEN__
 typedef interface spi_slave_callback_if {
 #endif
+
+  /**
+  * @defgroup spi_slave_callback_if
+  * Methods for SPI slave interface.
+  * @{
+  */
+
 
   /** This callback will get called when the master de-asserts on the slave
    *  select line to end a transaction.
@@ -58,7 +59,7 @@ typedef interface spi_slave_callback_if {
 } spi_slave_callback_if;
 #endif
 
-/**@}*/ // END: addtogroup spi_slave_callback_if
+/**@}*/ // end: spi_slave_callback_if
 
 
 /** This type specifies the transfer size from the SPI slave component

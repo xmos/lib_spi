@@ -28,7 +28,6 @@ uint8_t transfer8_sync_zero_clkblk(
     for(unsigned i=0;i<8;i++){
         partout_timed(sclk, 1, c, time);
         c>>=1;
-        //sclk @ time <:>> c;
 
         if(!isnull(mosi)){
             partout_timed(mosi, 1, data>>7, time);

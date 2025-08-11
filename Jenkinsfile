@@ -110,7 +110,13 @@ pipeline {
         archiveSandbox(REPO_NAME)
       }
     }
-  }
+
+    stage('🚀 Release') {
+      steps {
+        triggerRelease()
+      }
+    }
+  } // stages
   post {
     cleanup {
       xcoreCleanSandbox()
