@@ -4,13 +4,6 @@
 
 getApproval()
 
-def clone_test_deps() {
-  dir("${WORKSPACE}") {
-    sh "git clone git@github.com:xmos/test_support"
-    sh "git -C test_support checkout v2.0.0"
-  }
-}
-
 pipeline {
   agent {
     label 'x86_64 && linux'
@@ -85,7 +78,6 @@ pipeline {
     {
       steps {
         withTools(params.TOOLS_VERSION) {
-          clone_test_deps()
           dir("${REPO_NAME}/tests") {
             createVenv(reqFile: "requirements.txt")
             xcoreBuild()
