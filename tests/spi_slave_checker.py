@@ -11,7 +11,7 @@ print = partial(print, flush=True)
 
 class SPISlaveChecker(px.SimThread):
     """"
-    This simulator thread will act as SPI slave and check any transactions
+    This simulator thread will act as SPI master and check any transactions
     caused by the master.
     """
     def __init__(self, 

@@ -13,6 +13,7 @@ lib_spi change log
   * FIXED: SPI slave MISO now goes Hi-Z when SS is deasserted
   * FIXED: SPI master (all) swapping of SPI modes 0 and 1
   * FIXED: SPI slave swapping of SPI modes 0 and 1
+  * FIXED: Passing NULL ptr to SPI asynch throws exception
   * FIXED: Non-functional tests
   * CHANGED: State diagrams and wavedrom now rendered by xmosdoc
   * REMOVED: Support for XS1 devices

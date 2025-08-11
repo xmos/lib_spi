@@ -9,17 +9,16 @@
 #include "spi.h"
 #include "spi_master_shared.h"
 
-#define SPI_MAX_DEVICES 32 //Used to size the array of which bit in the SS port maps to which device
 
 typedef struct {
-    unsigned client_id;
-    unsigned device_index;
-    unsigned speed_in_khz;
-    spi_mode_t mode;
-    size_t               buffer_nbytes;
-    unsigned             buffer_transfer_width;
-    uint32_t * movable   buffer_tx;
-    uint32_t * movable   buffer_rx;
+    unsigned            client_id;
+    unsigned            device_index;
+    unsigned            speed_in_khz;
+    spi_mode_t          mode;
+    size_t              buffer_nbytes;
+    unsigned            buffer_transfer_width;
+    uint32_t * movable  buffer_tx;
+    uint32_t * movable  buffer_rx;
 
 } transaction_request;
 
@@ -37,7 +36,7 @@ void spi_master_async(server interface spi_master_async_if i[num_clients],
         clock cb){
 
     //These buffer are for the transaction requests
-    transaction_request tr_buffer[num_clients]; ///FIXME num_clients
+    transaction_request tr_buffer[num_clients];
     unsigned            tr_tail = 0;
     unsigned            tr_fill = 0;
 
@@ -72,8 +71,8 @@ void spi_master_async(server interface spi_master_async_if i[num_clients],
     }
 
     // By default use the port bit which is the number of the slave (slave 0 uses port bit 0 etc.)
-    uint8_t ss_port_bit[SPI_MAX_DEVICES];
-    for(size_t i = 0; i < SPI_MAX_DEVICES; i++){
+    uint8_t ss_port_bit[num_slaves];
+    for(size_t i = 0; i < num_slaves; i++){
         ss_port_bit[i] = i;
     }
 
@@ -81,8 +80,8 @@ void spi_master_async(server interface spi_master_async_if i[num_clients],
     p_ss <: 0xffffffff;
 
     // TMP MISO vals
-    uint8_t r8;
-    uint32_t r32;
+    uint8_t read8;
+    uint32_t read32;
 
     // Use as way of implementing a default case. Setting the default_case_time to the current time makes an event happen immediately
     // This is used for subsequent SPI transfers after the first during a transaction
@@ -96,7 +95,7 @@ void spi_master_async(server interface spi_master_async_if i[num_clients],
                 //if doing a transaction then buffer this one
                 if(currently_performing_a_transaction){
                     //Note, the tr_fill should never exceed num_clients if the calling protocol is respected
-                    unsigned index = (tr_tail + tr_fill)%num_clients; //FIXME div?
+                    unsigned index = (tr_tail + tr_fill)%num_clients;
                     tr_buffer[index].device_index = device_index;
                     tr_buffer[index].speed_in_khz = speed_in_khz;
                     tr_buffer[index].mode = mode;
@@ -166,7 +165,11 @@ void spi_master_async(server interface spi_master_async_if i[num_clients],
                         i[x].transfer_complete();
                     } else {
                         buffer_transfer_width = 8;
-                        spi_master_transfer(&spi_dev[active_device], (uint8_t*movable)&buffer_tx[0], &r8, 1);
+                        uint8_t mosi_data;
+                        if(buffer_tx != NULL){
+                            mosi_data = ((uint8_t*movable)buffer_tx)[0];
+                        }
+                        spi_master_transfer(&spi_dev[active_device], &mosi_data, &read8, 1);
                         tmr :> default_case_time;
                         default_case_enabled = 1;   
                     }
@@ -202,9 +205,11 @@ void spi_master_async(server interface spi_master_async_if i[num_clients],
                         i[x].transfer_complete();
                     } else {
                         buffer_transfer_width = 32;
-                        uint32_t data = byterev(buffer_tx[0]);
-                        // uint32_t data = buffer_tx[0];
-                        spi_master_transfer(&spi_dev[active_device], (uint8_t *)&data, (uint8_t*)&r32, 4);
+                        uint32_t mosi_data;
+                        if(buffer_tx != NULL){
+                            mosi_data = byterev(buffer_tx[0]);
+                        }
+                        spi_master_transfer(&spi_dev[active_device], (uint8_t *)&mosi_data, (uint8_t*)&read32, 4);
                         tmr :> default_case_time;
                         default_case_enabled = 1;
                     }
@@ -214,31 +219,35 @@ void spi_master_async(server interface spi_master_async_if i[num_clients],
 
             // This case handles the input from the last transfer
             case default_case_enabled => tmr when timerafter(default_case_time) :> int _:{
-                //put the data into the correct array and send the next data if need be
+                //put the data into the correct array and send the next data if needs be
                 if(buffer_transfer_width == 8){
-                    uint32_t data = byterev((uint32_t)r8<<24); // TODO - this is just r8!???
-                    ((uint8_t*movable)buffer_rx)[buffer_current_index] = (uint8_t)data;
+                    uint32_t data = (uint32_t)read8;
+                    if(buffer_rx != NULL){
+                        ((uint8_t*movable)buffer_rx)[buffer_current_index] = (uint8_t)data;
+                    }
                     buffer_current_index++;
                     if((buffer_current_index*sizeof(uint8_t)) == buffer_nbytes){
                         default_case_enabled = 0;
                         buffer_current_index = 0;
                         i[active_client].transfer_complete();
                     } else {
-                        spi_master_transfer(&spi_dev[active_device], &((uint8_t*movable)buffer_tx)[buffer_current_index], &r8, 1);
+                        spi_master_transfer(&spi_dev[active_device], &((uint8_t*movable)buffer_tx)[buffer_current_index], &read8, 1);
                         tmr :> default_case_time;
                         default_case_enabled = 1;
                     }
                 } else {
-                    uint32_t data = byterev(r32);
-                    buffer_rx[buffer_current_index] = data;
+                    uint32_t data = byterev(read32);
+                    if(buffer_rx != NULL){
+                        buffer_rx[buffer_current_index] = data;
+                    }
                     buffer_current_index++;
                     if((buffer_current_index*sizeof(uint32_t)) == buffer_nbytes){
                         default_case_enabled = 0;
                         buffer_current_index = 0;
                         i[active_client].transfer_complete();
                     } else {
-                        uint32_t data = byterev(buffer_tx[buffer_current_index]);
-                        spi_master_transfer(&spi_dev[active_device], (uint8_t *)&data, (uint8_t*)&r32, 4);
+                        uint32_t mosi_data = byterev(buffer_tx[buffer_current_index]);
+                        spi_master_transfer(&spi_dev[active_device], (uint8_t *)&mosi_data, (uint8_t*)&read32, 4);
                         tmr :> default_case_time;
                         default_case_enabled = 1;
                     }
@@ -297,13 +306,19 @@ void spi_master_async(server interface spi_master_async_if i[num_clients],
                         buffer_rx = move(tr_buffer[index].buffer_rx);
                         buffer_transfer_width = tr_buffer[index].buffer_transfer_width;
                         if(buffer_transfer_width == 8){
-                            spi_master_transfer(&spi_dev[active_device], (uint8_t*movable)&buffer_tx[0], &r8, 1);
+                            uint8_t mosi_data;
+                            if(buffer_tx != NULL){
+                                mosi_data = ((uint8_t*movable)buffer_tx)[0];
+                            }
+                            spi_master_transfer(&spi_dev[active_device], &mosi_data, &read8, 1);
                             tmr :> default_case_time;
                             default_case_enabled = 1;
                         } else {
-                            uint32_t data = byterev(buffer_tx[0]);
-                            // uint32_t data = buffer_tx[0];
-                            spi_master_transfer(&spi_dev[active_device], (uint8_t *)&data, (uint8_t*)&r32, 4);
+                            uint32_t mosi_data;
+                            if(buffer_tx != NULL){
+                                mosi_data = byterev(buffer_tx[0]);
+                            }
+                            spi_master_transfer(&spi_dev[active_device], (uint8_t *)&mosi_data, (uint8_t*)&read32, 4);
                             tmr :> default_case_time;
                             default_case_enabled = 1;
                         }

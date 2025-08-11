@@ -34,7 +34,7 @@ void app(client spi_master_if spi)
 
     spi.begin_transaction(0, SPI_SPEED_KBPS, SPI_MODE_0);
 
-    uint32_t reg_addr = 0; // Read reg 0
+    uint32_t reg_addr = 0; // Read reg 0 CONFIG register
     uint32_t read_cmd = 0x8000; // Read
     uint32_t num_16b_words = 2; // 32b
     uint32_t command = read_cmd | num_16b_words | (reg_addr << 12); //Do read command
@@ -64,19 +64,16 @@ void async_app(client spi_master_async_if spi)
   spi.begin_transaction(0, SPI_SPEED_KBPS, SPI_MODE_0);
 
   // Build command
-  uint32_t reg_addr = 0; // Read reg 0
+  uint32_t reg_addr = 0; // Read reg 0 CONFIG register
   uint32_t read_cmd = 0x8000;
   uint32_t num_16b_words = 2;
   uint32_t command = read_cmd | num_16b_words | (reg_addr << 12); //Do read command
 
-  uint8_t inbuffer[2]; // Dummy for write command
   uint8_t outbuffer[2];
-
-  // memcpy(outbuffer, &command, sizeof(command));
   outbuffer[0] = (command >> 8) & 0xff; // MSB first
   outbuffer[1] = command & 0xff;
 
-  uint8_t * movable inbuf = inbuffer;
+  uint8_t * movable inbuf = NULL; // We do not care about the read data for the cmd write
   uint8_t * movable outbuf = outbuffer;
 
 
@@ -101,19 +98,19 @@ void async_app(client spi_master_async_if spi)
   spi.begin_transaction(0, SPI_SPEED_KBPS, SPI_MODE_0);
 
   uint32_t inbuffer32[1] = {0}; 
-  uint32_t outbuffer32[1] = {0}; // Dummy for read reg
   uint32_t * movable inbuf32 = inbuffer32;
-  uint32_t * movable outbuf32 = outbuffer32;
+  uint32_t * movable outbuf32 = NULL; // We do not care what is written during reg reads
 
   spi.init_transfer_array_32(move(inbuf32),
-                            move(outbuf32),
+                            null,
                             1);
 
   select {
       case spi.transfer_complete():
          // Once the transfer is complete, we can retrieve the
          // buffers back into the inbuf and outbuf pointer variables
-         spi.retrieve_transfer_buffers_32(inbuf32, outbuf32);
+         spi.retrieve_transfer_buffers_32(inbuf32,
+                                          outbuf32);
          break;
   }
 

@@ -16,9 +16,9 @@
 [[distributable]]
 void spi_master(server interface spi_master_if i[num_clients],
         static const size_t num_clients,
-        out buffered port:32 sclk,
-        out buffered port:32 ?mosi,
-        in buffered port:32 ?miso,
+        out buffered port:32 p_sclk,
+        out buffered port:32 ?p_mosi,
+        in buffered port:32 ?p_miso,
         out port p_ss, // Note only one SS port supported - individual bits in port may be used for different devices however
         static const size_t num_slaves,
         clock ?cb){
@@ -39,7 +39,7 @@ void spi_master(server interface spi_master_if i[num_clients],
 
     if(!isnull(cb)){
         unsafe{
-            spi_master_init(&spi_master, (xclock_t)cb, (port_t)p_ss, (port_t)sclk, (port_t)mosi, (port_t)miso);
+            spi_master_init(&spi_master, (xclock_t)cb, (port_t)p_ss, (port_t)p_sclk, (port_t)p_mosi, (port_t)p_miso);
             // Set default timings
             for(int i = 0; i < num_slaves; i++){
                 device_ss_clock_timing[i].cs_to_clk_delay_ticks = SPI_MASTER_DEFAULT_SS_CLOCK_DELAY_TICKS;
@@ -50,9 +50,20 @@ void spi_master(server interface spi_master_if i[num_clients],
             }
         }
     } else {
+        unsafe{
+            set_port_clock(p_ss, (clock)XS1_CLKBLK_REF);
+            set_port_clock(p_sclk, (clock)XS1_CLKBLK_REF);
+            if(!isnull(p_miso)){
+                set_port_clock(p_miso, (clock)XS1_CLKBLK_REF);
+            }
+            if(!isnull(p_mosi)){
+                set_port_clock(p_mosi, (clock)XS1_CLKBLK_REF);
+            }
+        }
         // Initial SS bit pattern - deselected
         p_ss <: 0xffffffff;
         sync(p_ss);
+
     }
 
     int accepting_new_transactions = 1;
@@ -81,8 +92,8 @@ void spi_master(server interface spi_master_if i[num_clients],
 
                 if(isnull(cb)){
                     // Set the expected clock idle state on the clock port
-                    partout(sclk, 1, cpol);
-                    sync(sclk);
+                    partout(p_sclk, 1, cpol);
+                    sync(p_sclk);
 
                     unsigned ss_port_val = ~(1 << ss_port_bit[current_device]);
                     p_ss <: ss_port_val;
@@ -133,7 +144,7 @@ void spi_master(server interface spi_master_if i[num_clients],
 
             case i[int x].transfer8(uint8_t data)-> uint8_t r :{
                 if(isnull(cb)){
-                    r = transfer8_sync_zero_clkblk(sclk, mosi, miso, data, clkblkless_period_ticks, cpol, cpha);
+                    r = transfer8_sync_zero_clkblk(p_sclk, p_mosi, p_miso, data, clkblkless_period_ticks, cpol, cpha);
                 } else {
                     spi_master_transfer(&spi_dev[current_device], (uint8_t *)&data, &r, 1);
                 }
@@ -143,7 +154,7 @@ void spi_master(server interface spi_master_if i[num_clients],
 
             case i[int x].transfer32(uint32_t data) -> uint32_t r:{
                 if(isnull(cb)){
-                    r = transfer32_sync_zero_clkblk(sclk, mosi, miso, data, clkblkless_period_ticks, cpol, cpha);
+                    r = transfer32_sync_zero_clkblk(p_sclk, p_mosi, p_miso, data, clkblkless_period_ticks, cpol, cpha);
                 } else {
                     // For 32b words, we need to swap to big endian (standard for SPI) from little endian (XMOS)
                     // This means we transmit the MSByte first
@@ -160,11 +171,11 @@ void spi_master(server interface spi_master_if i[num_clients],
                 if(isnull(cb)){
                     for(int n = 0; n < num_bytes; n++){
                         uint8_t send;
-                        if(!isnull(mosi)){
+                        if(!isnull(p_mosi)){
                             send = data_out[n];
                         }
-                        uint8_t recv = transfer8_sync_zero_clkblk(sclk, mosi, miso, send, clkblkless_period_ticks, cpol, cpha);
-                        if(!isnull(miso)){
+                        uint8_t recv = transfer8_sync_zero_clkblk(p_sclk, p_mosi, p_miso, send, clkblkless_period_ticks, cpol, cpha);
+                        if(!isnull(p_miso)){
                             data_in[n] = recv;
                         }
                     }
@@ -209,13 +220,13 @@ void spi_master(server interface spi_master_if i[num_clients],
             case i[int x].shutdown(void):{
                 p_ss <: 0xffffffff;
                 // If using XC, then we need to enable/init which is how XC does it
-                if (!isnull(mosi)) {
-                    set_port_use_on(mosi);
+                if (!isnull(p_mosi)) {
+                    set_port_use_on(p_mosi);
                 }
-                if (!isnull(miso)) {
-                    set_port_use_on(miso);
+                if (!isnull(p_miso)) {
+                    set_port_use_on(p_miso);
                 }
-                set_port_use_on(sclk);
+                set_port_use_on(p_sclk);
                 if(!isnull(cb)){
                     set_clock_on(cb);
                 }

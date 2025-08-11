@@ -4,7 +4,6 @@
 #include <xclib.h>
 #include <stdlib.h>
 
-//TODO DEL these
 #include <stdio.h>
 #include <print.h>
 #include <platform.h>
