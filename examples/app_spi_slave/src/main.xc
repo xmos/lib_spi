@@ -5,6 +5,7 @@
 #include <timer.h>
 #include <print.h>
 #include <platform.h>
+#include <debug_print.h>
 
 #include "spi.h"
 
@@ -21,6 +22,9 @@ out buffered port:32   p_test_sclk  = on tile[0]: XS1_PORT_1I;
 out port               p_test_ss    = on tile[0]: XS1_PORT_1J;
 in buffered port:32    p_test_miso  = on tile[0]: XS1_PORT_1K;
 out buffered port:32   p_test_mosi  = on tile[0]: XS1_PORT_1L;
+// Clock used specifically for the test SPI master component.
+clock                  cb_test      = on tile[0]: XS1_CLKBLK_2;
+
 
 /* Interface to communicate between the register file tasks
    and the application. */
@@ -130,12 +134,15 @@ void reg_file(server spi_slave_callback_if i_spi,
  * to the reg_file tasks to get/set registers.
  */
 void app(client reg_if reg) {
-    reg.set_reg(0, 0xfe);
-    printstr("APP: Set register 1 to 0xFE\n");
+    uint8_t set_reg_data = 0xed;
+    reg.set_reg(0, set_reg_data);
+    debug_printf("APP: Set register %u to 0x%x\n", 0, set_reg_data);
     while (1) {
+        uint8_t reg_data_read[2];
         delay_microseconds(20);
-        printstr("APP: Register 1 is 0x");
-        printhexln(reg.get_reg(1));
+        reg_data_read[0] = reg.get_reg(0);
+        reg_data_read[1] = reg.get_reg(1);
+        debug_printf("APP: Register %d is 0x%x, Register %d is 0x%x\n", 0, reg_data_read[0], 1, reg_data_read[1]);
     }
 }
 
@@ -146,15 +153,14 @@ void app(client reg_if reg) {
  */
 void tester(client spi_master_if spi)
 {
-    delay_microseconds(45); // Wait for slave to init
+    delay_microseconds(50); // Wait for slave to init
     uint8_t val;
     spi.begin_transaction(0, SPI_SPEED_KBPS, SPI_MODE_0);
     spi.transfer8(READ_REG); // READ command
     spi.transfer8(0); // REGISTER 0
     val = spi.transfer8(0); // DATA
     spi.end_transaction(SPI_SS_DELAY_10NS_TICKS);
-    printstr("SPI MASTER: Read register 0: 0x");
-    printhexln(val);
+    debug_printf("SPI MASTER: Read register 0: 0x%x\n", val);
 
     spi.begin_transaction(0, SPI_SPEED_KBPS, SPI_MODE_0);
     spi.transfer8(WRITE_REG); // WRITE command
@@ -162,6 +168,9 @@ void tester(client spi_master_if spi)
     spi.transfer8(0xac); // DATA
     spi.end_transaction(SPI_SS_DELAY_10NS_TICKS);
     printstr("SPI MASTER: Set register 1 to 0xAC\n");
+
+    delay_microseconds(100);
+    _Exit(0);
 }
 
 int main(void) {
@@ -180,7 +189,7 @@ int main(void) {
     on tile[0]: tester(i_spi_master[0]);
     on tile[0]: spi_master(i_spi_master, 1,
                            p_test_sclk, p_test_mosi, p_test_miso, p_test_ss,
-                           1, null);
+                           1, cb_test);
   }
   return 0;
 }
