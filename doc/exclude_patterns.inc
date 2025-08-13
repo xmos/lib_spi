@@ -6,5 +6,5 @@
 #TODO remove these
 **index*
 **resource_usage_summary*
-**AN00160*
-**AN00161*
+**app_spi_master*
+**app_spi_slave*

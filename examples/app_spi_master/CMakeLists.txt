@@ -22,14 +22,16 @@ set(COMPILER_FLAGS_COMMON
     -Werror
 )
 
+# Standard `fast` SPI synchronous version
 set(APP_COMPILER_FLAGS_SYNC
     ${COMPILER_FLAGS_COMMON})
 
+# Clock-blockless `slow` SPI synchronous version
 set(APP_COMPILER_FLAGS_SYNC_NO_CLKBLK
     -DCLKBLK=null
     ${COMPILER_FLAGS_COMMON})
 
-
+# SPI Asynchronous version
 set(APP_COMPILER_FLAGS_ASYNC
     ${COMPILER_FLAGS_COMMON}
     -DSPI_USE_ASYNC=1)
