@@ -984,7 +984,7 @@ The application consists of five tasks:
 .. _spi_slave_example_block:
 
 .. figure:: ../images/spi_slave_example_block_diagram.png
-   :scale: 50%
+   :width: 90%
    :align: center
 
    Block diagram of SPI slave application example
@@ -1281,12 +1281,12 @@ Next, you can also view the simulation in a VCD (Voltage Change Description) vie
 
   gtkwave slave_simulation.gtkw
 
-This will view the four SPI lines and zoom into the section where the SPI transactions occur as can be seen in numref:`spi_slave_simulation`.
+This will view the four SPI lines and zoom into the section where the SPI transactions occur as can be seen in :numref:`spi_slave_simulation`.
 
 .. _spi_slave_simulation:
 
 .. figure:: ../images/spi_slave_simulation.png
-   :scale: 80%
+   :width: 100%
    :align: center
 
    VCD waveform trace for SPI slave with registers simulation
