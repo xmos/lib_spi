@@ -199,7 +199,7 @@ and so multiple slaves may share the same select bit if needed.
 Disabling master data lines
 ===========================
 
-The *MOSI* and *MISO* parameters of the ``spi_master`` task are
+The *MOSI* and *MISO* parameters of the ``spi_master()`` task are
 optional. So in the top-level ``par`` statement the function can be
 called with ``null`` instead of a port e.g.
 
@@ -208,7 +208,7 @@ called with ``null`` instead of a port e.g.
    spi_master(i_spi, 1, p_sclk, null, p_miso , p_ss, 1, clk_spi);
 
 
-Similarly, the *MOSI* parameter of the ``spi_master_async`` task is
+Similarly, the *MOSI* parameter of the ``spi_master_async()`` task is
 optional (but the *MISO* port must be provided).
 
 |newpage|
@@ -239,7 +239,7 @@ If the *MISO* line is not required then it need not be connected. The
 Disabling slave data lines
 ==========================
 
-The ``spi_slave`` task has an optional *MISO* parameter (but the
+The ``spi_slave()`` task has an optional *MISO* parameter (but the
 *MOSI* port must be supplied).
 
 
@@ -295,7 +295,7 @@ and connect to it.
           also an array since the same SPI data lines can connect to several
           devices via different slave lines.
 
-The final parameter of the ``spi_master`` task is an optional clock
+The final parameter of the ``spi_master()`` task is an optional clock
 block. If the clock block is supplied then the maximum transfer rate
 of the SPI bus is increased (see :numref:`spi_master_sync_timings`). If
 ``null`` is supplied instead then the performance is lower but no clock
@@ -845,17 +845,17 @@ Looking at this in more detail you can see the following:
 
   - The par functionality describes running two separate tasks in parallel
 
-  - The ``spi_master`` or ``spi_master_async`` task drives the SPI bus and takes the ports it
+  - The ``spi_master()`` or ``spi_master_async()`` task drives the SPI bus and takes the ports it
     will use as arguments.
 
-  - The ``app`` or ``app_async`` task communicates to the SPI master task via the
+  - The ``app()`` or ``app_async()`` task communicates to the SPI master task via the
     shared interface argument ``i_spi`` or ``i_spi_async``. This is an array since the
     SPI master task could connect to many other tasks (clients) in parallel.
 
-The app() function
-..................
+The app() task
+..............
 
-The ``app`` function uses its interface connection to the SPI master
+The ``app()`` task uses its interface connection to the SPI master
 task to perform SPI transactions. It performs two transactions (each
 transaction will assert the slave select line, transfer some data and then
 de-assert the slave select line). The functions in the SPI master
@@ -955,16 +955,16 @@ Likewise, the following two commands should yield the same console output:
 SPI Slave Example
 =================
 
-Introduction
-............
+Overview
+........
 
 The example in this application note uses the XMOS SPI library to
 act as SPI slave. It maintains a register file which can be read and
 written by the internal application *or* by the master on the SPI bus.
 To show the bus functioning the demo application also has a tester
 component connected to an SPI master bus which is connected (in
-simulation) to the the SPI slave. This allows the generation of
-traffic to show the the communication functioning.
+simulation) to the the SPI slave, using the simulator loopback plug-in.
+This allows generation of SPI traffic to show the communication functioning.
 
 The application consists of five tasks:
 
@@ -1060,36 +1060,36 @@ Looking at this in a more detail you can see the following:
     parallel; three are for the main application and two are for the
     tester.
 
-  - The ``spi_slave`` task controls the application
+  - The ``spi_slave()`` task controls the application
     SPI bus and takes the ports it will use as arguments.
 
-  - The ``reg_file`` task is connected to the ``app`` task and the
-    ``spi_slave`` task.
+  - The ``reg_file()`` task is connected to the ``app()`` task and the
+    ``spi_slave()`` task.
 
-  - The ``spi_slave`` task has an argument for the mode it expects -
+  - The ``spi_slave()`` task has an argument for the mode it expects -
     in this case Mode 0 (see the SPI library user guide for more
     details on modes)
 
-  - The ``spi_slave`` task also has an argument
+  - The ``spi_slave()`` task also has an argument
     ``SPI_TRANSFER_SIZE_8`` which specifies the size of data chunk it
     will use when making callbacks to the application.
 
-  - The ``spi_master`` task controls the test SPI bus and takes
+  - The ``spi_master()`` task controls the test SPI bus and takes
     different ports to the SPI slave bus as arguments. For details on
     using SPI master see application note AN00160.
 
 
-The reg_file() function
-.......................
+The reg_file() task
+...................
 
-The ``reg_file`` function is the main logic of this example. It will
+The ``reg_file()`` task is the main logic of this example. It will
 respond to calls from the application and the SPI slave bus whilst
 maintaining a set of register values.
 
-The function is marked as ``[[distributable]]`` which means it can only
+The task is marked as ``[[distributable]]`` which means it can only
 responds to calls from other tasks, rather than resource events.
 The main reason for this is so
-that the ``reg_file`` task itself does not need a hardware thread of its
+that the ``reg_file()`` task itself does not need a hardware thread of its
 own it can use the hardware thread of the task that calls it. See the
 XMOS programming guide for details of distributable tasks.
 
@@ -1102,7 +1102,7 @@ application task and the SPI slave task:
     :end-at: {
 
 The ``reg_if`` interface has been defined in ``main.xc`` earlier. It
-defines the functions that the app may call in the ``reg_file`` tasks:
+defines the functions that the app may call in the ``reg_file()`` tasks:
 
 .. literalinclude:: ../../examples/app_spi_slave/src/main.xc
     :language: c
@@ -1112,7 +1112,7 @@ defines the functions that the app may call in the ``reg_file`` tasks:
 In this case we have two functions - one for reading a register value
 and one for writing a register value.
 
-The ``reg_file`` function first declares its state - an array to hold
+The ``reg_file()`` task first declares its state - an array to hold
 register value, a state variable to hold what stage of an SPI
 transaction it is in and the currently addressed register by the SPI bus.
 
@@ -1139,7 +1139,7 @@ The implemented protocol on the SPI bus is as follows:
 
 |newpage|
 
-To implement the protocol logic the ``reg_file`` tasks must continually react
+To implement the protocol logic the ``reg_file()`` task must continually react
 to events from the SPI slave tasks keeping track of its state,
 updating registers and supplying the correct outputs. This is done via
 a ``while(1)`` loop with an xC ``select`` statement inside it. A
@@ -1165,7 +1165,7 @@ protocol.
 
 |newpage|
 
-The main select also needs to react to request from the
+The main ``select`` statement also needs to react to request from the
 application. The following cases implement this:
 
 .. literalinclude:: ../../examples/app_spi_slave/src/main.xc
@@ -1173,10 +1173,10 @@ application. The following cases implement this:
     :start-at: respond to the application
     :end-before: }
 
-The app() function
-..................
+The app() task
+..............
 
-The ``app`` task represents a sample application task that uses the
+The ``app()`` task represents a sample application task that uses the
 register file. In this demo, it doesn't do much - it simple sets one
 register and repeatedly polls the value of another register and prints
 out its value:
@@ -1194,10 +1194,10 @@ out its value:
       console in the xTIMEcomposer (either using JTAG or xSCOPE to
       communicate to the host via the debug adaptor).
 
-The tester() function
-.....................
+The tester() task
+.................
 
-The tester function will send some test data to the SPI master
+The tester task will send some test data to the SPI master
 bus. It does this using the SPI master interface to communicate with
 the SPI master task:
 
@@ -1275,13 +1275,13 @@ Both registers were initialised to 0x00 so you can see the successful applicatio
 SPI master read of that register shortly afterwards. You can also see that the SPI master writes to register 1 with the value of 0xAC
 which is then successfully read by the application.
 
-Next, you can also view the simulation in a VCD (Voltage Change Description) viewer such as ``gtkwave`` by running the following command:
+If you wish, you can also view the simulation in a VCD (Voltage Change Description) viewer, such as ``gtkwave``, by running the following command:
 
 .. code-block:: console
 
   gtkwave slave_simulation.gtkw
 
-This will view the four SPI lines and zoom into the section where the SPI transactions occur as can be seen in :numref:`spi_slave_simulation`.
+This will show the four SPI lines and zoom into the section where the SPI transactions occur, as can be seen in :numref:`spi_slave_simulation`.
 
 .. _spi_slave_simulation:
 
