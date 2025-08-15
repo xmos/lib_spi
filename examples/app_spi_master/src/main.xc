@@ -126,7 +126,7 @@ void async_app(client spi_master_async_if spi)
 
 
 #if SPI_USE_ASYNC
-
+// SPI async main
 int main(void) {
   interface spi_master_async_if i_spi_async[1];
   par {
@@ -139,12 +139,15 @@ int main(void) {
   }
   return 0;
 }
+// end async main
 
 #else // SYNC
+
 #ifndef CLKBLK
 #define CLKBLK clk
 #endif
 
+// SPI sync main
 int main(void) {
   interface spi_master_if i_spi[1];
   par {
@@ -153,5 +156,6 @@ int main(void) {
   }
   return 0;
 }
+// end sync main
 
 #endif /*SPI_USE_ASYNC*/

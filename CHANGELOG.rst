@@ -12,10 +12,13 @@ lib_spi change log
   * ADDED: Array transfer method for SPI master sync
   * FIXED: SPI slave MISO now goes Hi-Z when SS is deasserted
   * FIXED: SPI master (all) swapping of SPI modes 0 and 1
+  * FIXED: SPI master async non-functional SPI modes 1 and 2
   * FIXED: SPI slave swapping of SPI modes 0 and 1
   * FIXED: Passing NULL ptr to SPI asynch throws exception
   * FIXED: Non-functional tests
   * CHANGED: State diagrams and wavedrom now rendered by xmosdoc
+  * CHANGED: Examples AN00160 and AN00161 now integrated into main document as
+    app_spi_master and app_spi_slave examples
   * REMOVED: Support for XS1 devices
 
 3.4.0

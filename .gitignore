@@ -30,3 +30,4 @@ build/
 __gen
 *tests/logs/*
 *.gtkw
+*.xmt

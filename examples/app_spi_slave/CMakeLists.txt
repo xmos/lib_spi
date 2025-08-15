@@ -21,6 +21,7 @@ set(
     -report
     -Wall
     -Werror
+    -DDEBUG_PRINT_ENABLE=1
 )
 
 XMOS_REGISTER_APP()

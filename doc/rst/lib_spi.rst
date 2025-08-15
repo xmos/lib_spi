@@ -199,7 +199,7 @@ and so multiple slaves may share the same select bit if needed.
 Disabling master data lines
 ===========================
 
-The *MOSI* and *MISO* parameters of the ``spi_master`` task are
+The *MOSI* and *MISO* parameters of the ``spi_master()`` task are
 optional. So in the top-level ``par`` statement the function can be
 called with ``null`` instead of a port e.g.
 
@@ -208,7 +208,7 @@ called with ``null`` instead of a port e.g.
    spi_master(i_spi, 1, p_sclk, null, p_miso , p_ss, 1, clk_spi);
 
 
-Similarly, the *MOSI* parameter of the ``spi_master_async`` task is
+Similarly, the *MOSI* parameter of the ``spi_master_async()`` task is
 optional (but the *MISO* port must be provided).
 
 |newpage|
@@ -239,7 +239,7 @@ If the *MISO* line is not required then it need not be connected. The
 Disabling slave data lines
 ==========================
 
-The ``spi_slave`` task has an optional *MISO* parameter (but the
+The ``spi_slave()`` task has an optional *MISO* parameter (but the
 *MOSI* port must be supplied).
 
 
@@ -290,12 +290,12 @@ and connect to it.
      return 0;
    }
 
-Note that the connection is an array of interfaces, so several tasks
-can connect to the same component instance. The slave select ports are
-also an array since the same SPI data lines can connect to several
-devices via different slave lines.
+.. note:: The connection is an array of interfaces, so several tasks
+          can connect to the same component instance. The slave select ports are
+          also an array since the same SPI data lines can connect to several
+          devices via different slave lines.
 
-The final parameter of the ``spi_master`` task is an optional clock
+The final parameter of the ``spi_master()`` task is an optional clock
 block. If the clock block is supplied then the maximum transfer rate
 of the SPI bus is increased (see :numref:`spi_master_sync_timings`). If
 ``null`` is supplied instead then the performance is lower but no clock
@@ -770,8 +770,122 @@ Throughput for SPI slave versus mode and MOSI usage is shown in the following ta
 Examples
 ********
 
+SPI Master Example
+==================
+
+Overview
+........
+
+The example uses the XMOS SPI library to perform some bus transactions as SPI master. The SPI master examples are run on the `xcore.ai` evaluation kit, `XK-EVK-XU316 <https://www.xmos.com/xk-evk-xu316>`_ using the WFM200 WiFi device as a simple SPI slave.
+
+The application consists of two tasks:
+
+   - A task that drives the SPI bus
+
+   - An application task that connects to the SPI task
+
+These tasks communicate via the use of xC interfaces. Note that for the SPI `synchronous` cases, even though
+the SPI master and app are separate tasks, the compiler is able to `distribute` the SPI master so that the 
+application only uses a single hardware thread.
+
+:numref:`spi_master_example` shows the task and communication structure of the application.
+
+.. _spi_master_example:
+
+.. uml::
+   :width: 60%
+   :caption: Task diagram of SPI master example
+
+   @startuml
+   left to right direction
+   circle app
+   circle SPI_master
+   app --> SPI_master : spi_master_if\nor\nspi_master_async_if
+   @enduml
+
+Declaring ports
+...............
+
+The SPI library connects to external pins via xCORE ports. In
+``main.xc`` these are declared as variables of type ``port`` at the
+start of the file:
+
+.. literalinclude:: ../../examples/app_spi_master/src/main.xc
+   :language: c
+   :start-at: p_sclk
+   :end-at: p_mosi
+
+.. note::
+
+  The slave select declaration is for a mulit-bit port. The pin in this
+  port that will be used as SPI SS set by ``spi.set_ss_port_bit(0, 1);``
+
+How the ports (e.g. ``XS1_PORT_1I``) relate to external pins will
+depend on the exact device being used. See the device datasheet for details.
+
+|newpage|
+
+The application main() function
+...............................
+
+Below is the source code for the main function of this application,
+which is taken from the source file ``main.xc``
+
+.. literalinclude:: ../../examples/app_spi_master/src/main.xc
+    :language: c
+    :start-after: // SPI async main
+    :end-before: // end async main
+
+.. literalinclude:: ../../examples/app_spi_master/src/main.xc
+    :language: c
+    :start-after: // SPI sync main
+    :end-before: // end sync main
+
+Looking at this in more detail you can see the following:
+
+  - The par functionality describes running two separate tasks in parallel
+
+  - The ``spi_master()`` or ``spi_master_async()`` task drives the SPI bus and takes the ports it
+    will use as arguments.
+
+  - The ``app()`` or ``app_async()`` task communicates to the SPI master task via the
+    shared interface argument ``i_spi`` or ``i_spi_async``. This is an array since the
+    SPI master task could connect to many other tasks (clients) in parallel.
+
+The app() task
+..............
+
+The ``app()`` task uses its interface connection to the SPI master
+task to perform SPI transactions. It performs two transactions (each
+transaction will assert the slave select line, transfer some data and then
+de-assert the slave select line). The functions in the SPI master
+interface can be found in the SPI library user guide.
+
+.. literalinclude:: ../../examples/app_spi_master/src/main.xc
+    :language: c
+    :start-at: void app
+    :end-at: spi.shutdown
+
+.. literalinclude:: ../../examples/app_spi_master/src/main.xc
+    :language: c
+    :start-at: void async_app
+    :end-at: spi.shutdown
+
+
+.. note::
+
+    When ``begin_transaction`` is called the SPI device selected is determined
+    by the first argument. In this case it is ``0``.
+    This is the method that is used to communiate with multiple SPI
+    slave devices. The speed and mode of the SPI protocol is also set at
+    in the ``begin_transaction`` call.
+
+|newpage|
+
+
+
 Building
-========
+........
 
 The following section assumes that the `XMOS XTC tools <https://www.xmos.com/software-tools/>`_ has
 been downloaded and installed (see `README` for required version).
@@ -788,7 +902,7 @@ To configure the build, run the following from an XTC command prompt:
 .. code-block:: console
 
   cd examples
-  cd AN00160_using_SPI_master
+  cd app_spi_master
   cmake -G "Unix Makefiles" -B build
 
 Any missing dependencies will be downloaded by the build system at this configure step.
@@ -806,11 +920,13 @@ Multiple build profiles are included and will be built as follows:
 * SYNC - Example of using the `synchronous` SPI master with clock-block (high performance)
 * SYNC_NO_CLKBLK - Example of using the `synchronous` SPI master without clock-block (low performance / low resource usage)
 
+The build profiles are guarded by the defines `SPI_USE_ASYNC=1` for specifying the asynchronous SPI master and `CLKBLK=null`
+when using the synchronous SPI master which determines which underlying SPI master transport to use.
 
 Running
-=======
+.......
 
-To run the application return to the ``/examples/AN00160_using_SPI_master`` directory and run the following
+To run the application return to the ``/examples/app_spi_master`` directory and run the following
 command:
 
 .. code-block:: console
@@ -823,9 +939,359 @@ As application runs that reads a value from the SPI connected WiFi chip and prin
   5400
   Done.
 
+The value `5400` represents bits 15 to 0 of the default value of the CONFIG register of the WFM200.
+
+Likewise, the following two commands should yield the same console output:
+
+.. code-block:: console
+
+  xrun --xscope bin/SYNC/app_spi_master_SYNC_NO_CLKBLK.xe
+  xrun --xscope bin/SYNC/app_spi_master_ASYNC.xe
+
 
 |newpage|
 
+
+SPI Slave Example
+=================
+
+Overview
+........
+
+The example in this application note uses the XMOS SPI library to
+act as SPI slave. It maintains a register file which can be read and
+written by the internal application *or* by the master on the SPI bus.
+To show the bus functioning the demo application also has a tester
+component connected to an SPI master bus which is connected (in
+simulation) to the the SPI slave, using the simulator loopback plug-in.
+This allows generation of SPI traffic to show the communication functioning.
+
+The application consists of five tasks:
+
+   - A task that controls the SPI slave ports
+
+   - A task that implements the register file handling calls from the
+     SPI slave component and the application
+
+   - An application task that connects to the register file task
+
+   - A task that controls the SPI master ports used for testing
+
+   - A tester task that outputs commands to the SPI master task
+
+:numref:`spi_slave_example_block` shows the task and communication structure of the application.
+
+.. _spi_slave_example_block:
+
+.. figure:: ../images/spi_slave_example_block_diagram.png
+   :width: 90%
+   :align: center
+
+   Block diagram of SPI slave application example
+
+
+These tasks communicate via the use of xC interfaces. :numref:`spi_slave_example_task` shows
+the task and communication structure of the application.
+
+.. _spi_slave_example_task:
+
+.. uml::
+   :width: 60%
+   :caption: Task diagram of SPI slave example
+
+   @startuml
+   circle tester
+   circle SPI_master
+   circle app
+   circle reg_file
+   circle SPI_slave
+
+   ' Force layout order with hidden links
+   SPI_master -[#transparent]-> SPI_slave
+
+   ' Actual displayed nodes
+   tester -r-> SPI_master : spi_master_if
+   SPI_slave -r-> reg_file : spi_slave_callback_if
+   app -l-> reg_file : reg_if
+   @enduml
+
+
+Declaring ports
+...............
+
+The SPI library connects to external pins via xCORE ports. In
+``main.xc`` these are declared as variables of type ``port`` at the
+start of the file:
+
+.. literalinclude:: ../../examples/app_spi_slave/src/main.xc
+    :language: c
+    :start-at: p_sclk
+    :end-at: clock
+
+.. note::
+    
+    There is also a clock declaration since the slave needs to use an internal clock as well as ports inside the xCORE device.
+
+How the ports (e.g. ``XS1_PORT_1I``) relate to external pins will
+depend on the exact device being used. See the device datasheet for details.
+
+This application also has an SPI master interface on different ports:
+
+.. literalinclude:: ../../examples/app_spi_slave/src/main.xc
+    :language: c
+    :start-at: p_test_sclk
+    :end-at: p_test_mosi
+
+|newpage|
+
+The application main() function
+...............................
+
+Below is the source code for the main function of this application,
+which is taken from the source file ``main.xc``
+
+.. literalinclude:: ../../examples/app_spi_slave/src/main.xc
+    :language: c
+    :start-at: int main
+
+Looking at this in a more detail you can see the following:
+
+  - The par functionality describes running five separate tasks in
+    parallel; three are for the main application and two are for the
+    tester.
+
+  - The ``spi_slave()`` task controls the application
+    SPI bus and takes the ports it will use as arguments.
+
+  - The ``reg_file()`` task is connected to the ``app()`` task and the
+    ``spi_slave()`` task.
+
+  - The ``spi_slave()`` task has an argument for the mode it expects -
+    in this case Mode 0 (see the SPI library user guide for more
+    details on modes)
+
+  - The ``spi_slave()`` task also has an argument
+    ``SPI_TRANSFER_SIZE_8`` which specifies the size of data chunk it
+    will use when making callbacks to the application.
+
+  - The ``spi_master()`` task controls the test SPI bus and takes
+    different ports to the SPI slave bus as arguments. For details on
+    using SPI master see application note AN00160.
+
+
+The reg_file() task
+...................
+
+The ``reg_file()`` task is the main logic of this example. It will
+respond to calls from the application and the SPI slave bus whilst
+maintaining a set of register values.
+
+The task is marked as ``[[distributable]]`` which means it can only
+responds to calls from other tasks, rather than resource events.
+The main reason for this is so
+that the ``reg_file()`` task itself does not need a hardware thread of its
+own it can use the hardware thread of the task that calls it. See the
+XMOS programming guide for details of distributable tasks.
+
+The function takes two arguments, the interface connections to the
+application task and the SPI slave task:
+
+.. literalinclude:: ../../examples/app_spi_slave/src/main.xc
+    :language: c
+    :start-at: [[distributable]]
+    :end-at: {
+
+The ``reg_if`` interface has been defined in ``main.xc`` earlier. It
+defines the functions that the app may call in the ``reg_file()`` tasks:
+
+.. literalinclude:: ../../examples/app_spi_slave/src/main.xc
+    :language: c
+    :start-at: interface
+    :end-at: }
+
+In this case we have two functions - one for reading a register value
+and one for writing a register value.
+
+The ``reg_file()`` task first declares its state - an array to hold
+register value, a state variable to hold what stage of an SPI
+transaction it is in and the currently addressed register by the SPI bus.
+
+.. literalinclude:: ../../examples/app_spi_slave/src/main.xc
+    :language: c
+    :start-at: This array holds
+    :end-at: addr = 0
+
+The state variable is just an integer from the following ``enum`` type
+defined earlier in the file:
+
+.. literalinclude:: ../../examples/app_spi_slave/src/main.xc
+    :language: c
+    :start-at: enum
+    :end-at: }
+
+The implemented protocol on the SPI bus is as follows:
+
+  * The master will start a transaction (assert slave select)
+  * It will then send a byte of either a 0 for a write or a
+    1 for a read.
+  * It will then send the address of the register to read/write
+  * It will then send or receive the value of the register
+
+|newpage|
+
+To implement the protocol logic the ``reg_file()`` task must continually react
+to events from the SPI slave tasks keeping track of its state,
+updating registers and supplying the correct outputs. This is done via
+a ``while(1)`` loop with an xC ``select`` statement inside it. A
+``select`` statement will wait and then react to various events or
+calls from different tasks - see the XMOS programming guide for more details.
+
+The following cases in the main loop of the function handle this:
+
+.. literalinclude:: ../../examples/app_spi_slave/src/main.xc
+   :language: c
+   :start-at: while (1)
+   :end-before: respond to the application
+
+We can see that the slave will always send the value of the currently
+addressed register on every data transfer (this is allowable in the
+described protocol).
+
+When the SPI master supplies some data to the slave then what happens
+depends on the current state - either the state variable is updated,
+the currently addressed register is updated or a register value is
+updated. This state machine will implement the previously described
+protocol.
+
+|newpage|
+
+The main ``select`` statement also needs to react to request from the
+application. The following cases implement this:
+
+.. literalinclude:: ../../examples/app_spi_slave/src/main.xc
+    :language: c
+    :start-at: respond to the application
+    :end-before: }
+
+The app() task
+..............
+
+The ``app()`` task represents a sample application task that uses the
+register file. In this demo, it doesn't do much - it simple sets one
+register and repeatedly polls the value of another register and prints
+out its value:
+
+.. literalinclude:: ../../examples/app_spi_slave/src/main.xc
+    :language: c
+    :start-at: app(
+    :end-before: tester
+
+
+.. note::
+
+      The ``debug_printf`` function comes from the ``debug_print.h`` header supplied by ``lib_logging``. It is a low
+      memory debug printing function that will print out messages to the
+      console in the xTIMEcomposer (either using JTAG or xSCOPE to
+      communicate to the host via the debug adaptor).
+
+The tester() task
+.................
+
+The tester task will send some test data to the SPI master
+bus. It does this using the SPI master interface to communicate with
+the SPI master task:
+
+.. literalinclude:: ../../examples/app_spi_slave/src/main.xc
+    :language: c
+    :start-at: tester(
+    :end-before: main
+
+
+
+Building
+........
+
+The following section assumes that the `XMOS XTC tools <https://www.xmos.com/software-tools/>`_ has
+been downloaded and installed (see `README` for required version).
+
+Installation instructions can be found `here <https://xmos.com/xtc-install-guide>`_. Particular
+attention should be paid to the section `Installation of required third-party tools
+<https://www.xmos.com/documentation/XM-014363-PC-10/html/installation/install-configure/install-tools/install_prerequisites.html>`_.
+
+The application uses the `XMOS` build and dependency system, `xcommon-cmake <https://www.xmos.com/file/xcommon-cmake-documentation/?version=latest>`_. `xcommon-cmake`
+is bundled with the `XMOS` XTC tools. It runs on the `xcore.ai` evaluation kit, `XK-EVK-XU316 <https://www.xmos.com/xk-evk-xu316>`_.
+
+To configure the build, run the following from an XTC command prompt:
+
+.. code-block:: console
+
+  cd examples
+  cd app_spi_slave
+  cmake -G "Unix Makefiles" -B build
+
+Any missing dependencies will be downloaded by the build system at this configure step.
+
+
+Finally, the application binaries can be built using ``xmake``:
+
+.. code-block:: console
+
+  xmake -j -C build
+
+
+Running
+.......
+
+To run the application return to the ``/examples/app_spi_slave`` directory and run the following command:
+
+.. code-block:: console
+
+  xsim --xscope '-offline trace.xmt' bin/app_spi_slave.xe  \
+  --trace-plugin VcdPlugin.dll '-tile tile[0] -o trace.vcd -xe bin/app_spi_slave.xe \
+  -ports -functions -cores -instructions' --plugin LoopbackPort.dll \
+  '-port tile[0] XS1_PORT_1I 1 0 -port tile[0] XS1_PORT_1E 1 0 \
+  -port tile[0] XS1_PORT_1J 1 0 -port tile[0] XS1_PORT_1F 1 0 \
+  -port tile[0] XS1_PORT_1K 1 0 -port tile[0] XS1_PORT_1G 1 0 \
+  -port tile[0] XS1_PORT_1L 1 0 -port tile[0] XS1_PORT_1H 1 0' 
+
+.. note::
+
+    This command line is provided as a file in the ``/examples/app_spi_slave`` directory under the filename ``simulate_cmd.txt``.
+    You can rename this file to ``simulate_cmd.sh`` or ``simulate_cmd.bat`` and run it directly, depending on your host OS.
+
+As application runs that reads a value from the SPI connected WiFi chip and prints the following output to the console::
+
+  APP: Set register 0 to 0xED
+  APP: Register 0 is 0xED, Register 1 is 0x0
+  APP: Register 0 is 0xED, Register 1 is 0x0
+  SPI MASTER: Read register 0: 0xED
+  APP: Register 0 is 0xED, Register 1 is 0x0
+  SPI MASTER: Set register 1 to 0xAC
+  APP: Register 0 is 0xED, Register 1 is 0xAC
+  APP: Register 0 is 0xED, Register 1 is 0xAC
+  APP: Register 0 is 0xED, Register 1 is 0xAC
+
+Both registers were initialised to 0x00 so you can see the successful application side write to register 0 of value 0xED, followed by the
+SPI master read of that register shortly afterwards. You can also see that the SPI master writes to register 1 with the value of 0xAC
+which is then successfully read by the application.
+
+If you wish, you can also view the simulation in a VCD (Voltage Change Description) viewer, such as ``gtkwave``, by running the following command:
+
+.. code-block:: console
+
+  gtkwave slave_simulation.gtkw
+
+This will show the four SPI lines and zoom into the section where the SPI transactions occur, as can be seen in :numref:`spi_slave_simulation`.
+
+.. _spi_slave_simulation:
+
+.. figure:: ../images/spi_slave_simulation.png
+   :width: 100%
+   :align: center
+
+   VCD waveform trace for SPI slave with registers simulation
+
+|newpage|
 
 **************
 Resource Usage
