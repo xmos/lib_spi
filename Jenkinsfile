@@ -5,14 +5,8 @@
 getApproval()
 
 pipeline {
-  agent {
-    label 'x86_64 && linux'
-  }
-  options {
-    buildDiscarder(xmosDiscardBuildSettings())
-    skipDefaultCheckout()
-    timestamps()
-  }
+  agent none
+
   parameters {
     choice(name: 'TEST_LEVEL', choices: ['smoke', 'default', 'extended'],
             description: 'The level of test coverage to run'
@@ -34,74 +28,90 @@ pipeline {
     )
   }
 
-  stages {
-    stage('Checkout & build examples') {
-      steps {
-        println "Stage running on ${env.NODE_NAME}"
+  options {
+    buildDiscarder(xmosDiscardBuildSettings())
+    skipDefaultCheckout()
+    timestamps()
+  }
 
-        script {
-            def (server, user, repo) = extractFromScmUrl()
-            env.REPO_NAME = repo
+  stages {
+    stage('🏗️ Build and test') {
+      agent {
+        label 'x86_64 && linux && documentation'
+      }
+
+      stages {
+        stage('Checkout') {
+          steps {
+            println "Stage running on ${env.NODE_NAME}"
+            script {
+              def (server, user, repo) = extractFromScmUrl()
+              env.REPO_NAME = repo
+            }
+
+            dir(REPO_NAME){
+              checkoutScmShallow()
+            }
+          }
         }
 
-        dir("${REPO_NAME}") {
-          checkoutScmShallow()
-
-          dir("examples") {
-            withTools(params.TOOLS_VERSION) {
+        stage('Examples build') {
+          steps {
+            dir("${REPO_NAME}/examples") {
               xcoreBuild()
             }
           }
         }
-      }
-    }
 
-    stage('Library checks') {
-      steps {
-        warnError("Library checks failed")
-        {
-          runRepoChecks("${WORKSPACE}/${REPO_NAME}")
-        }
-      }
-    }
-
-    stage('Documentation') {
-      steps {
-        dir(REPO_NAME) {
-          buildDocs()
-        }
-      }
-    }
-
-
-    stage('Tests')
-    {
-      steps {
-        withTools(params.TOOLS_VERSION) {
-          dir("${REPO_NAME}/tests") {
-            createVenv(reqFile: "requirements.txt")
-            xcoreBuild()
-            withVenv{
-              runPytest("--numprocesses=auto --testlevel=${params.TEST_LEVEL}")
+        stage('Repo checks') {
+          steps {
+            warnError("Repo checks failed")
+            {
+              runRepoChecks("${WORKSPACE}/${REPO_NAME}")
             }
-          } // dir
-        } // withTools
-      } // steps
-      post
-      {
-        always{
-          archiveArtifacts artifacts: "${REPO_NAME}/tests/logs/*.txt", fingerprint: true, allowEmptyArchive: true
+          }
+        }
+
+        stage('Doc build') {
+          steps {
+            dir(REPO_NAME) {
+              buildDocs()
+            }
+          }
+        }
+        
+        stage('Tests') {
+          steps {
+            withTools(params.TOOLS_VERSION) {
+              dir("${REPO_NAME}/tests") {
+                createVenv(reqFile: "requirements.txt")
+                xcoreBuild()
+                withVenv{
+                  runPytest("--numprocesses=auto --testlevel=${params.TEST_LEVEL}")
+                }
+              } // dir
+            } // withTools
+          } // steps
+          post {
+            always {
+              archiveArtifacts artifacts: "${REPO_NAME}/tests/logs/*.txt", fingerprint: true, allowEmptyArchive: true
+            }
+          }
+        }
+
+        stage("Archive sandbox") {
+          steps {
+            archiveSandbox(REPO_NAME)
+          }
+        }
+      } // stages
+  
+      post {
+        cleanup {
+          xcoreCleanSandbox()
         }
       }
-    }
-
-    stage("Archive")
-    {
-      steps
-      {
-        archiveSandbox(REPO_NAME)
-      }
-    }
+    } // stage build and test
 
     stage('🚀 Release') {
       steps {
@@ -109,9 +119,4 @@ pipeline {
       }
     }
   } // stages
-  post {
-    cleanup {
-      xcoreCleanSandbox()
-    }
-  }
-}
+} // pipeline
