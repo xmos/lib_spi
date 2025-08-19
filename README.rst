@@ -57,8 +57,7 @@ Required libraries (dependencies)
 Related application notes
 *************************
 
-* AN00160 - How to communicate as SPI master
-* AN00161 - How to communicate as SPI slave
+Please see `examples` section of user guide for SPI slave and SPI master examples.
 
 
 *******
