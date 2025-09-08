@@ -9,9 +9,9 @@ Introduction
 SPI is a four-wire hardware bi-directional serial interface. 
 This library provides a software defined, industry-standard, SPI (serial peripheral
 interface) component that allows you to control an SPI bus via the
-``xcore`` GPIO ports.
+`xcore` GPIO ports.
 
-The SPI bus can be used by multiple tasks within the ``xcore`` device
+The SPI bus can be used by multiple tasks within the `xcore` device
 and (each addressing the same or different slaves) and
 is compatible with other slave devices on the same bus.
 
@@ -33,7 +33,7 @@ This component is the standard SPI master and is simplest to use. The `synchrono
 means that calls to this component block until the transaction has completed. The component
 server may be placed on the same or a different tile from the client. If placed on the same
 tile, the task may be `distributed` by the compiler which means it gets turned into a function
-call and consequently does not consume an ``xcore`` thread.
+call and consequently does not consume an `xcore` thread.
 
 Multiple clients are supported and are arbitrated by the component. Multiple devices are also
 supported by means of individual slave select bits within a port.
@@ -45,7 +45,7 @@ This component offers buffering functionality over the `synchronous` SPI master.
 The `asynchronous` feature means that calls to this component can be non-blocking and SPI transfers
 may be queued. The component server may be placed on the same or a different tile from the client.
 
-Due to the buffering logic, the `asynchronous` version always consumes an ``xcore`` thread.
+Due to the buffering logic, the `asynchronous` version always consumes an `xcore` thread.
 
 Multiple clients are supported and are arbitrated by the component. Multiple devices are also
 supported by means of individual slave select bits within a port.
@@ -53,7 +53,7 @@ supported by means of individual slave select bits within a port.
 SPI Slave
 =========
 
-The SPI slave component task always runs in its own ``xcore`` thread because it needs to be 
+The SPI slave component task always runs in its own `xcore` thread because it needs to be 
 responsive to the external master requests. It offers a single slave device with basic 
 8 or 32 bit transfer support. 
 It provides callbacks for when the slave needs data to transmit or has received data, as
@@ -86,7 +86,7 @@ relative to the clock. The timings are given by:
      * - *MAX CLOCK RATE*
        - This is the maximum clock rate supported by the configuration.
 
-The setup and hold timings are inherited from the underlying ``xcore``
+The setup and hold timings are inherited from the underlying `xcore`
 device. For details on these timing please refer to the device datasheet.
 
 When operating above 20 Mbps please also see the :ref:`MISO port timing<miso_port_timing>` section.
@@ -171,11 +171,11 @@ ignore any transitions on the other lines.
 |newpage|
 
 
-**************************************
-Connecting to the ``xcore`` SPI master
-**************************************
+************************************
+Connecting to the `xcore` SPI master
+************************************
 
-The SPI wires need to be connected to the ``xcore`` device as shown in
+The SPI wires need to be connected to the `xcore` device as shown in
 :numref:`spi_master_xcore_connect`. The signals can be connected to any
 one bit ports, with the exception of slave select which may be any width 
 port. All ports must be on the same tile.
@@ -185,7 +185,7 @@ port. All ports must be on the same tile.
 .. figure:: ../images/spi_master_connect.*
    :width: 40%
 
-   SPI master connection to the ``xcore`` device
+   SPI master connection to the `xcore` device
 
 If only one data direction is required then the *MOSI* or *MISO* line
 need not be connected. However, **asynchronous mode is only supported
@@ -214,11 +214,11 @@ optional (but the *MISO* port must be provided).
 |newpage|
 
 
-*************************************
-Connecting to the ``xcore`` SPI slave
-*************************************
+***********************************
+Connecting to the `xcore` SPI slave
+***********************************
 
-The SPI wires need to be connected to the ``xcore`` device as shown in
+The SPI wires need to be connected to the `xcore` device as shown in
 :numref:`spi_slave_xcore_connect`. The signals can be connected to any
 one bit ports on the device.
 
@@ -227,7 +227,7 @@ one bit ports on the device.
 .. figure:: ../images/spi_slave_connect.*
    :width: 40%
 
-   SPI slave connection to the ``xcore`` device
+   SPI slave connection to the `xcore` device
 
 The slave will only send and receive data when the slave select is
 driven high. Additionally the *MISO* line is set to high impedance
@@ -325,9 +325,9 @@ Operations such as ``spi.transfer8`` will
 block until the operation is completed on the bus.
 More information on interfaces and tasks can be be found in
 the `XMOS Programming Guide <https://www.xmos.com/documentation/XM-014363-PC/html/prog-guide/index.html>`_. By default the
-SPI synchronous master mode component does not use any ``xcore`` threads of its
+SPI synchronous master mode component does not use any `xcore` threads of its
 own. It is a *distributed* task which means it will perform its
-function on the ``xcore`` thread of the application task connected to
+function on the `xcore` thread of the application task connected to
 it (provided the application task is on the same tile).
 
 Synchronous master usage state machine
@@ -613,7 +613,7 @@ Synchronous SPI master clock speeds
 ===================================
 
 The maximum speed that the SPI bus can be driven depends on whether a
-clock block is used, the speed of the ``xcore`` thread that the SPI code
+clock block is used, the speed of the `xcore` thread that the SPI code
 is running on and where both the *MISO* and *MOSI* lines are used. The
 timings can be seen in :numref:`spi_master_sync_timings`.
 
@@ -677,8 +677,8 @@ MISO port timing
 Port timing is affected by chip pad and PCB delays. For the clock, slave-select and MOSI signals, all of the delays will be broadly matched.
 This means port timing adjustment is normally not required even up to the fastest supported SPI clock rates.
 
-For the MISO signal, there will be a 'round trip delay' starting with the clock edge output and finishing at the ``xcore``'s input port.
-The presence of this delay will mean the ``xcore`` may sample too early since data signal will arrive later. 
+For the MISO signal, there will be a 'round trip delay' starting with the clock edge output and finishing at the `xcore`'s input port.
+The presence of this delay will mean the `xcore` may sample too early since data signal will arrive later. 
 It may be necessary to delay the sampling of the MISO pin to capture within the required window, particularly if the SPI clock is above 20 MHz.
 
 Control over the signal capture is provided for all SPI master implementations that require a clock block. Please see the :ref:`API section<api_section>` `spi_master_sync_timings()` method which exposes the controls available for optimising setup and hold capture.
@@ -691,11 +691,11 @@ For details on how to calculate and adjust round-trip port timing, please consul
 SPI slave timing characteristics
 ********************************
 
-The ``xcore`` thread running the SPI slave task will wait for the slave
+The `xcore` thread running the SPI slave task will wait for the slave
 select line to assert and then begin processing the transaction. At
 this point it will call the ``master_requires_data`` callback to
 application code. The time taken for the application to perform this
-call will affect how long the ``xcore`` thread has to resume processing
+call will affect how long the `xcore` thread has to resume processing
 SPI data. This will affect the minimum allowable time between slave
 select changing and data transfer from the master (*t1*).
 
@@ -708,7 +708,7 @@ gap between transactions (*t2*).  The user of the library will also need to
 determine this time based on their application.
 
 If the SPI slave task is combined will other tasks running on the same
-``xcore`` thread then the other task may process an event delaying the
+`xcore` thread then the other task may process an event delaying the
 time it takes for the SPI slave task to react to events. This will add
 these delays to the minimum times for both *t1* and *t2*. The library
 user will need to take these into account in determining the timing
@@ -806,7 +806,7 @@ application only uses a single hardware thread.
 Declaring ports
 ...............
 
-The SPI library connects to external pins via ``xcore`` ports. In
+The SPI library connects to external pins via `xcore` ports. In
 ``main.xc`` these are declared as variables of type ``port`` at the
 start of the file:
 
@@ -1019,7 +1019,7 @@ the task and communication structure of the application.
 Declaring ports
 ...............
 
-The SPI library connects to external pins via ``xcore`` ports. In
+The SPI library connects to external pins via `xcore` ports. In
 ``main.xc`` these are declared as variables of type ``port`` at the
 start of the file:
 
@@ -1030,7 +1030,7 @@ start of the file:
 
 .. note::
     
-    There is also a clock declaration since the slave needs to use an internal clock as well as ports inside the ``xcore`` device.
+    There is also a clock declaration since the slave needs to use an internal clock as well as ports inside the `xcore` device.
 
 How the ports (e.g. ``XS1_PORT_1I``) relate to external pins will
 depend on the exact device being used. See the device datasheet for details.
