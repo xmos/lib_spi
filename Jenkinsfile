@@ -18,7 +18,7 @@ pipeline {
     )
     string(
       name: 'XMOSDOC_VERSION',
-      defaultValue: 'v7.3.0',
+      defaultValue: 'v7.4.0',
       description: 'The xmosdoc version'
     )
     string(
@@ -74,8 +74,18 @@ pipeline {
 
         stage('Doc build') {
           steps {
-            dir(REPO_NAME) {
-              buildDocs()
+            /// THIS IS A WORKAROUND DUE TO DOCKER NOT BUILDING PROPERLY
+            /// TODO FIXME
+            /// First create the venv which will also be used later by tests
+            dir("${REPO_NAME}/tests") {
+              createVenv(reqFile: "requirements.txt")
+            }
+
+            dir(${REPO_NAME}) {
+              runXmosdoc(
+                xmosdocVersion: "${XMOSDOC_VERSION}"
+                xmosdocArgs: "-v -z -o _xmosdoc_output"
+                xmosdocVenvPath: "${REPO_NAME}/tests"
             }
           }
         }
@@ -84,7 +94,8 @@ pipeline {
           steps {
             withTools(params.TOOLS_VERSION) {
               dir("${REPO_NAME}/tests") {
-                createVenv(reqFile: "requirements.txt")
+                /// TODO fixme when docker working
+                // createVenv(reqFile: "requirements.txt")
                 xcoreBuild()
                 withVenv{
                   runPytest("--numprocesses=auto --testlevel=${params.TEST_LEVEL}")
