@@ -85,6 +85,7 @@ pipeline {
               runXmosdoc("${XMOSDOC_VERSION}",
                 xmosdocArgs: "-v -z -o _xmosdoc_output",
                 xmosdocVenvPath: "${REPO_NAME}/tests"
+              )
             }
           }
         }
