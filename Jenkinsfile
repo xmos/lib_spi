@@ -82,9 +82,8 @@ pipeline {
             }
 
             dir(${REPO_NAME}) {
-              runXmosdoc(
-                xmosdocVersion: "${XMOSDOC_VERSION}"
-                xmosdocArgs: "-v -z -o _xmosdoc_output"
+              runXmosdoc("${XMOSDOC_VERSION}",
+                xmosdocArgs: "-v -z -o _xmosdoc_output",
                 xmosdocVenvPath: "${REPO_NAME}/tests"
             }
           }
