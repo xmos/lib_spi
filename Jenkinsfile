@@ -81,7 +81,7 @@ pipeline {
               createVenv(reqFile: "requirements.txt")
             }
 
-            dir(${REPO_NAME}) {
+            dir("${REPO_NAME}") {
               runXmosdoc("${XMOSDOC_VERSION}",
                 xmosdocArgs: "-v -z -o _xmosdoc_output",
                 xmosdocVenvPath: "${REPO_NAME}/tests"
