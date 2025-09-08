@@ -78,7 +78,7 @@ pipeline {
             dir(".xmosdoc") {
               createVenv()
             }
-            dir(${REPO_NAME}) {
+            dir("${REPO_NAME}") {
               buildDocs(xmosdocVenvPath: "${WORKSPACE}/.xmosdoc")
             }
           }
