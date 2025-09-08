@@ -75,7 +75,10 @@ pipeline {
         stage('Doc build') {
           steps {
             sh "mkdir ${WORKSPACE}/.xmosdoc"
-            dir(REPO_NAME) {
+            dir(".xmosdoc") {
+              createVenv()
+            }
+            dir(${REPO_NAME}) {
               buildDocs(xmosdocVenvPath: "${WORKSPACE}/.xmosdoc")
             }
           }
