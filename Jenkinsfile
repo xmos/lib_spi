@@ -74,18 +74,9 @@ pipeline {
 
         stage('Doc build') {
           steps {
-            /// THIS IS A WORKAROUND DUE TO DOCKER NOT BUILDING PROPERLY
-            /// TODO FIXME
-            /// First create the venv which will also be used later by tests
-            dir("${REPO_NAME}/tests") {
-              createVenv(reqFile: "requirements.txt")
-            }
-
-            dir("${REPO_NAME}") {
-              runXmosdoc("${XMOSDOC_VERSION}",
-                xmosdocArgs: "-v -z -o _xmosdoc_output",
-                xmosdocVenvPath: "${REPO_NAME}/tests"
-              )
+            sh "mkdir ${WORKSPACE}/.xmosdoc"
+            dir(REPO_NAME) {
+              buildDocs(xmosdocVenvPath: "${WORKSPACE}/.xmosdoc")
             }
           }
         }
@@ -94,8 +85,7 @@ pipeline {
           steps {
             withTools(params.TOOLS_VERSION) {
               dir("${REPO_NAME}/tests") {
-                /// TODO fixme when docker working
-                // createVenv(reqFile: "requirements.txt")
+                createVenv(reqFile: "requirements.txt")
                 xcoreBuild()
                 withVenv{
                   runPytest("--numprocesses=auto --testlevel=${params.TEST_LEVEL}")
