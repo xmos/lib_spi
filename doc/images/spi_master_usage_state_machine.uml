@@ -1,0 +1,22 @@
+@startuml
+title SPI master use state machine (synchronous)
+
+[*] --> begin_transaction
+
+begin_transaction --> transfer8
+begin_transaction --> transfer32
+transfer8 --> transfer8
+transfer8 --> transfer32
+transfer8 --> end_transaction
+transfer32 --> transfer8
+transfer32 --> transfer32
+transfer32 --> end_transaction
+end_transaction --> begin_transaction
+begin_transaction --> end_transaction
+
+begin_transaction --> [*] : shutdown
+transfer8 --> [*] : shutdown
+transfer32 --> [*] : shutdown
+end_transaction --> [*] : shutdown
+
+@enduml

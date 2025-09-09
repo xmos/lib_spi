@@ -1,0 +1,6 @@
+@startuml
+left to right direction
+circle app
+circle SPI_master
+app --> SPI_master : spi_master_if\nor\nspi_master_async_if
+@enduml

@@ -74,6 +74,12 @@ pipeline {
 
         stage('Doc build') {
           steps {
+            // These are commented out to force use of xmosdoc python.
+            // This was needed due to plantuml rendering errors. Will need update
+            // of docker image to fix properly
+            // dir("${REPO_NAME}") {
+            //   buildDocs()
+            // }
             sh "mkdir ${WORKSPACE}/.xmosdoc"
             dir(".xmosdoc") {
               createVenv()

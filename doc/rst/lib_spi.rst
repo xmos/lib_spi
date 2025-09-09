@@ -338,33 +338,12 @@ sequence shown by the state machine in :numref:`spi_master_usage_state_machine`.
 If this sequence is not followed then the behaviour is undefined.
 
 .. _spi_master_usage_state_machine:
+.. uml:: ../images/spi_master_usage_state_machine.uml
+    :alt: SPI master use state machine (synchronous)
+    :caption: SPI master use state machine (synchronous)
+    :align: center
+    :width: 70%
 
-.. uml::
-   :width: 60%
-   :caption: SPI master use state machine (synchronous)
-
-   @startuml
-   title SPI master use state machine (synchronous)
-
-   [*] --> begin_transaction
-
-   begin_transaction --> transfer8
-   begin_transaction --> transfer32
-   transfer8 --> transfer8
-   transfer8 --> transfer32
-   transfer8 --> end_transaction
-   transfer32 --> transfer8
-   transfer32 --> transfer32
-   transfer32 --> end_transaction
-   end_transaction --> begin_transaction
-   begin_transaction --> end_transaction
-
-   begin_transaction --> [*] : shutdown
-   transfer8 --> [*] : shutdown
-   transfer32 --> [*] : shutdown
-   end_transaction --> [*] : shutdown
-
-   @enduml
 
 |newpage|
 
@@ -471,33 +450,11 @@ sequence shown by the state machine in :numref:`spi_master_usage_state_machine_a
 If this sequence is not followed then the behaviour is undefined.
 
 .. _spi_master_usage_state_machine_async:
-
-.. uml::
-   :caption: SPI master use state machine (asynchronous)
-   :width: 60%
-
-   @startuml
-   title SPI master use state machine (asynchronous)
-
-   [*] --> begin_transaction
-   begin_transaction --> init_transfer_array_8
-   begin_transaction --> init_transfer_array_32
-   init_transfer_array_8 --> transfer_complete
-   init_transfer_array_32 --> transfer_complete
-   transfer_complete --> retrieve_transfer_buffers_8
-   transfer_complete --> retrieve_transfer_buffers_32
-   retrieve_transfer_buffers_8 --> retrieve_transfer_buffers_8
-   retrieve_transfer_buffers_8 --> retrieve_transfer_buffers_32
-   retrieve_transfer_buffers_8 --> end_transaction
-   retrieve_transfer_buffers_32 --> retrieve_transfer_buffers_8
-   retrieve_transfer_buffers_32 --> retrieve_transfer_buffers_32
-   retrieve_transfer_buffers_32 --> end_transaction
-   end_transaction --> begin_transaction
-   begin_transaction --> end_transaction
-   end_transaction --> [*] : shutdown
-
-   @enduml
-
+.. uml:: ../images/spi_master_usage_state_machine_async.uml
+    :alt: SPI master use state machine (asynchronous)
+    :caption: SPI master use state machine (asynchronous)
+    :align: center
+    :width: 70%
    
 
 Master inter-transaction gap
@@ -791,17 +748,11 @@ application only uses a single hardware thread.
 :numref:`spi_master_example` shows the task and communication structure of the application.
 
 .. _spi_master_example:
-
-.. uml::
-   :width: 60%
-   :caption: Task diagram of SPI master example
-
-   @startuml
-   left to right direction
-   circle app
-   circle SPI_master
-   app --> SPI_master : spi_master_if\nor\nspi_master_async_if
-   @enduml
+.. uml:: ../images/spi_master_example.uml
+    :alt: Task diagram of SPI master example
+    :caption: Task diagram of SPI master example
+    :align: center
+    :width: 70%
 
 Declaring ports
 ...............
@@ -994,27 +945,11 @@ These tasks communicate via the use of xC interfaces. :numref:`spi_slave_example
 the task and communication structure of the application.
 
 .. _spi_slave_example_task:
-
-.. uml::
-   :width: 60%
-   :caption: Task diagram of SPI slave example
-
-   @startuml
-   circle tester
-   circle SPI_master
-   circle app
-   circle reg_file
-   circle SPI_slave
-
-   ' Force layout order with hidden links
-   SPI_master -[#transparent]-> SPI_slave
-
-   ' Actual displayed nodes
-   tester -r-> SPI_master : spi_master_if
-   SPI_slave -r-> reg_file : spi_slave_callback_if
-   app -l-> reg_file : reg_if
-   @enduml
-
+.. uml:: ../images/spi_slave_example_task.uml
+    :alt: Task diagram of SPI slave example
+    :caption: Task diagram of SPI slave example
+    :align: center
+    :width: 90%
 
 Declaring ports
 ...............
