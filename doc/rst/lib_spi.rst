@@ -1005,10 +1005,10 @@ the task and communication structure of the application.
    circle app
    circle reg_file
    circle SPI_slave
-
+ 
    ' Force layout order with hidden links
-   SPI_master -[#transparent]-> SPI_slave
-
+   SPI_master -[hidden]-> SPI_slave
+ 
    ' Actual displayed nodes
    tester -r-> SPI_master : spi_master_if
    SPI_slave -r-> reg_file : spi_slave_callback_if
