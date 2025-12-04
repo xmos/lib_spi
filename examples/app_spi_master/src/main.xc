@@ -21,7 +21,8 @@ clock clk                             = on tile[0]: XS1_CLKBLK_1;
 
 /* This application function sends some traffic as SPI master using
  * the synchronous interface. It reads the config register (address 0)
- * of the WFM200S using a 16b command and prints the 32b read result */ 
+ * of the WFM200S using a 16b command and prints the upper 16b of the
+ * 32b read result to identify the device */ 
 void app(client spi_master_if spi)
 {
     uint8_t val;
@@ -54,7 +55,8 @@ void app(client spi_master_if spi)
 
 /* This application function sends some traffic as SPI master using
  * the synchronous interface. It reads the config register (address 0)
- * of the WFM200S using a 16b command and prints the 32b read result */
+ * of the WFM200S using a 16b command and prints the upper 16b of the
+ * 32b read result to identify the device */ 
 void async_app(client spi_master_async_if spi)
 {
 
