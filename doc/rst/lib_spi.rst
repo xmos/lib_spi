@@ -1075,8 +1075,7 @@ Looking at this in a more detail you can see the following:
     will use when making callbacks to the application.
 
   - The ``spi_master()`` task controls the test SPI bus and takes
-    different ports to the SPI slave bus as arguments. For details on
-    using SPI master see application note AN00160.
+    different ports to the SPI slave bus as arguments.
 
 
 The reg_file() task
@@ -1259,7 +1258,7 @@ To run the application return to the ``/examples/app_spi_slave`` directory and r
     This command line is provided as a file in the ``/examples/app_spi_slave`` directory under the filename ``simulate_cmd.txt``.
     You can rename this file to ``simulate_cmd.sh`` or ``simulate_cmd.bat`` and run it directly, depending on your host OS.
 
-As application runs that reads a value from the SPI connected WiFi chip and prints the following output to the console::
+An application runs that reads the values from the two emulated registers and prints the following output to the console::
 
   APP: Set register 0 to 0xED
   APP: Register 0 is 0xED, Register 1 is 0x0
